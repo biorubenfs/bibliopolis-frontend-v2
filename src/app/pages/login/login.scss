@@ -1,0 +1,86 @@
+:host {
+  display: grid;
+  grid-template-rows: 180px 1fr;
+  min-height: 100dvh;
+  background: var(--mat-sys-surface);
+}
+
+.cover {
+  position: relative;
+  overflow: hidden;
+
+  img {
+    object-fit: cover;
+  }
+}
+
+.panel {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.content {
+  width: 100%;
+  max-width: 400px;
+}
+
+.brand {
+  margin: 0 0 32px;
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-primary);
+  font-weight: 500;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font: var(--mat-sys-headline-medium);
+  color: var(--mat-sys-on-surface);
+}
+
+.subtitle {
+  margin: 0 0 32px;
+  font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-error);
+
+  &:not(:empty) {
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+  }
+}
+
+.submit {
+  height: 48px;
+  margin-top: 8px;
+}
+
+// Desktop: vertical split, image on the left and form on the right
+@media (min-width: 900px) {
+  :host {
+    grid-template-rows: none;
+    // The form only needs a narrow column; the image takes the remaining space
+    grid-template-columns: 1fr minmax(440px, 40%);
+  }
+
+  .panel {
+    align-items: center;
+    padding: 48px;
+  }
+}

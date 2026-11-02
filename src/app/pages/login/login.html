@@ -1,0 +1,62 @@
+<div class="cover">
+  <img ngSrc="images/login.jpg" alt="" fill priority />
+</div>
+
+<main class="panel">
+  <div class="content">
+    <p class="brand">Bibliopolis</p>
+    <h1>Inicia sesión</h1>
+    <p class="subtitle">Accede a tus bibliotecas y a tus libros.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" autocomplete="email" required />
+        @if (form.controls.email.hasError('required')) {
+          <mat-error>Introduce tu email.</mat-error>
+        } @else if (form.controls.email.hasError('email')) {
+          <mat-error>Introduce un email válido.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Contraseña</mat-label>
+        <input
+          matInput
+          [type]="passwordVisible() ? 'text' : 'password'"
+          formControlName="password"
+          autocomplete="current-password"
+          required
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="togglePasswordVisibility()"
+          [attr.aria-label]="passwordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          [attr.aria-pressed]="passwordVisible()"
+        >
+          <mat-icon>{{ passwordVisible() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (form.controls.password.hasError('required')) {
+          <mat-error>Introduce tu contraseña.</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="error" role="alert">
+        @if (errorMessage(); as message) {
+          <mat-icon aria-hidden="true">error</mat-icon>
+          <span>{{ message }}</span>
+        }
+      </div>
+
+      <button mat-flat-button type="submit" class="submit" [disabled]="loading()">
+        @if (loading()) {
+          <mat-spinner diameter="20" aria-label="Iniciando sesión" />
+        } @else {
+          Entrar
+        }
+      </button>
+    </form>
+  </div>
+</main>
