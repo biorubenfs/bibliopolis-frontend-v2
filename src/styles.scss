@@ -2,6 +2,8 @@
 
 html {
   color-scheme: light;
+  // Serif display font for brand and page titles; the rest of the UI uses Roboto
+  --app-font-display: 'Lora', Georgia, serif;
 
   @include mat.theme(
     (
