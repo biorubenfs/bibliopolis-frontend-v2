@@ -1,0 +1,64 @@
+<article class="card">
+  <div class="header">
+    <div class="icon" aria-hidden="true">
+      <mat-icon>shelves</mat-icon>
+    </div>
+    <h2 class="title">{{ library().name }}</h2>
+  </div>
+
+  <p class="description">{{ library().description }}</p>
+
+  <footer class="footer">
+    <span class="count">
+      <mat-icon aria-hidden="true">menu_book</mat-icon>
+      {{ booksLabel() }}
+    </span>
+
+    <div class="actions">
+      @if (exporting()) {
+        <span class="exporting">
+          <mat-spinner diameter="20" aria-label="Descargando" />
+        </span>
+      } @else {
+        <button
+          mat-icon-button
+          type="button"
+          [matMenuTriggerFor]="exportMenu"
+          matTooltip="Descargar"
+          [attr.aria-label]="'Descargar ' + library().name"
+        >
+          <mat-icon>download</mat-icon>
+        </button>
+      }
+      <button
+        mat-icon-button
+        type="button"
+        matTooltip="Editar"
+        [attr.aria-label]="'Editar ' + library().name"
+        (click)="editRequested.emit()"
+      >
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        matTooltip="Eliminar"
+        [attr.aria-label]="'Eliminar ' + library().name"
+        (click)="deleteRequested.emit()"
+      >
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </footer>
+</article>
+
+<mat-menu #exportMenu="matMenu" xPosition="before">
+  <button mat-menu-item type="button" (click)="exportRequested.emit('pdf')">
+    <mat-icon>picture_as_pdf</mat-icon>
+    <span>PDF</span>
+  </button>
+  <button mat-menu-item type="button" (click)="exportRequested.emit('csv')">
+    <mat-icon>table_view</mat-icon>
+    <span>CSV (Excel)</span>
+  </button>
+</mat-menu>

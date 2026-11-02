@@ -9,4 +9,4 @@ export const authGuard: CanActivateFn = () =>
 
 /** Keeps authenticated users away from the login page. */
 export const guestGuard: CanActivateFn = () =>
-  !inject(AuthService).isAuthenticated() || inject(Router).createUrlTree(['/']);
+  !inject(AuthService).isAuthenticated() || inject(Router).createUrlTree(['/libraries']);

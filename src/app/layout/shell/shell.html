@@ -1,0 +1,74 @@
+<mat-sidenav-container class="container">
+  <mat-sidenav
+    #sidenav
+    class="sidebar"
+    [mode]="isDesktop() ? 'side' : 'over'"
+    [opened]="isDesktop()"
+    [disableClose]="isDesktop()"
+  >
+    <nav class="sidebar-content" aria-label="Navegación principal">
+      <button type="button" class="account" [matMenuTriggerFor]="accountMenu">
+        @if (avatarUrl(); as url) {
+          <img class="avatar" [src]="url" alt="" width="40" height="40" />
+        } @else {
+          <span class="avatar avatar--initial" aria-hidden="true">{{ initial() }}</span>
+        }
+        <span class="account-text">
+          <span class="account-name">{{ user()?.name ?? 'Mi cuenta' }}</span>
+          @if (user(); as user) {
+            <span class="account-email">{{ user.email }}</span>
+          }
+        </span>
+        <mat-icon aria-hidden="true">expand_more</mat-icon>
+      </button>
+
+      <mat-menu #accountMenu="matMenu" xPosition="after">
+        <a mat-menu-item routerLink="/profile" (click)="closeOnMobile(sidenav)">
+          <mat-icon>person</mat-icon>
+          <span>Perfil</span>
+        </a>
+      </mat-menu>
+
+      <ul class="nav-list">
+        @for (item of navItems; track item.path) {
+          <li>
+            <a
+              class="nav-item"
+              [routerLink]="item.path"
+              routerLinkActive="nav-item--active"
+              ariaCurrentWhenActive="page"
+              (click)="closeOnMobile(sidenav)"
+            >
+              <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+              <span>{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+
+      <button type="button" class="nav-item logout" (click)="logout()">
+        <mat-icon aria-hidden="true">logout</mat-icon>
+        <span>Cerrar sesión</span>
+      </button>
+    </nav>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="content">
+    @if (!isDesktop()) {
+      <header class="topbar">
+        <button
+          mat-icon-button
+          type="button"
+          (click)="sidenav.open()"
+          aria-label="Abrir menú de navegación"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+        <span class="topbar-brand">Bibliopolis</span>
+      </header>
+    }
+    <main>
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 
 import { authGuard, guestGuard } from './core/auth/auth.guards';
 
+const comingSoon = () => import('./pages/coming-soon/coming-soon').then((m) => m.ComingSoon);
+
 export const routes: Routes = [
   {
     path: 'login',
@@ -11,10 +13,35 @@ export const routes: Routes = [
   },
   {
     path: '',
-    pathMatch: 'full',
     canActivate: [authGuard],
-    title: 'Bibliopolis',
-    loadComponent: () => import('./pages/home/home').then((m) => m.Home),
+    loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'libraries' },
+      {
+        path: 'libraries',
+        title: 'Mis bibliotecas · Bibliopolis',
+        loadComponent: () =>
+          import('./features/libraries/libraries-page').then((m) => m.LibrariesPage),
+      },
+      {
+        path: 'books',
+        title: 'Mis libros · Bibliopolis',
+        data: { heading: 'Mis libros' },
+        loadComponent: comingSoon,
+      },
+      {
+        path: 'explore',
+        title: 'Explorar · Bibliopolis',
+        data: { heading: 'Explorar' },
+        loadComponent: comingSoon,
+      },
+      {
+        path: 'profile',
+        title: 'Perfil · Bibliopolis',
+        data: { heading: 'Perfil' },
+        loadComponent: comingSoon,
+      },
+    ],
   },
   { path: '**', redirectTo: '' },
 ];

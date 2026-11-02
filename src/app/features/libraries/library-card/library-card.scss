@@ -1,0 +1,95 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 20px 12px 8px 26px;
+  overflow: hidden;
+  border: 1px solid #dad7cd;
+  border-radius: 16px;
+  background: #ffffff;
+  color: var(--mat-sys-on-surface);
+
+  // Book "spine": same colour for every card; --spine-color allows overriding it per card
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 6px;
+    background: var(--spine-color, #588157);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 8px;
+}
+
+.icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #dad7cd;
+  color: #3a5a40;
+}
+
+.title {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+  overflow-wrap: anywhere;
+}
+
+.description {
+  flex: 1;
+  margin: 0;
+  padding-right: 8px;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+  border-top: 1px solid #ebe9e3;
+}
+
+.count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}
+
+.actions {
+  display: flex;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.exporting {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+}

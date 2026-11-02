@@ -37,7 +37,7 @@ describe('Login', () => {
     expect(login).not.toHaveBeenCalled();
   });
 
-  it('navigates home after a successful login', () => {
+  it('navigates to the libraries after a successful login', () => {
     loginResult = of(undefined);
     const fixture = setup();
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
@@ -45,7 +45,7 @@ describe('Login', () => {
     fillAndSubmit(fixture.nativeElement, 'user@email.com', 'secret');
 
     expect(login).toHaveBeenCalledWith({ email: 'user@email.com', password: 'secret' });
-    expect(navigate).toHaveBeenCalledWith('/');
+    expect(navigate).toHaveBeenCalledWith('/libraries');
   });
 
   it('shows a Spanish message when the credentials are wrong', async () => {

@@ -53,7 +53,7 @@ export class Login {
     this.errorMessage.set(null);
 
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => void this.router.navigateByUrl('/'),
+      next: () => void this.router.navigateByUrl('/libraries'),
       error: (error: unknown) => {
         this.loading.set(false);
         this.errorMessage.set(toUserMessage(error));

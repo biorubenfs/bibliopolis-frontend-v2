@@ -1,0 +1,50 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar biblioteca' : 'Nueva biblioteca' }}</h2>
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="name" [maxlength]="nameMaxLength" required />
+      <mat-hint align="end">{{ form.controls.name.value.length }} / {{ nameMaxLength }}</mat-hint>
+      @if (form.controls.name.hasError('required')) {
+        <mat-error>Introduce un nombre.</mat-error>
+      } @else if (form.controls.name.hasError('minlength')) {
+        <mat-error>El nombre debe tener al menos {{ nameMinLength }} caracteres.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Descripción</mat-label>
+      <textarea
+        matInput
+        formControlName="description"
+        rows="3"
+        [maxlength]="descriptionMaxLength"
+        required
+      ></textarea>
+      <mat-hint align="end">
+        {{ form.controls.description.value.length }} / {{ descriptionMaxLength }}
+      </mat-hint>
+      @if (form.controls.description.hasError('required')) {
+        <mat-error>Introduce una descripción.</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="error" role="alert">
+      @if (errorMessage(); as message) {
+        {{ message }}
+      }
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">
+      @if (saving()) {
+        <mat-spinner diameter="20" aria-label="Guardando biblioteca" />
+      } @else {
+        {{ isEdit ? 'Guardar' : 'Crear' }}
+      }
+    </button>
+  </mat-dialog-actions>
+</form>
