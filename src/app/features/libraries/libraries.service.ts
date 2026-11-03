@@ -30,6 +30,13 @@ export class LibrariesService {
     );
   }
 
+  get(id: string): Observable<Library> {
+    return this.http.get<ApiItemResponse<LibraryAttributes>>(`${this.baseUrl}/${id}`).pipe(
+      map((response) => flatten(response.results)),
+      catchError(toApiError),
+    );
+  }
+
   create(library: CreateLibrary): Observable<Library> {
     return this.http.post<ApiItemResponse<LibraryAttributes>>(this.baseUrl, library).pipe(
       map((response) => flatten(response.results)),

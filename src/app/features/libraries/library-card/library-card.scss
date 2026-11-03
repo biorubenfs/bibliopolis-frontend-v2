@@ -16,6 +16,18 @@
   border-radius: 16px;
   background: #ffffff;
   color: var(--mat-sys-on-surface);
+  transition: transform 150ms ease-out;
+
+  // Slight zoom to show which card is selected, with the mouse or the keyboard
+  &:hover,
+  &:has(.link:focus-visible) {
+    transform: scale(1.03);
+  }
+
+  // Respect the system setting for people who are sensitive to animations
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 
   // Book "spine": same colour for every card; --spine-color allows overriding it per card
   &::before {
@@ -51,6 +63,28 @@
   overflow-wrap: anywhere;
 }
 
+.link {
+  color: inherit;
+  text-decoration: none;
+
+  // Stretches the clickable area over the whole card; .actions sits above it
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+  }
+
+  &:focus-visible {
+    outline: none;
+
+    &::after {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: -2px;
+    }
+  }
+}
+
 .description {
   flex: 1;
   margin: 0;
@@ -83,6 +117,8 @@
 }
 
 .actions {
+  position: relative;
+  z-index: 1;
   display: flex;
   color: var(--mat-sys-on-surface-variant);
 }

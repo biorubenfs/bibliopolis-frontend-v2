@@ -1,0 +1,195 @@
+import { TestBed } from '@angular/core/testing';
+import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { of, throwError } from 'rxjs';
+
+import { ApiError } from '../../../core/http/api-error';
+import { UserBook } from '../../user-books/user-book.model';
+import { UserBooksService } from '../../user-books/user-books.service';
+import { LibrariesService } from '../libraries.service';
+import { Library } from '../library.model';
+import { LibraryDetailPage } from './library-detail-page';
+
+const library: Library = {
+  id: 'l1',
+  name: 'Novela',
+  description: 'Mis novelas',
+  books: [],
+  userId: 'u1',
+  createdAt: '',
+  updatedAt: '',
+};
+
+function book(id: string, title: string): UserBook {
+  return {
+    id,
+    libraries: ['l1'],
+    bookId: `b-${id}`,
+    bookTitle: title,
+    bookAuthors: ['Autora'],
+    bookCoverUrl: null,
+    bookIsbn13: '9780595385294',
+    bookIsbn10: null,
+    rating: null,
+    notes: null,
+    userId: 'u1',
+    createdAt: '',
+    updatedAt: '',
+  };
+}
+
+/** A library with 13 books: one page of 12 and a second page with the last one. */
+const thirteenBooks = () =>
+  vi.fn((_id: string, { skip }: { skip: number }) =>
+    of({ items: skip < 13 ? [book(`${skip}`, `Libro ${skip}`)] : [], total: 13 }),
+  );
+
+describe('LibraryDetailPage', () => {
+  async function setup(
+    options: {
+      url?: string;
+      get?: ReturnType<typeof vi.fn>;
+      listByLibrary?: ReturnType<typeof vi.fn>;
+    } = {},
+  ) {
+    const get = options.get ?? vi.fn(() => of(library));
+    const listByLibrary = options.listByLibrary ?? vi.fn(() => of({ items: [], total: 0 }));
+    TestBed.configureTestingModule({
+      providers: [
+        // Real routing: the page receives :id, ?page= and ?limit= through input binding
+        provideRouter(
+          [{ path: 'libraries/:id', component: LibraryDetailPage }],
+          withComponentInputBinding(),
+        ),
+        { provide: LibrariesService, useValue: { get } },
+        { provide: UserBooksService, useValue: { listByLibrary } },
+      ],
+    });
+    const harness = await RouterTestingHarness.create(options.url ?? '/libraries/l1');
+    await harness.fixture.whenStable();
+    return {
+      harness,
+      router: TestBed.inject(Router),
+      element: harness.routeNativeElement as HTMLElement,
+      get,
+      listByLibrary,
+    };
+  }
+
+  it('shows the library and its books', async () => {
+    const { element, get, listByLibrary } = await setup({
+      listByLibrary: vi.fn(() =>
+        of({ items: [book('1', 'Rossiya'), book('2', 'Ulises')], total: 2 }),
+      ),
+    });
+
+    expect(get).toHaveBeenCalledWith('l1');
+    expect(listByLibrary).toHaveBeenCalledWith('l1', { skip: 0, limit: 12 });
+    expect(element.querySelector('h1')?.textContent).toContain('Novela');
+    expect(element.textContent).toContain('Mis novelas');
+    expect(element.querySelector('.count')?.textContent).toContain('2 libros');
+    const cards = element.querySelectorAll('app-user-book-card');
+    expect(cards.length).toBe(2);
+    expect(cards[0].textContent).toContain('Rossiya');
+    expect(element.querySelector('mat-paginator')).toBeNull();
+    expect(element.querySelector('a.back')?.getAttribute('href')).toBe('/libraries');
+  });
+
+  it('shows an empty state when the library has no books', async () => {
+    const { element } = await setup();
+
+    expect(element.querySelector('h1')?.textContent).toContain('Novela');
+    expect(element.textContent).toContain('Esta biblioteca aún no tiene libros');
+    expect(element.querySelector('.count')).toBeNull();
+  });
+
+  describe('pagination in the URL', () => {
+    it('keeps the page in the URL without requesting the library again', async () => {
+      const listByLibrary = thirteenBooks();
+      const { harness, router, element, get } = await setup({ listByLibrary });
+
+      element.querySelector<HTMLButtonElement>('button[aria-label="Página siguiente"]')!.click();
+      await harness.fixture.whenStable();
+
+      expect(router.url).toBe('/libraries/l1?page=2');
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 12, limit: 12 });
+      expect(get).toHaveBeenCalledTimes(1);
+      expect(element.querySelector('app-user-book-card')?.textContent).toContain('Libro 12');
+    });
+
+    it('restores the page and its size from the URL', async () => {
+      const listByLibrary = vi.fn(() => of({ items: [book('1', 'Rossiya')], total: 60 }));
+      const { element } = await setup({ url: '/libraries/l1?page=2&limit=24', listByLibrary });
+
+      expect(listByLibrary).toHaveBeenCalledTimes(1);
+      expect(listByLibrary).toHaveBeenCalledWith('l1', { skip: 24, limit: 24 });
+      expect(element.querySelector('.mat-mdc-paginator-range-label')?.textContent).toContain(
+        '25 – 48 de 60',
+      );
+    });
+
+    it('follows URL changes such as back/forward', async () => {
+      const listByLibrary = thirteenBooks();
+      const { harness } = await setup({ url: '/libraries/l1?page=2', listByLibrary });
+
+      await harness.navigateByUrl('/libraries/l1');
+      await harness.fixture.whenStable();
+
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 0, limit: 12 });
+    });
+
+    it('falls back to the defaults on invalid values', async () => {
+      const listByLibrary = vi.fn(() => of({ items: [], total: 0 }));
+      await setup({ url: '/libraries/l1?page=abc&limit=7', listByLibrary });
+
+      expect(listByLibrary).toHaveBeenCalledWith('l1', { skip: 0, limit: 12 });
+    });
+
+    it('goes to the last page when the URL points past the end', async () => {
+      const listByLibrary = thirteenBooks();
+      const { router, element } = await setup({ url: '/libraries/l1?page=9', listByLibrary });
+
+      expect(router.url).toBe('/libraries/l1?page=2');
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 12, limit: 12 });
+      expect(element.querySelector('app-user-book-card')?.textContent).toContain('Libro 12');
+      expect(element.textContent).not.toContain('aún no tiene libros');
+    });
+  });
+
+  it.each([403, 404])('shows a not-found state on a %i response', async (statusCode) => {
+    const { element } = await setup({
+      get: vi.fn(() => throwError(() => new ApiError(statusCode, null, 'library not found'))),
+    });
+
+    expect(element.textContent).toContain('No hemos encontrado esta biblioteca');
+    expect(element.textContent).not.toContain('Reintentar');
+    expect(element.querySelector('a.back')).not.toBeNull();
+  });
+
+  it('offers a retry on other errors', async () => {
+    const listByLibrary = vi
+      .fn()
+      .mockReturnValueOnce(throwError(() => new ApiError(500, null, 'boom')))
+      .mockReturnValue(of({ items: [book('1', 'Rossiya')], total: 1 }));
+    const { harness, element } = await setup({ listByLibrary });
+
+    const retry = Array.from(element.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Reintentar'),
+    )!;
+    retry.click();
+    await harness.fixture.whenStable();
+
+    expect(element.textContent).not.toContain('No se han podido cargar');
+    expect(element.querySelectorAll('app-user-book-card').length).toBe(1);
+  });
+
+  it('reloads from scratch when the route points to another library', async () => {
+    const { harness, get, listByLibrary } = await setup({ url: '/libraries/l1?page=2' });
+
+    await harness.navigateByUrl('/libraries/l2');
+    await harness.fixture.whenStable();
+
+    expect(get).toHaveBeenLastCalledWith('l2');
+    expect(listByLibrary).toHaveBeenLastCalledWith('l2', { skip: 0, limit: 12 });
+  });
+});

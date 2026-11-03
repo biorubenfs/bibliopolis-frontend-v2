@@ -1,0 +1,40 @@
+<article class="card">
+  <div class="cover">
+    @if (book().bookCoverUrl && !coverFailed()) {
+      <!-- Empty alt: the cover is decorative because the title is right next to it -->
+      <img
+        [src]="book().bookCoverUrl"
+        alt=""
+        width="96"
+        height="144"
+        loading="lazy"
+        (error)="coverFailed.set(true)"
+      />
+    } @else {
+      <mat-icon class="placeholder" aria-hidden="true">menu_book</mat-icon>
+    }
+  </div>
+
+  <div class="info">
+    <h2 class="title">{{ book().bookTitle }}</h2>
+    <p class="authors">{{ authors() }}</p>
+
+    @if (book().rating !== null) {
+      <p class="rating">
+        <mat-icon aria-hidden="true">star</mat-icon>
+        Valoración: {{ book().rating }}/10
+      </p>
+    }
+
+    @if (book().notes; as notes) {
+      <p class="notes">{{ notes }}</p>
+    }
+
+    <div class="isbn">
+      <p>ISBN-13: {{ book().bookIsbn13 }}</p>
+      @if (book().bookIsbn10; as isbn10) {
+        <p>ISBN-10: {{ isbn10 }}</p>
+      }
+    </div>
+  </div>
+</article>

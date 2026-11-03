@@ -60,6 +60,17 @@ describe('LibrariesService', () => {
     req.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
   });
 
+  it('gets a library as a flat model', () => {
+    let result: unknown;
+    service.get('lib-1').subscribe((library) => (result = library));
+
+    backend
+      .expectOne(`${environment.apiUrl}/libraries/lib-1`)
+      .flush({ results: { type: 'libraries', id: 'lib-1', attributes: { name: 'Novela' } } });
+
+    expect(result).toEqual({ id: 'lib-1', name: 'Novela' });
+  });
+
   it('updates a library with PATCH', () => {
     service.update('lib-1', { name: 'Nuevo' }).subscribe();
     const req = backend.expectOne(`${environment.apiUrl}/libraries/lib-1`);
