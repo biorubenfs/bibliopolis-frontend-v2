@@ -13,6 +13,12 @@ import { Subject, Subscription, debounceTime, distinctUntilChanged, map } from '
 
 import { saveFile } from '../../core/files/save-file';
 import { SpanishPaginatorIntl } from '../../core/i18n/paginator-intl';
+import {
+  DEFAULT_PAGE_SIZE,
+  PAGE_SIZE_OPTIONS,
+  toPageNumber,
+  toPageSize,
+} from '../../core/pagination/pagination';
 import { DeleteLibraryDialog } from './delete-library-dialog/delete-library-dialog';
 import { LibrariesService } from './libraries.service';
 import { LibraryCard } from './library-card/library-card';
@@ -34,20 +40,6 @@ export const SEARCH_QUERY_PARAM = 'q';
 
 const PAGE_QUERY_PARAM = 'page';
 const LIMIT_QUERY_PARAM = 'limit';
-
-const PAGE_SIZE_OPTIONS = [12, 24, 48];
-const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
-
-/** Anyone can edit the URL: anything that is not a valid page number means the first page. */
-function toPageNumber(value: string | null): number {
-  const page = Number(value);
-  return Number.isSafeInteger(page) && page >= 1 ? page : 1;
-}
-
-function toPageSize(value: string | null): number {
-  const size = Number(value);
-  return PAGE_SIZE_OPTIONS.includes(size) ? size : DEFAULT_PAGE_SIZE;
-}
 
 @Component({
   selector: 'app-libraries-page',

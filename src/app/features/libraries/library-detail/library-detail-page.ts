@@ -19,6 +19,12 @@ import { Subscription, forkJoin, of } from 'rxjs';
 
 import { ApiError } from '../../../core/http/api-error';
 import { SpanishPaginatorIntl } from '../../../core/i18n/paginator-intl';
+import {
+  DEFAULT_PAGE_SIZE,
+  PAGE_SIZE_OPTIONS,
+  toPageNumber,
+  toPageSize,
+} from '../../../core/pagination/pagination';
 import { UserBookCard } from '../../user-books/user-book-card/user-book-card';
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
@@ -26,20 +32,6 @@ import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
 
 type LoadState = 'loading' | 'loaded' | 'not-found' | 'error';
-
-const PAGE_SIZE_OPTIONS = [12, 24, 48];
-const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
-
-/** Anyone can edit the URL: anything that is not a valid page number means the first page. */
-function toPageNumber(value: string | undefined): number {
-  const page = Number(value);
-  return Number.isSafeInteger(page) && page >= 1 ? page : 1;
-}
-
-function toPageSize(value: string | undefined): number {
-  const size = Number(value);
-  return PAGE_SIZE_OPTIONS.includes(size) ? size : DEFAULT_PAGE_SIZE;
-}
 
 /** Shows a library and the books it contains. */
 @Component({
