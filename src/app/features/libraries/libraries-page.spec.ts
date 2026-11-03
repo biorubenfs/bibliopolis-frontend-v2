@@ -153,4 +153,110 @@ describe('LibrariesPage', () => {
       expect(input()).toBeNull();
     });
   });
+
+  describe('pagination in the URL', () => {
+    afterEach(() => vi.useRealTimers());
+
+    /** 13 libraries: one page of 12 and a second page with the last one. */
+    const thirteen = (options: { skip: number }) =>
+      of({ items: options.skip < 13 ? [library(`${options.skip}`, 'Novela')] : [], total: 13 });
+
+    async function setup(
+      initialUrl: string,
+      results: (options: { skip: number }) => ReturnType<typeof thirteen> = thirteen,
+    ) {
+      vi.useFakeTimers();
+      const list = vi.fn(results);
+      TestBed.configureTestingModule({
+        imports: [LibrariesPage],
+        providers: [provideRouter([]), { provide: LibrariesService, useValue: { list } }],
+      });
+      const router = TestBed.inject(Router);
+      await router.navigateByUrl(initialUrl);
+      const fixture = TestBed.createComponent(LibrariesPage);
+      const wait = async (ms = 0) => {
+        await vi.advanceTimersByTimeAsync(ms);
+        fixture.detectChanges();
+      };
+      await wait();
+      return { element: fixture.nativeElement as HTMLElement, fixture, list, router, wait };
+    }
+
+    it('keeps the page in the URL', async () => {
+      const { element, list, router, wait } = await setup('/');
+
+      element.querySelector<HTMLButtonElement>('button[aria-label="Página siguiente"]')!.click();
+      await wait();
+
+      expect(router.url).toBe('/?page=2');
+      expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '' });
+    });
+
+    it('restores the page and its size from the URL', async () => {
+      const { element, list } = await setup('/?page=2&limit=24', () =>
+        of({ items: [library('1', 'Novela')], total: 60 }),
+      );
+
+      expect(list).toHaveBeenCalledTimes(1);
+      expect(list).toHaveBeenCalledWith({ skip: 24, limit: 24, search: '' });
+      expect(element.querySelector('.mat-mdc-paginator-range-label')?.textContent).toContain(
+        '25 – 48 de 60',
+      );
+    });
+
+    it('follows URL changes such as back/forward', async () => {
+      const { list, router, wait } = await setup('/?page=2');
+
+      await router.navigateByUrl('/');
+      await wait();
+
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '' });
+    });
+
+    it('falls back to the defaults on invalid values', async () => {
+      const { list } = await setup('/?page=abc&limit=7');
+
+      expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12, search: '' });
+    });
+
+    it('goes to the last page when the URL points past the end', async () => {
+      const { element, list, router } = await setup('/?page=9');
+
+      expect(router.url).toBe('/?page=2');
+      expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '' });
+      expect(element.querySelectorAll('.card').length).toBe(1);
+    });
+
+    it('goes back to the first page on a new search, keeping the page size', async () => {
+      const { element, fixture, list, router, wait } = await setup('/?page=2&limit=24', () =>
+        of({ items: [library('1', 'Novela')], total: 60 }),
+      );
+
+      const input = element.querySelector<HTMLInputElement>(
+        'input[aria-label="Buscar bibliotecas"]',
+      )!;
+      input.value = 'nov';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      await wait(SEARCH_DEBOUNCE_MS);
+
+      expect(router.parseUrl(router.url).queryParams).toEqual({ limit: '24', q: 'nov' });
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 24, search: 'nov' });
+    });
+
+    it('stays on the same page when the search does not really change', async () => {
+      const { element, fixture, list, router, wait } = await setup('/?page=2');
+
+      const input = element.querySelector<HTMLInputElement>(
+        'input[aria-label="Buscar bibliotecas"]',
+      )!;
+      input.value = '  ';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      await wait(SEARCH_DEBOUNCE_MS);
+
+      expect(router.url).toBe('/?page=2');
+      expect(list).toHaveBeenCalledTimes(1);
+    });
+  });
 });
