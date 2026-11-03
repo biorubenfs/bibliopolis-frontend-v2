@@ -4,8 +4,8 @@ import { Observable, catchError, map, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiError } from '../../core/http/api-error';
-import { ApiCollectionResponse, Page, flatten } from '../../core/http/api.models';
-import { UserBook } from './user-book.model';
+import { ApiCollectionResponse, ApiItemResponse, Page, flatten } from '../../core/http/api.models';
+import { UpdateUserBook, UserBook } from './user-book.model';
 
 type UserBookAttributes = Omit<UserBook, 'id'>;
 
@@ -30,5 +30,15 @@ export class UserBooksService {
       })),
       catchError((error: HttpErrorResponse) => throwError(() => ApiError.fromHttpError(error))),
     );
+  }
+
+  /** Changes the rating and notes of a book; send null to clear them. */
+  update(id: string, changes: UpdateUserBook): Observable<UserBook> {
+    return this.http
+      .patch<ApiItemResponse<UserBookAttributes>>(`${this.baseUrl}/${id}`, changes)
+      .pipe(
+        map((response) => flatten(response.results)),
+        catchError((error: HttpErrorResponse) => throwError(() => ApiError.fromHttpError(error))),
+      );
   }
 }

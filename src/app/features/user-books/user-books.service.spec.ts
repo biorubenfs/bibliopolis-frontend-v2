@@ -38,6 +38,18 @@ describe('UserBooksService', () => {
     expect(result).toEqual({ items: [{ id: 'ub-1', bookTitle: 'Rossiya' }], total: 13 });
   });
 
+  it('updates the rating and notes and returns the flat model', () => {
+    let result: unknown;
+    service.update('ub-1', { rating: 5, notes: null }).subscribe((book) => (result = book));
+
+    const req = backend.expectOne(`${url}/ub-1`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ rating: 5, notes: null });
+    req.flush({ results: { type: 'user-books', id: 'ub-1', attributes: { rating: 5 } } });
+
+    expect(result).toEqual({ id: 'ub-1', rating: 5 });
+  });
+
   it('turns HTTP errors into ApiError', () => {
     let error: unknown;
     service.listByLibrary('lib-1', { skip: 0, limit: 12 }).subscribe({ error: (e) => (error = e) });

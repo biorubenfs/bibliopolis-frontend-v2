@@ -1,0 +1,100 @@
+<h2 mat-dialog-title>Añadir libro</h2>
+
+<form [formGroup]="form" (ngSubmit)="add()" novalidate>
+  <mat-dialog-content>
+    <div class="search">
+      <mat-form-field appearance="outline">
+        <mat-label>ISBN</mat-label>
+        <!-- Enter searches here: adding is only possible once a book has been found -->
+        <input
+          matInput
+          formControlName="isbn"
+          autocomplete="off"
+          required
+          (keydown.enter)="$event.preventDefault(); search()"
+        />
+        <mat-hint>ISBN-10 o ISBN-13</mat-hint>
+        <mat-error>Introduce un ISBN.</mat-error>
+      </mat-form-field>
+      <button mat-stroked-button type="button" [disabled]="searching()" (click)="search()">
+        Buscar
+      </button>
+    </div>
+
+    <!-- Always in the DOM so that screen readers announce the result of the search -->
+    <div role="status">
+      @if (searching()) {
+        <div class="searching">
+          <mat-spinner diameter="24" aria-hidden="true" />
+          Buscando libro…
+        </div>
+      }
+      @if (foundBook(); as book) {
+        <div class="preview">
+          <div class="cover">
+            @if (book.coverUrl && !coverFailed()) {
+              <!-- Empty alt: the cover is decorative because the title is right next to it -->
+              <img
+                [src]="book.coverUrl"
+                alt=""
+                width="72"
+                height="108"
+                (error)="coverFailed.set(true)"
+              />
+            } @else {
+              <mat-icon aria-hidden="true">menu_book</mat-icon>
+            }
+          </div>
+          <div class="book-data">
+            <h3>{{ book.title }}</h3>
+            <p>{{ book.authors.join(', ') || 'Autor desconocido' }}</p>
+            @if (book.isbn13; as isbn13) {
+              <p class="isbn">ISBN-13: {{ isbn13 }}</p>
+            }
+            @if (book.isbn10; as isbn10) {
+              <p class="isbn">ISBN-10: {{ isbn10 }}</p>
+            }
+          </div>
+        </div>
+      }
+      @if (notFoundIsbn() !== null) {
+        <p class="not-found">
+          No hemos encontrado ese ISBN. Si es correcto, puedes añadir el libro con sus datos.
+        </p>
+      }
+    </div>
+
+    @if (notFoundIsbn() !== null) {
+      <mat-form-field appearance="outline">
+        <mat-label>Título</mat-label>
+        <input matInput formControlName="title" required />
+        <mat-error>Introduce el título.</mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Autores</mat-label>
+        <input matInput formControlName="authors" required />
+        <mat-hint>Separa los autores con comas</mat-hint>
+        <mat-error>Introduce al menos un autor.</mat-error>
+      </mat-form-field>
+    }
+
+    <div class="error" role="alert">
+      @if (errorMessage(); as message) {
+        {{ message }}
+      }
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancelar</button>
+    @if (lookup()) {
+      <button mat-flat-button type="submit" [disabled]="adding()">
+        @if (adding()) {
+          <mat-spinner diameter="20" aria-label="Añadiendo libro" />
+        } @else {
+          Añadir
+        }
+      </button>
+    }
+  </mat-dialog-actions>
+</form>

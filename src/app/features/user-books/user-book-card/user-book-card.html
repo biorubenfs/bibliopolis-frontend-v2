@@ -36,5 +36,26 @@
         <p>ISBN-10: {{ isbn10 }}</p>
       }
     </div>
+
+    <div class="actions">
+      <button
+        mat-icon-button
+        type="button"
+        matTooltip="Editar valoración y notas"
+        [attr.aria-label]="'Editar valoración y notas de ' + book().bookTitle"
+        (click)="editRequested.emit()"
+      >
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        matTooltip="Quitar de la biblioteca"
+        [attr.aria-label]="'Quitar ' + book().bookTitle + ' de la biblioteca'"
+        (click)="removeRequested.emit()"
+      >
+        <mat-icon>bookmark_remove</mat-icon>
+      </button>
+    </div>
   </div>
 </article>

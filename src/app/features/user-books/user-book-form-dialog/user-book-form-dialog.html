@@ -1,0 +1,38 @@
+<h2 mat-dialog-title>Editar «{{ book.bookTitle }}»</h2>
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    <mat-form-field appearance="outline" floatLabel="always">
+      <mat-label>Valoración (de 1 a 10)</mat-label>
+      <mat-select formControlName="rating" placeholder="Sin valorar">
+        <mat-option [value]="null">Sin valorar</mat-option>
+        @for (rating of ratings; track rating) {
+          <mat-option [value]="rating">{{ rating }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Notas</mat-label>
+      <textarea matInput formControlName="notes" rows="3" [maxlength]="notesMaxLength"></textarea>
+      <mat-hint align="end">{{ form.controls.notes.value.length }} / {{ notesMaxLength }}</mat-hint>
+    </mat-form-field>
+
+    <div class="error" role="alert">
+      @if (errorMessage(); as message) {
+        {{ message }}
+      }
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">
+      @if (saving()) {
+        <mat-spinner diameter="20" aria-label="Guardando cambios" />
+      } @else {
+        Guardar
+      }
+    </button>
+  </mat-dialog-actions>
+</form>

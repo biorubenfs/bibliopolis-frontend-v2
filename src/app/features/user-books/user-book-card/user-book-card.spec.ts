@@ -40,6 +40,24 @@ describe('UserBookCard', () => {
     expect(element.querySelector('img')?.getAttribute('src')).toBe(book.bookCoverUrl);
   });
 
+  it('asks to edit or remove the book through labelled buttons', () => {
+    const fixture = render();
+    const edit = vi.fn();
+    const remove = vi.fn();
+    fixture.componentInstance.editRequested.subscribe(edit);
+    fixture.componentInstance.removeRequested.subscribe(remove);
+    const element = fixture.nativeElement as HTMLElement;
+
+    element.querySelector<HTMLButtonElement>('[aria-label^="Editar"]')!.click();
+    element.querySelector<HTMLButtonElement>('[aria-label^="Quitar"]')!.click();
+
+    expect(element.querySelector('[aria-label^="Editar"]')?.getAttribute('aria-label')).toContain(
+      'Rossiya',
+    );
+    expect(edit).toHaveBeenCalledTimes(1);
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
+
   it('omits the optional data the book does not have', () => {
     const element = render({ bookAuthors: [], bookIsbn10: null, rating: null, notes: null })
       .nativeElement as HTMLElement;

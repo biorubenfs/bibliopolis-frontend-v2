@@ -8,7 +8,22 @@
 }
 
 .page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 24px;
+
+  button {
+    flex: none;
+  }
+}
+
+.heading {
+  // Long names wrap inside this block, and the button only drops below on narrow screens
+  flex: 1 1 280px;
+  min-width: 0;
 }
 
 h1 {

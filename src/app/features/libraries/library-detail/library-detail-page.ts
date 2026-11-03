@@ -2,18 +2,22 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   computed,
   effect,
   inject,
   input,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, forkJoin, of } from 'rxjs';
 
@@ -26,12 +30,17 @@ import {
   toPageSize,
 } from '../../../core/pagination/pagination';
 import { UserBookCard } from '../../user-books/user-book-card/user-book-card';
+import { UserBookFormDialog } from '../../user-books/user-book-form-dialog/user-book-form-dialog';
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
+import { AddBookDialog, AddBookDialogData } from '../add-book-dialog/add-book-dialog';
 import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
+import { RemoveBookDialog, RemoveBookDialogData } from '../remove-book-dialog/remove-book-dialog';
 
 type LoadState = 'loading' | 'loaded' | 'not-found' | 'error';
+
+const DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
 
 /** Shows a library and the books it contains. */
 @Component({
@@ -55,6 +64,10 @@ export class LibraryDetailPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
+
+  private readonly addButton = viewChild('addButton', { read: ElementRef });
 
   /** Library ID, bound from the `:id` route param. */
   readonly id = input.required<string>();
@@ -134,6 +147,59 @@ export class LibraryDetailPage {
 
   protected changePage(event: PageEvent): void {
     this.updateUrl(event.pageIndex + 1, event.pageSize);
+  }
+
+  protected openAddDialog(): void {
+    this.dialog
+      .open<AddBookDialog, AddBookDialogData, string>(AddBookDialog, {
+        ...DIALOG_SIZE,
+        data: { libraryId: this.id() },
+      })
+      .afterClosed()
+      .subscribe((title) => {
+        if (title) {
+          this.notify(`«${title}» añadido a la biblioteca`);
+          this.load();
+        }
+      });
+  }
+
+  protected openEditDialog(book: UserBook): void {
+    this.dialog
+      .open<UserBookFormDialog, UserBook, UserBook>(UserBookFormDialog, {
+        ...DIALOG_SIZE,
+        data: book,
+      })
+      .afterClosed()
+      .subscribe((updated) => {
+        if (updated) {
+          this.books.update((list) =>
+            list.map((item) => (item.id === updated.id ? updated : item)),
+          );
+          this.notify('Cambios guardados');
+        }
+      });
+  }
+
+  protected openRemoveDialog(book: UserBook): void {
+    this.dialog
+      .open<RemoveBookDialog, RemoveBookDialogData, boolean>(RemoveBookDialog, {
+        ...DIALOG_SIZE,
+        data: { libraryId: this.id(), book },
+      })
+      .afterClosed()
+      .subscribe((removed) => {
+        if (removed) {
+          this.notify(`«${book.bookTitle}» quitado de la biblioteca`);
+          // The button that opened the dialog is gone with its card: keep the keyboard focus nearby
+          this.addButton()?.nativeElement.focus();
+          this.load();
+        }
+      });
+  }
+
+  private notify(message: string): void {
+    this.snackBar.open(message, undefined, { duration: 4000 });
   }
 
   private updateUrl(page: number, limit: number, replaceUrl = false): void {

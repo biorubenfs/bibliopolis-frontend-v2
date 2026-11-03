@@ -92,3 +92,10 @@ p {
   font: var(--mat-sys-label-medium);
   color: var(--mat-sys-on-surface-variant);
 }
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  // The icon buttons have invisible padding: this aligns the icons with the card's content
+  margin: 0 -8px -8px 0;
+}

@@ -16,3 +16,10 @@ export interface UserBook {
   createdAt: string;
   updatedAt: string;
 }
+
+/** The backend requires both fields on every update. */
+export type UpdateUserBook = Pick<UserBook, 'rating' | 'notes'>;
+
+/** Validation limits defined by the backend (see docs/api/user-books.md). */
+export const USER_BOOK_RATINGS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+export const USER_BOOK_NOTES_MAX_LENGTH = 150;

@@ -5,13 +5,19 @@
 
 @if (library(); as library) {
   <header class="page-header">
-    <h1>{{ library.name }}</h1>
-    @if (library.description) {
-      <p class="description">{{ library.description }}</p>
-    }
-    @if (total() > 0) {
-      <p class="count">{{ booksLabel() }}</p>
-    }
+    <div class="heading">
+      <h1>{{ library.name }}</h1>
+      @if (library.description) {
+        <p class="description">{{ library.description }}</p>
+      }
+      @if (total() > 0) {
+        <p class="count">{{ booksLabel() }}</p>
+      }
+    </div>
+    <button #addButton mat-flat-button type="button" (click)="openAddDialog()">
+      <mat-icon>add</mat-icon>
+      Añadir libro
+    </button>
   </header>
 }
 
@@ -40,12 +46,17 @@
       <div class="status empty">
         <mat-icon aria-hidden="true">menu_book</mat-icon>
         <h2>Esta biblioteca aún no tiene libros</h2>
+        <p>Usa «Añadir libro» para incorporar el primero.</p>
       </div>
     } @else {
       <ul class="grid">
         @for (book of books(); track book.id) {
           <li>
-            <app-user-book-card [book]="book" />
+            <app-user-book-card
+              [book]="book"
+              (editRequested)="openEditDialog(book)"
+              (removeRequested)="openRemoveDialog(book)"
+            />
           </li>
         }
       </ul>

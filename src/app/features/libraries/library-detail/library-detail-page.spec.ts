@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
@@ -6,8 +8,11 @@ import { of, throwError } from 'rxjs';
 import { ApiError } from '../../../core/http/api-error';
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
+import { UserBookFormDialog } from '../../user-books/user-book-form-dialog/user-book-form-dialog';
+import { AddBookDialog } from '../add-book-dialog/add-book-dialog';
 import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
+import { RemoveBookDialog } from '../remove-book-dialog/remove-book-dialog';
 import { LibraryDetailPage } from './library-detail-page';
 
 const library: Library = {
@@ -50,10 +55,13 @@ describe('LibraryDetailPage', () => {
       url?: string;
       get?: ReturnType<typeof vi.fn>;
       listByLibrary?: ReturnType<typeof vi.fn>;
+      dialogResult?: unknown;
     } = {},
   ) {
     const get = options.get ?? vi.fn(() => of(library));
     const listByLibrary = options.listByLibrary ?? vi.fn(() => of({ items: [], total: 0 }));
+    const openDialog = vi.fn(() => ({ afterClosed: () => of(options.dialogResult) }));
+    const openSnackBar = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         // Real routing: the page receives :id, ?page= and ?limit= through input binding
@@ -63,6 +71,8 @@ describe('LibraryDetailPage', () => {
         ),
         { provide: LibrariesService, useValue: { get } },
         { provide: UserBooksService, useValue: { listByLibrary } },
+        { provide: MatDialog, useValue: { open: openDialog } },
+        { provide: MatSnackBar, useValue: { open: openSnackBar } },
       ],
     });
     const harness = await RouterTestingHarness.create(options.url ?? '/libraries/l1');
@@ -73,6 +83,8 @@ describe('LibraryDetailPage', () => {
       element: harness.routeNativeElement as HTMLElement,
       get,
       listByLibrary,
+      openDialog,
+      openSnackBar,
     };
   }
 
@@ -101,6 +113,97 @@ describe('LibraryDetailPage', () => {
     expect(element.querySelector('h1')?.textContent).toContain('Novela');
     expect(element.textContent).toContain('Esta biblioteca aún no tiene libros');
     expect(element.querySelector('.count')).toBeNull();
+  });
+
+  describe('managing the books', () => {
+    const rossiya = book('1', 'Rossiya');
+    const withRossiya = () => vi.fn(() => of({ items: [rossiya], total: 1 }));
+    const click = (element: HTMLElement, selector: string) =>
+      element.querySelector<HTMLButtonElement>(selector)!.click();
+
+    it('reloads the list after adding a book', async () => {
+      const { harness, element, listByLibrary, openDialog, openSnackBar } = await setup({
+        dialogResult: 'Ulises',
+      });
+
+      click(element, '.page-header button');
+      await harness.fixture.whenStable();
+
+      expect(openDialog).toHaveBeenCalledWith(
+        AddBookDialog,
+        expect.objectContaining({ data: { libraryId: 'l1' } }),
+      );
+      expect(listByLibrary).toHaveBeenCalledTimes(2);
+      expect(openSnackBar.mock.lastCall?.[0]).toContain('Ulises');
+    });
+
+    it('does nothing when adding a book is cancelled', async () => {
+      const { harness, element, listByLibrary, openSnackBar } = await setup();
+
+      click(element, '.page-header button');
+      await harness.fixture.whenStable();
+
+      expect(listByLibrary).toHaveBeenCalledTimes(1);
+      expect(openSnackBar).not.toHaveBeenCalled();
+    });
+
+    it('shows the edited book without reloading the list', async () => {
+      const { harness, element, listByLibrary, openDialog } = await setup({
+        listByLibrary: withRossiya(),
+        dialogResult: { ...rossiya, rating: 9 },
+      });
+
+      click(element, 'app-user-book-card [aria-label^="Editar"]');
+      await harness.fixture.whenStable();
+
+      expect(openDialog).toHaveBeenCalledWith(
+        UserBookFormDialog,
+        expect.objectContaining({ data: rossiya }),
+      );
+      expect(element.querySelector('app-user-book-card')?.textContent).toContain(
+        'Valoración: 9/10',
+      );
+      expect(listByLibrary).toHaveBeenCalledTimes(1);
+    });
+
+    it('reloads the list and keeps the focus in the page after removing a book', async () => {
+      const listByLibrary = vi
+        .fn()
+        .mockReturnValueOnce(of({ items: [rossiya], total: 1 }))
+        .mockReturnValue(of({ items: [], total: 0 }));
+      const { harness, element, openDialog } = await setup({ listByLibrary, dialogResult: true });
+      document.body.appendChild(element);
+
+      click(element, 'app-user-book-card [aria-label^="Quitar"]');
+      await harness.fixture.whenStable();
+
+      expect(openDialog).toHaveBeenCalledWith(
+        RemoveBookDialog,
+        expect.objectContaining({ data: { libraryId: 'l1', book: rossiya } }),
+      );
+      expect(element.textContent).toContain('Esta biblioteca aún no tiene libros');
+      expect(document.activeElement).toBe(element.querySelector('.page-header button'));
+      element.remove();
+    });
+
+    it('goes to the previous page when the last book of a page is removed', async () => {
+      const listByLibrary = vi.fn((_id: string, { skip }: { skip: number }) =>
+        of({ items: skip < 12 ? [rossiya] : [], total: 12 }),
+      );
+      // First load on ?page=2 would redirect, so start with 13 books and then have 12
+      listByLibrary.mockReturnValueOnce(of({ items: [rossiya], total: 13 }));
+      const { harness, router, element } = await setup({
+        url: '/libraries/l1?page=2',
+        listByLibrary,
+        dialogResult: true,
+      });
+
+      click(element, 'app-user-book-card [aria-label^="Quitar"]');
+      await harness.fixture.whenStable();
+
+      expect(router.url).toBe('/libraries/l1');
+      expect(element.querySelectorAll('app-user-book-card').length).toBe(1);
+    });
   });
 
   describe('pagination in the URL', () => {
