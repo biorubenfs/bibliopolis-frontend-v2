@@ -127,6 +127,7 @@ export class LibrariesPage {
       .list({ skip: this.pageIndex() * limit, limit, search: this.search() })
       .subscribe({
         next: ({ items, total }) => {
+          this.total.set(total);
           // Past the end, because the last library of the page was deleted or a shared link is
           // outdated: show the last page. Replacing the URL keeps the invalid one out of the
           // history, and the URL change reloads the list.
@@ -136,7 +137,6 @@ export class LibrariesPage {
             return;
           }
           this.libraries.set(items);
-          this.total.set(total);
           this.state.set('loaded');
         },
         error: () => this.state.set('error'),

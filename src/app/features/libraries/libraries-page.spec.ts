@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 
 import { LibrariesService } from './libraries.service';
 import { LibrariesPage, SEARCH_DEBOUNCE_MS } from './libraries-page';
@@ -190,6 +190,32 @@ describe('LibrariesPage', () => {
 
       expect(router.url).toBe('/?page=2');
       expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '' });
+    });
+
+    it('keeps the paginator and the keyboard focus while the next page loads', async () => {
+      const nextPage = new Subject<{ items: Library[]; total: number }>();
+      const { element, wait } = await setup('/', (options) =>
+        options.skip === 0 ? thirteen(options) : nextPage,
+      );
+      const paginator = element.querySelector('mat-paginator');
+      const next = element.querySelector<HTMLButtonElement>(
+        'button[aria-label="Página siguiente"]',
+      )!;
+
+      next.focus();
+      next.click();
+      await wait();
+
+      expect(element.querySelector('mat-spinner')).not.toBeNull();
+      expect(element.querySelector('mat-paginator')).toBe(paginator);
+      expect(document.activeElement).toBe(next);
+
+      nextPage.next({ items: [library('12', 'Novela')], total: 13 });
+      await wait();
+
+      expect(element.querySelector('mat-spinner')).toBeNull();
+      expect(element.querySelector('mat-paginator')).toBe(paginator);
+      expect(document.activeElement).toBe(next);
     });
 
     it('restores the page and its size from the URL', async () => {
