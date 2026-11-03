@@ -14,8 +14,13 @@ export class LibrariesService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/libraries`;
 
-  list(options: { skip: number; limit: number }): Observable<Page<Library>> {
-    const params = new HttpParams().set('skip', options.skip).set('limit', options.limit);
+  /** Lists the user's libraries; `search` filters by name or description (partial, case-insensitive). */
+  list(options: { skip: number; limit: number; search?: string }): Observable<Page<Library>> {
+    let params = new HttpParams().set('skip', options.skip).set('limit', options.limit);
+    const search = options.search?.trim();
+    if (search) {
+      params = params.set('search', search);
+    }
     return this.http.get<ApiCollectionResponse<LibraryAttributes>>(this.baseUrl, { params }).pipe(
       map((response) => ({
         items: response.results.map((item) => flatten(item)),

@@ -18,6 +18,7 @@ export interface CreateLibrary {
 export const LIBRARY_NAME_MIN_LENGTH = 3;
 export const LIBRARY_NAME_MAX_LENGTH = 50;
 export const LIBRARY_DESCRIPTION_MAX_LENGTH = 100;
+export const LIBRARY_SEARCH_MAX_LENGTH = 100;
 
 export type UpdateLibrary = Partial<CreateLibrary>;
 
