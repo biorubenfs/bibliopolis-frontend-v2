@@ -32,6 +32,23 @@ export const SEARCH_DEBOUNCE_MS = 300;
 /** Query param that keeps the search in the URL (survives reloads and back/forward). */
 export const SEARCH_QUERY_PARAM = 'q';
 
+const PAGE_QUERY_PARAM = 'page';
+const LIMIT_QUERY_PARAM = 'limit';
+
+const PAGE_SIZE_OPTIONS = [12, 24, 48];
+const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
+
+/** Anyone can edit the URL: anything that is not a valid page number means the first page. */
+function toPageNumber(value: string | null): number {
+  const page = Number(value);
+  return Number.isSafeInteger(page) && page >= 1 ? page : 1;
+}
+
+function toPageSize(value: string | null): number {
+  const size = Number(value);
+  return PAGE_SIZE_OPTIONS.includes(size) ? size : DEFAULT_PAGE_SIZE;
+}
+
 @Component({
   selector: 'app-libraries-page',
   imports: [
@@ -55,13 +72,13 @@ export class LibrariesPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  protected readonly pageSizeOptions = [12, 24, 48];
+  protected readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
   protected readonly searchMaxLength = LIBRARY_SEARCH_MAX_LENGTH;
 
   protected readonly libraries = signal<Library[]>([]);
   protected readonly total = signal(0);
   protected readonly pageIndex = signal(0);
-  protected readonly pageSize = signal(this.pageSizeOptions[0]);
+  protected readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   protected readonly state = signal<LoadState>('loading');
   protected readonly exportingId = signal<string | null>(null);
   /** Text in the search field, updated on every keystroke. */
@@ -75,18 +92,22 @@ export class LibrariesPage {
   private loadSubscription?: Subscription;
 
   constructor() {
-    // The URL is the source of truth: typing only updates ?q=, and the list reacts to ?q=
-    // changes from any origin (typing, reload, a link, back/forward). Its first emission
-    // performs the initial load.
+    // The URL is the source of truth: typing and the paginator only update ?q=, ?page= and
+    // ?limit=, and the list reacts to changes from any origin (typing, paginator, reload, a link,
+    // back/forward). Its first emission performs the initial load.
     this.route.queryParamMap
       .pipe(
-        map((params) =>
-          (params.get(SEARCH_QUERY_PARAM) ?? '').trim().slice(0, LIBRARY_SEARCH_MAX_LENGTH),
+        map((params) => ({
+          term: (params.get(SEARCH_QUERY_PARAM) ?? '').trim().slice(0, LIBRARY_SEARCH_MAX_LENGTH),
+          page: toPageNumber(params.get(PAGE_QUERY_PARAM)),
+          limit: toPageSize(params.get(LIMIT_QUERY_PARAM)),
+        })),
+        distinctUntilChanged(
+          (a, b) => a.term === b.term && a.page === b.page && a.limit === b.limit,
         ),
-        distinctUntilChanged(),
         takeUntilDestroyed(),
       )
-      .subscribe((term) => this.applySearch(term));
+      .subscribe((listParams) => this.applyListParams(listParams));
 
     this.searchInput
       .pipe(
@@ -106,14 +127,16 @@ export class LibrariesPage {
       .list({ skip: this.pageIndex() * limit, limit, search: this.search() })
       .subscribe({
         next: ({ items, total }) => {
-          // Deleting the last library of a page leaves it empty: go back one page
-          if (items.length === 0 && total > 0 && this.pageIndex() > 0) {
-            this.pageIndex.update((index) => index - 1);
-            this.load();
+          this.total.set(total);
+          // Past the end, because the last library of the page was deleted or a shared link is
+          // outdated: show the last page. Replacing the URL keeps the invalid one out of the
+          // history, and the URL change reloads the list.
+          const lastPage = Math.ceil(total / limit);
+          if (total > 0 && this.pageIndex() + 1 > lastPage) {
+            this.updatePageInUrl(lastPage, limit, true);
             return;
           }
           this.libraries.set(items);
-          this.total.set(total);
           this.state.set('loaded');
         },
         error: () => this.state.set('error'),
@@ -133,30 +156,47 @@ export class LibrariesPage {
   }
 
   private updateUrl(term: string): void {
+    // Typing a trailing space does not change the search, so it must not lose the current page
+    if (term === this.search()) {
+      return;
+    }
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { [SEARCH_QUERY_PARAM]: term || null },
+      // A new search has different results: start again from the first page
+      queryParams: { [SEARCH_QUERY_PARAM]: term || null, [PAGE_QUERY_PARAM]: null },
       queryParamsHandling: 'merge',
       // One history entry per page visit, not one per search typed
       replaceUrl: true,
     });
   }
 
-  private applySearch(term: string): void {
+  private updatePageInUrl(page: number, limit: number, replaceUrl = false): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        // Default values stay out of the URL to keep it short
+        [PAGE_QUERY_PARAM]: page > 1 ? page : null,
+        [LIMIT_QUERY_PARAM]: limit !== DEFAULT_PAGE_SIZE ? limit : null,
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl,
+    });
+  }
+
+  private applyListParams(params: { term: string; page: number; limit: number }): void {
     // Only overwrite the field when the change comes from outside (reload, link, back/forward),
     // so a trailing space being typed is not removed
-    if (this.query().trim() !== term) {
-      this.query.set(term);
+    if (this.query().trim() !== params.term) {
+      this.query.set(params.term);
     }
-    this.search.set(term);
-    this.pageIndex.set(0);
+    this.search.set(params.term);
+    this.pageIndex.set(params.page - 1);
+    this.pageSize.set(params.limit);
     this.load();
   }
 
   protected changePage(event: PageEvent): void {
-    this.pageIndex.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-    this.load();
+    this.updatePageInUrl(event.pageIndex + 1, event.pageSize);
   }
 
   protected openCreateDialog(): void {
@@ -166,8 +206,12 @@ export class LibrariesPage {
       .subscribe((library) => {
         if (library) {
           this.notify(`Biblioteca «${library.name}» creada`);
-          this.pageIndex.set(0);
-          this.load();
+          // On the first page the URL does not change, so nothing else would reload the list
+          if (this.pageIndex() === 0) {
+            this.load();
+          } else {
+            this.updatePageInUrl(1, this.pageSize());
+          }
         }
       });
   }

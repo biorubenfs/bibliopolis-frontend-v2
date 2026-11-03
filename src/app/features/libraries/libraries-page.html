@@ -82,19 +82,20 @@
           </li>
         }
       </ul>
-
-      @if (total() > pageSizeOptions[0]) {
-        <mat-paginator
-          [length]="total()"
-          [pageIndex]="pageIndex()"
-          [pageSize]="pageSize()"
-          [pageSizeOptions]="pageSizeOptions"
-          (page)="changePage($event)"
-          aria-label="Páginas de bibliotecas"
-        />
-      }
     }
   }
+}
+
+<!-- Outside the @switch so it stays in the DOM while a page loads and keeps the keyboard focus -->
+@if (state() !== 'error' && total() > pageSizeOptions[0]) {
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="changePage($event)"
+    aria-label="Páginas de bibliotecas"
+  />
 }
 
 <button mat-fab extended type="button" class="fab" (click)="openCreateDialog()">
