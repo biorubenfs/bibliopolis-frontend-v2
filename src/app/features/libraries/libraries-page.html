@@ -2,9 +2,43 @@
   <div>
     <h1>Mis bibliotecas</h1>
     @if (state() === 'loaded' && total() > 0) {
-      <p class="count">{{ total() }} {{ total() === 1 ? 'biblioteca' : 'bibliotecas' }}</p>
+      <p class="count">
+        @if (search()) {
+          {{ total() }} {{ total() === 1 ? 'resultado' : 'resultados' }}
+        } @else {
+          {{ total() }} {{ total() === 1 ? 'biblioteca' : 'bibliotecas' }}
+        }
+      </p>
     }
   </div>
+
+  @if (showSearch()) {
+    <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic" role="search">
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <input
+        matInput
+        type="text"
+        placeholder="Buscar por nombre o descripción"
+        aria-label="Buscar bibliotecas"
+        autocomplete="off"
+        [attr.maxlength]="searchMaxLength"
+        [value]="query()"
+        (input)="onSearchInput($any($event.target).value)"
+        (keydown.escape)="clearSearch()"
+      />
+      @if (query()) {
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          aria-label="Borrar búsqueda"
+          (click)="clearSearch()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+  }
 </header>
 
 @switch (state()) {
@@ -21,7 +55,14 @@
     </div>
   }
   @default {
-    @if (libraries().length === 0) {
+    @if (libraries().length === 0 && search()) {
+      <div class="status empty">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h2>Ninguna biblioteca coincide con «{{ search() }}»</h2>
+        <p>Prueba con otra palabra del nombre o de la descripción.</p>
+        <button mat-stroked-button type="button" (click)="clearSearch()">Borrar búsqueda</button>
+      </div>
+    } @else if (libraries().length === 0) {
       <div class="status empty">
         <mat-icon aria-hidden="true">shelves</mat-icon>
         <h2>Aún no tienes bibliotecas</h2>

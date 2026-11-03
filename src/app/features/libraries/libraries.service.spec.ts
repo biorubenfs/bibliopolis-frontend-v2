@@ -44,6 +44,22 @@ describe('LibrariesService', () => {
     });
   });
 
+  it('sends the trimmed search term', () => {
+    service.list({ skip: 0, limit: 12, search: '  novela ' }).subscribe();
+
+    const req = backend.expectOne((r) => r.url === `${environment.apiUrl}/libraries`);
+    expect(req.request.params.get('search')).toBe('novela');
+    req.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
+  });
+
+  it('omits a blank search term', () => {
+    service.list({ skip: 0, limit: 12, search: '   ' }).subscribe();
+
+    const req = backend.expectOne((r) => r.url === `${environment.apiUrl}/libraries`);
+    expect(req.request.params.has('search')).toBe(false);
+    req.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
+  });
+
   it('updates a library with PATCH', () => {
     service.update('lib-1', { name: 'Nuevo' }).subscribe();
     const req = backend.expectOne(`${environment.apiUrl}/libraries/lib-1`);
