@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 
 import { Library, LibraryExportFormat } from '../library.model';
 
@@ -15,6 +16,7 @@ import { Library, LibraryExportFormat } from '../library.model';
     MatMenuModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    RouterLink,
   ],
   templateUrl: './library-card.html',
   styleUrl: './library-card.scss',

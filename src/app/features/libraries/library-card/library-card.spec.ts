@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { Library } from '../library.model';
 import { LibraryCard } from './library-card';
@@ -15,7 +16,7 @@ describe('LibraryCard', () => {
   };
 
   function render() {
-    TestBed.configureTestingModule({ imports: [LibraryCard] });
+    TestBed.configureTestingModule({ imports: [LibraryCard], providers: [provideRouter([])] });
     const fixture = TestBed.createComponent(LibraryCard);
     fixture.componentRef.setInput('library', library);
     fixture.detectChanges();
@@ -27,6 +28,13 @@ describe('LibraryCard', () => {
     expect(element.textContent).toContain('Novela');
     expect(element.textContent).toContain('Mis novelas');
     expect(element.textContent).toContain('1 libro');
+  });
+
+  it('links to the library detail page', () => {
+    const element = render().nativeElement as HTMLElement;
+    const link = element.querySelector('h2 a');
+    expect(link?.getAttribute('href')).toBe('/libraries/l1');
+    expect(link?.textContent).toContain('Novela');
   });
 
   it('has labelled action buttons that emit the requested action', () => {

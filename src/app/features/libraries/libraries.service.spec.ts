@@ -20,6 +20,33 @@ describe('LibrariesService', () => {
 
   afterEach(() => backend.verify());
 
+  it('adds a book to a library', () => {
+    const book = { title: 'Rossiya', isbn13: '9780595385294', isbn10: null, authors: [] };
+    let result: unknown;
+    service.addBook('lib-1', book).subscribe((library) => (result = library));
+
+    const req = backend.expectOne(`${environment.apiUrl}/libraries/lib-1/books`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(book);
+    req.flush(
+      { results: { type: 'libraries', id: 'lib-1', attributes: { books: ['ub-1'] } } },
+      { status: 201, statusText: 'Created' },
+    );
+
+    expect(result).toEqual({ id: 'lib-1', books: ['ub-1'] });
+  });
+
+  it('removes a book from a library', () => {
+    let done = false;
+    service.removeBook('lib-1', 'ub-1').subscribe(() => (done = true));
+
+    const req = backend.expectOne(`${environment.apiUrl}/libraries/lib-1/books/ub-1`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(done).toBe(true);
+  });
+
   it('lists libraries as flat models with pagination', () => {
     let result: unknown;
     service.list({ skip: 12, limit: 12 }).subscribe((page) => (result = page));
@@ -58,6 +85,17 @@ describe('LibrariesService', () => {
     const req = backend.expectOne((r) => r.url === `${environment.apiUrl}/libraries`);
     expect(req.request.params.has('search')).toBe(false);
     req.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
+  });
+
+  it('gets a library as a flat model', () => {
+    let result: unknown;
+    service.get('lib-1').subscribe((library) => (result = library));
+
+    backend
+      .expectOne(`${environment.apiUrl}/libraries/lib-1`)
+      .flush({ results: { type: 'libraries', id: 'lib-1', attributes: { name: 'Novela' } } });
+
+    expect(result).toEqual({ id: 'lib-1', name: 'Novela' });
   });
 
   it('updates a library with PATCH', () => {

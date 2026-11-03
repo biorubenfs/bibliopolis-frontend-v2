@@ -5,7 +5,13 @@ import { Observable, catchError, map, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiError } from '../../core/http/api-error';
 import { ApiCollectionResponse, ApiItemResponse, Page, flatten } from '../../core/http/api.models';
-import { CreateLibrary, Library, LibraryExportFormat, UpdateLibrary } from './library.model';
+import {
+  AddBookToLibrary,
+  CreateLibrary,
+  Library,
+  LibraryExportFormat,
+  UpdateLibrary,
+} from './library.model';
 
 type LibraryAttributes = Omit<Library, 'id'>;
 
@@ -30,6 +36,13 @@ export class LibrariesService {
     );
   }
 
+  get(id: string): Observable<Library> {
+    return this.http.get<ApiItemResponse<LibraryAttributes>>(`${this.baseUrl}/${id}`).pipe(
+      map((response) => flatten(response.results)),
+      catchError(toApiError),
+    );
+  }
+
   create(library: CreateLibrary): Observable<Library> {
     return this.http.post<ApiItemResponse<LibraryAttributes>>(this.baseUrl, library).pipe(
       map((response) => flatten(response.results)),
@@ -48,6 +61,23 @@ export class LibrariesService {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`).pipe(catchError(toApiError));
+  }
+
+  /** Adds a book to a library; fails with a 409 if the library already contains it. */
+  addBook(libraryId: string, book: AddBookToLibrary): Observable<Library> {
+    return this.http
+      .post<ApiItemResponse<LibraryAttributes>>(`${this.baseUrl}/${libraryId}/books`, book)
+      .pipe(
+        map((response) => flatten(response.results)),
+        catchError(toApiError),
+      );
+  }
+
+  /** Removes a book from a library. The user keeps the book, its rating and its notes. */
+  removeBook(libraryId: string, userBookId: string): Observable<void> {
+    return this.http
+      .delete<void>(`${this.baseUrl}/${libraryId}/books/${userBookId}`)
+      .pipe(catchError(toApiError));
   }
 
   /** Exports the books of a library as a PDF or CSV file. */

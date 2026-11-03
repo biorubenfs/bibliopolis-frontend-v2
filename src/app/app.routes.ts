@@ -24,6 +24,14 @@ export const routes: Routes = [
           import('./features/libraries/libraries-page').then((m) => m.LibrariesPage),
       },
       {
+        path: 'libraries/:id',
+        title: 'Biblioteca · Bibliopolis',
+        loadComponent: () =>
+          import('./features/libraries/library-detail/library-detail-page').then(
+            (m) => m.LibraryDetailPage,
+          ),
+      },
+      {
         path: 'books',
         title: 'Mis libros · Bibliopolis',
         data: { heading: 'Mis libros' },
