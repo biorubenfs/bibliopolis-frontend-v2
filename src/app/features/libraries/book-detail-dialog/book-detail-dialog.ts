@@ -11,13 +11,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
 
-import {
-  USER_BOOK_NOTES_MAX_LENGTH,
-  USER_BOOK_RATINGS,
-  UserBook,
-} from '../../user-books/user-book.model';
+import { RatingInput } from '../../user-books/rating-input/rating-input';
+import { USER_BOOK_NOTES_MAX_LENGTH, UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
 import { RemoveBookDialog, RemoveBookDialogData } from '../remove-book-dialog/remove-book-dialog';
 
@@ -45,7 +41,7 @@ const REMOVE_DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
-    MatSelectModule,
+    RatingInput,
   ],
   templateUrl: './book-detail-dialog.html',
   styleUrl: './book-detail-dialog.scss',
@@ -61,7 +57,6 @@ export class BookDetailDialog {
   protected readonly book = this.data.book;
   protected readonly authors = this.book.bookAuthors.join(', ') || 'Autor desconocido';
 
-  protected readonly ratings = USER_BOOK_RATINGS;
   protected readonly notesMaxLength = USER_BOOK_NOTES_MAX_LENGTH;
 
   protected readonly form = inject(NonNullableFormBuilder).group({

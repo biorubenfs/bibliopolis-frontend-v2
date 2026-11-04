@@ -30,15 +30,9 @@
       </div>
     </div>
 
-    <mat-form-field appearance="outline" floatLabel="always">
-      <mat-label>Valoración (de 1 a 10)</mat-label>
-      <mat-select formControlName="rating" placeholder="Sin valorar">
-        <mat-option [value]="null">Sin valorar</mat-option>
-        @for (rating of ratings; track rating) {
-          <mat-option [value]="rating">{{ rating }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+    <app-rating-input class="rating" formControlName="rating" aria-labelledby="book-rating-label">
+      <span id="book-rating-label" class="rating-label">Valoración</span>
+    </app-rating-input>
 
     <mat-form-field appearance="outline">
       <mat-label>Notas</mat-label>

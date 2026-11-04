@@ -1,0 +1,80 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stars {
+  display: flex;
+}
+
+button {
+  // Equal stars that fill the available width; 24px is the smallest target WCAG AA allows
+  flex: 1 1 0;
+  min-width: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--mat-sys-on-surface-variant);
+  cursor: pointer;
+
+  &.filled {
+    color: var(--mat-sys-primary);
+
+    path {
+      fill: currentColor;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+// Previews the rating under the pointer. Only on devices that can hover, because on a touch screen
+// the hover state stays on the tapped star and would hide the real rating.
+@media (hover: hover) {
+  .stars:has(button:hover:enabled) button {
+    // The stars after the hovered one look empty, even if they are part of the current rating
+    color: var(--mat-sys-on-surface-variant);
+
+    path {
+      fill: none;
+    }
+
+    &:hover,
+    &:has(~ button:hover) {
+      color: var(--mat-sys-primary);
+
+      path {
+        fill: currentColor;
+      }
+    }
+  }
+}
+
+svg {
+  display: block;
+  width: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.status {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}

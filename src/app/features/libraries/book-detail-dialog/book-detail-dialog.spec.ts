@@ -1,7 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { MatSelect } from '@angular/material/select';
-import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 
 import { UserBook } from '../../user-books/user-book.model';
@@ -53,8 +51,6 @@ describe('BookDetailDialog', () => {
     await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
     const notes = element.querySelector('textarea')!;
-    const select = fixture.debugElement.query(By.directive(MatSelect))
-      .componentInstance as MatSelect;
 
     const clickButton = async (label: string) => {
       Array.from(element.querySelectorAll('button'))
@@ -67,12 +63,8 @@ describe('BookDetailDialog', () => {
       notes.dispatchEvent(new Event('input'));
       await fixture.whenStable();
     };
-    const chooseRating = async (label: string) => {
-      select.open();
-      await fixture.whenStable();
-      Array.from(document.querySelectorAll<HTMLElement>('mat-option'))
-        .find((option) => option.textContent?.trim() === label)!
-        .click();
+    const chooseRating = async (rating: number) => {
+      element.querySelector<HTMLElement>(`button[aria-label="${rating} de 10"]`)!.click();
       await fixture.whenStable();
     };
     return {
@@ -80,7 +72,6 @@ describe('BookDetailDialog', () => {
       element,
       data,
       notes,
-      select,
       open,
       close,
       update,
@@ -91,11 +82,14 @@ describe('BookDetailDialog', () => {
   }
 
   it('shows the data of the book with its rating and notes ready to edit', async () => {
-    const { element, notes, select } = await setup();
+    const { element, notes } = await setup();
 
     expect(element.querySelector('h2')?.textContent).toContain('Rossiya');
     expect(element.textContent).toContain('Alex Shishin, Otra Autora');
-    expect(select.value).toBe(8);
+    expect(element.querySelector('app-rating-input')?.textContent).toContain('8 de 10');
+    expect(element.querySelector('app-rating-input')?.getAttribute('aria-labelledby')).toBe(
+      element.querySelector('.rating-label')?.id,
+    );
     expect(notes.value).toBe('Muy recomendable');
     expect(element.textContent).toContain('ISBN-13: 9780595385294');
     expect(element.textContent).toContain('ISBN-10: 059538529X');
@@ -103,7 +97,7 @@ describe('BookDetailDialog', () => {
   });
 
   it('copes with a book without the optional data', async () => {
-    const { element, notes, select } = await setup({
+    const { element, notes } = await setup({
       overrides: {
         bookAuthors: [],
         bookIsbn10: null,
@@ -114,7 +108,7 @@ describe('BookDetailDialog', () => {
     });
 
     expect(element.textContent).toContain('Autor desconocido');
-    expect(select.value).toBeNull();
+    expect(element.querySelector('app-rating-input')?.textContent).toContain('Sin valorar');
     expect(notes.value).toBe('');
     expect(element.textContent).not.toContain('ISBN-10');
     expect(element.querySelector('.placeholder')).not.toBeNull();
@@ -134,7 +128,7 @@ describe('BookDetailDialog', () => {
     const { update, close, typeNotes, chooseRating } = await setup();
 
     await typeNotes('Otra nota');
-    await chooseRating('9');
+    await chooseRating(9);
 
     expect(update).not.toHaveBeenCalled();
     expect(close).not.toHaveBeenCalled();
@@ -146,7 +140,7 @@ describe('BookDetailDialog', () => {
       update: vi.fn(() => of(updated)),
     });
 
-    await chooseRating('9');
+    await chooseRating(9);
     await typeNotes('  Otra nota ');
     await clickButton('Guardar');
 
@@ -157,7 +151,8 @@ describe('BookDetailDialog', () => {
   it('can clear the rating', async () => {
     const { update, clickButton, chooseRating } = await setup();
 
-    await chooseRating('Sin valorar');
+    // Clicking on the current rating clears it
+    await chooseRating(8);
     await clickButton('Guardar');
 
     expect(update).toHaveBeenCalledWith('ub1', { rating: null, notes: 'Muy recomendable' });

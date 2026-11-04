@@ -65,6 +65,15 @@ mat-dialog-content {
   color: var(--mat-sys-on-surface-variant);
 }
 
+.rating {
+  margin-bottom: 16px;
+}
+
+.rating-label {
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .error:not(:empty) {
   padding: 12px 16px;
   border-radius: 12px;

@@ -1,0 +1,25 @@
+<div class="header">
+  <ng-content />
+  <span class="status">{{ status() }}</span>
+</div>
+
+<div class="stars">
+  @for (rating of ratings; track rating) {
+    <button
+      type="button"
+      [class.filled]="rating <= (value() ?? 0)"
+      [disabled]="disabled()"
+      [attr.aria-label]="rating + ' de ' + ratings.length"
+      [attr.aria-pressed]="rating === value()"
+      (click)="select(rating)"
+      (blur)="onTouched()"
+    >
+      <!-- An inline SVG because the icon font is loaded without its filled variant -->
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+        />
+      </svg>
+    </button>
+  }
+</div>
