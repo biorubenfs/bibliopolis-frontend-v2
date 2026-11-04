@@ -1,3 +1,4 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -11,7 +12,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,7 +20,7 @@ import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/materi
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription, forkJoin, of } from 'rxjs';
+import { Subscription, forkJoin, map, of } from 'rxjs';
 
 import { ApiError } from '../../../core/http/api-error';
 import { SpanishPaginatorIntl } from '../../../core/i18n/paginator-intl';
@@ -37,10 +38,21 @@ import { AddBookDialog, AddBookDialogData } from '../add-book-dialog/add-book-di
 import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
 import { RemoveBookDialog, RemoveBookDialogData } from '../remove-book-dialog/remove-book-dialog';
+import {
+  SCAN_DIALOG_SIZE,
+  ScanBooksDialog,
+  ScanBooksDialogData,
+} from '../scan-books-dialog/scan-books-dialog';
 
 type LoadState = 'loading' | 'loaded' | 'not-found' | 'error';
 
 const DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
+
+/**
+ * A device mainly used by touch, so a phone or a tablet, with their rear camera. Screen width would
+ * not tell a narrow desktop window from a phone, and webcams often cannot focus on a nearby book.
+ */
+const TOUCH_DEVICE_QUERY = '(hover: none) and (pointer: coarse)';
 
 /** Shows a library and the books it contains. */
 @Component({
@@ -77,6 +89,13 @@ export class LibraryDetailPage {
   readonly limit = input(DEFAULT_PAGE_SIZE, { transform: toPageSize });
 
   protected readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
+
+  protected readonly canScan = toSignal(
+    inject(BreakpointObserver)
+      .observe(TOUCH_DEVICE_QUERY)
+      .pipe(map((state) => state.matches)),
+    { initialValue: false },
+  );
 
   protected readonly library = signal<Library | null>(null);
   protected readonly books = signal<UserBook[]>([]);
@@ -159,6 +178,22 @@ export class LibraryDetailPage {
       .subscribe((title) => {
         if (title) {
           this.notify(`«${title}» añadido a la biblioteca`);
+          this.load();
+        }
+      });
+  }
+
+  protected openScanDialog(): void {
+    this.dialog
+      .open<ScanBooksDialog, ScanBooksDialogData, number>(ScanBooksDialog, {
+        ...SCAN_DIALOG_SIZE,
+        // Pressing Esc by accident would lose the summary and the pending books
+        disableClose: true,
+        data: { libraryId: this.id() },
+      })
+      .afterClosed()
+      .subscribe((added) => {
+        if (added) {
           this.load();
         }
       });

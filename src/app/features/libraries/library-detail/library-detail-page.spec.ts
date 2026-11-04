@@ -1,3 +1,4 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -13,6 +14,7 @@ import { AddBookDialog } from '../add-book-dialog/add-book-dialog';
 import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
 import { RemoveBookDialog } from '../remove-book-dialog/remove-book-dialog';
+import { ScanBooksDialog } from '../scan-books-dialog/scan-books-dialog';
 import { LibraryDetailPage } from './library-detail-page';
 
 const library: Library = {
@@ -56,6 +58,7 @@ describe('LibraryDetailPage', () => {
       get?: ReturnType<typeof vi.fn>;
       listByLibrary?: ReturnType<typeof vi.fn>;
       dialogResult?: unknown;
+      touchDevice?: boolean;
     } = {},
   ) {
     const get = options.get ?? vi.fn(() => of(library));
@@ -73,6 +76,10 @@ describe('LibraryDetailPage', () => {
         { provide: UserBooksService, useValue: { listByLibrary } },
         { provide: MatDialog, useValue: { open: openDialog } },
         { provide: MatSnackBar, useValue: { open: openSnackBar } },
+        {
+          provide: BreakpointObserver,
+          useValue: { observe: () => of({ matches: options.touchDevice ?? false }) },
+        },
       ],
     });
     const harness = await RouterTestingHarness.create(options.url ?? '/libraries/l1');
@@ -105,6 +112,48 @@ describe('LibraryDetailPage', () => {
     expect(cards[0].textContent).toContain('Rossiya');
     expect(element.querySelector('mat-paginator')).toBeNull();
     expect(element.querySelector('a.back')?.getAttribute('href')).toBe('/libraries');
+  });
+
+  describe('scanning books', () => {
+    const scanButton = (element: HTMLElement) =>
+      Array.from(element.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Escanear libros'),
+      );
+
+    it('is not offered on a desktop', async () => {
+      const { element } = await setup({ touchDevice: false });
+
+      expect(scanButton(element)).toBeUndefined();
+    });
+
+    it('opens the scanner on a touch device', async () => {
+      const { element, openDialog } = await setup({ touchDevice: true });
+
+      scanButton(element)!.click();
+
+      expect(openDialog).toHaveBeenCalledWith(
+        ScanBooksDialog,
+        expect.objectContaining({ data: { libraryId: 'l1' }, disableClose: true }),
+      );
+    });
+
+    it('reloads the books when some were added', async () => {
+      const { element, listByLibrary } = await setup({ touchDevice: true, dialogResult: 2 });
+      listByLibrary.mockClear();
+
+      scanButton(element)!.click();
+
+      expect(listByLibrary).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not reload when nothing changed', async () => {
+      const { element, listByLibrary } = await setup({ touchDevice: true, dialogResult: 0 });
+      listByLibrary.mockClear();
+
+      scanButton(element)!.click();
+
+      expect(listByLibrary).not.toHaveBeenCalled();
+    });
   });
 
   it('shows an empty state when the library has no books', async () => {

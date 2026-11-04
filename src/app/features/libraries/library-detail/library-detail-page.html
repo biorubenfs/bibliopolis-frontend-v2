@@ -14,10 +14,18 @@
         <p class="count">{{ booksLabel() }}</p>
       }
     </div>
-    <button #addButton mat-flat-button type="button" (click)="openAddDialog()">
-      <mat-icon>add</mat-icon>
-      Añadir libro
-    </button>
+    <div class="actions">
+      @if (canScan()) {
+        <button mat-stroked-button type="button" (click)="openScanDialog()">
+          <mat-icon>barcode_scanner</mat-icon>
+          Escanear libros
+        </button>
+      }
+      <button #addButton mat-flat-button type="button" (click)="openAddDialog()">
+        <mat-icon>add</mat-icon>
+        Añadir libro
+      </button>
+    </div>
   </header>
 }
 

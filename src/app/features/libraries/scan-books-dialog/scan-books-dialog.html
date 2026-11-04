@@ -1,0 +1,150 @@
+<div class="scanner">
+  <header class="toolbar">
+    <h2 mat-dialog-title>Escanear libros</h2>
+    @if (torchAvailable()) {
+      <button
+        mat-icon-button
+        type="button"
+        [attr.aria-label]="torchOn() ? 'Apagar la linterna' : 'Encender la linterna'"
+        [attr.aria-pressed]="torchOn()"
+        (click)="toggleTorch()"
+      >
+        <mat-icon aria-hidden="true">{{ torchOn() ? 'flashlight_off' : 'flashlight_on' }}</mat-icon>
+      </button>
+    }
+  </header>
+
+  <!-- Always in the DOM: the camera needs the element, and it comes back when scanning resumes -->
+  <div class="camera" [hidden]="phase() === 'summary' || cameraError() !== null">
+    <video #video autoplay muted playsinline aria-label="Imagen de la cámara"></video>
+    <div class="guide" aria-hidden="true"></div>
+    <p class="help">Encuadra el código de barras del libro</p>
+  </div>
+
+  <div class="panel">
+    <!-- Always in the DOM so that screen readers announce each result -->
+    <p class="visually-hidden" role="status">{{ announcement() }}</p>
+
+    @if (phase() === 'scanning' && cameraError(); as message) {
+      <div class="camera-error" role="alert">
+        <p>{{ message }}</p>
+        <p>También puedes escribir el ISBN a mano.</p>
+        <button mat-stroked-button type="button" (click)="startCamera()">Reintentar</button>
+      </div>
+    }
+
+    @if (queue.current()?.status === 'searching') {
+      <div class="searching">
+        <mat-spinner diameter="24" aria-hidden="true" />
+        Buscando libro…
+      </div>
+    }
+
+    @if (currentBook(); as book) {
+      <app-book-preview [book]="book" />
+      <div class="decision">
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="queue.current()?.status === 'adding'"
+          (click)="queue.discard()"
+        >
+          Descartar
+        </button>
+        <button
+          mat-flat-button
+          type="button"
+          [disabled]="queue.current()?.status === 'adding'"
+          (click)="queue.confirm()"
+        >
+          @if (queue.current()?.status === 'adding') {
+            <mat-spinner diameter="20" aria-label="Añadiendo libro" />
+          } @else {
+            Añadir
+          }
+        </button>
+      </div>
+    } @else if (queue.notice(); as notice) {
+      <p class="notice">{{ notice }}</p>
+    }
+
+    @if (queue.waitingCount() > 0) {
+      <p class="counter">En espera: {{ queue.waitingCount() }}</p>
+    }
+
+    @if (phase() === 'scanning') {
+      <p class="counter">
+        Añadidos: {{ queue.added().length }}
+        @if (queue.pending().length > 0) {
+          · Pendientes: {{ queue.pending().length }}
+        }
+      </p>
+      <div class="actions">
+        <button mat-button type="button" (click)="openManualEntry()">Escribir ISBN</button>
+        <button mat-stroked-button type="button" (click)="finishScanning()">Terminar</button>
+      </div>
+    } @else {
+      <section class="summary" aria-labelledby="scan-summary-title">
+        <h3 id="scan-summary-title">{{ addedLabel() }}</h3>
+        @if (queue.added().length > 0) {
+          <ul>
+            @for (title of queue.added(); track $index) {
+              <li>{{ title }}</li>
+            }
+          </ul>
+        }
+
+        @if (queue.pending().length > 0) {
+          <h3>Pendientes</h3>
+          <ul class="pending">
+            @for (pending of queue.pending(); track pending.isbn) {
+              <li>
+                <span>
+                  {{ pending.isbn }}
+                  <small>
+                    {{ pending.reason === 'not-found' ? 'No encontrado' : 'Error al procesarlo' }}
+                  </small>
+                </span>
+                @if (pending.reason === 'not-found') {
+                  <button
+                    mat-button
+                    type="button"
+                    [attr.aria-label]="'Completar los datos del ISBN ' + pending.isbn"
+                    (click)="openManualEntry(pending.isbn)"
+                  >
+                    Completar
+                  </button>
+                } @else {
+                  <button
+                    mat-button
+                    type="button"
+                    [attr.aria-label]="'Reintentar el ISBN ' + pending.isbn"
+                    (click)="queue.retry(pending.isbn)"
+                  >
+                    Reintentar
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        }
+
+        @if (queue.undecidedCount() > 0) {
+          <p class="warning">Si cierras ahora, los libros sin confirmar no se añadirán.</p>
+        }
+      </section>
+
+      <div class="actions">
+        <button mat-button type="button" (click)="continueScanning()">Seguir escaneando</button>
+        <button
+          mat-flat-button
+          type="button"
+          [disabled]="queue.current()?.status === 'adding'"
+          (click)="close()"
+        >
+          Cerrar
+        </button>
+      </div>
+    }
+  </div>
+</div>

@@ -30,32 +30,7 @@
         </div>
       }
       @if (foundBook(); as book) {
-        <div class="preview">
-          <div class="cover">
-            @if (book.coverUrl && !coverFailed()) {
-              <!-- Empty alt: the cover is decorative because the title is right next to it -->
-              <img
-                [src]="book.coverUrl"
-                alt=""
-                width="72"
-                height="108"
-                (error)="coverFailed.set(true)"
-              />
-            } @else {
-              <mat-icon aria-hidden="true">menu_book</mat-icon>
-            }
-          </div>
-          <div class="book-data">
-            <h3>{{ book.title }}</h3>
-            <p>{{ book.authors.join(', ') || 'Autor desconocido' }}</p>
-            @if (book.isbn13; as isbn13) {
-              <p class="isbn">ISBN-13: {{ isbn13 }}</p>
-            }
-            @if (book.isbn10; as isbn10) {
-              <p class="isbn">ISBN-10: {{ isbn10 }}</p>
-            }
-          </div>
-        </div>
+        <app-book-preview [book]="book" />
       }
       @if (notFoundIsbn() !== null) {
         <p class="not-found">

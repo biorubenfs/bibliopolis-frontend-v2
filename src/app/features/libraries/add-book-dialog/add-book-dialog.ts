@@ -11,19 +11,21 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subscription } from 'rxjs';
 
 import { ApiError } from '../../../core/http/api-error';
+import { BookPreview } from '../../books/book-preview/book-preview';
 import { ExternalBook } from '../../books/external-book.model';
 import { ExternalBooksService } from '../../books/external-books.service';
 import { LibrariesService } from '../libraries.service';
-import { AddBookToLibrary } from '../library.model';
+import { AddBookToLibrary, toAddBookToLibrary } from '../library.model';
 
 export interface AddBookDialogData {
   libraryId: string;
+  /** Searched straight away, for a book whose ISBN is already known. */
+  isbn?: string;
 }
 
 type IsbnLookup = { kind: 'found'; book: ExternalBook } | { kind: 'not-found'; isbn: string };
@@ -38,11 +40,11 @@ const NOT_BLANK = [Validators.required, Validators.pattern(/\S/)];
 @Component({
   selector: 'app-add-book-dialog',
   imports: [
+    BookPreview,
     ReactiveFormsModule,
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,
-    MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
   ],
@@ -67,7 +69,6 @@ export class AddBookDialog {
   protected readonly lookup = signal<IsbnLookup | null>(null);
   protected readonly searching = signal(false);
   protected readonly adding = signal(false);
-  protected readonly coverFailed = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
   protected readonly foundBook = computed(() => {
@@ -86,6 +87,11 @@ export class AddBookDialog {
     this.form.controls.isbn.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.resetSearch());
+
+    if (this.data.isbn) {
+      this.form.controls.isbn.setValue(this.data.isbn);
+      this.search();
+    }
   }
 
   protected search(): void {
@@ -152,8 +158,7 @@ export class AddBookDialog {
   private bookToAdd(): AddBookToLibrary | null {
     const found = this.foundBook();
     if (found) {
-      const { title, isbn13, isbn10, authors, cover } = found;
-      return { title, isbn13, isbn10, authors, cover };
+      return toAddBookToLibrary(found);
     }
 
     const isbn = this.notFoundIsbn();
@@ -181,7 +186,6 @@ export class AddBookDialog {
     this.searchSubscription?.unsubscribe();
     this.searching.set(false);
     this.lookup.set(null);
-    this.coverFailed.set(false);
     this.errorMessage.set(null);
   }
 }
