@@ -4,6 +4,8 @@
 }
 
 .card {
+  // Reference for the clickable area of .open
+  position: relative;
   display: flex;
   gap: 16px;
   height: 100%;
@@ -13,6 +15,11 @@
   border-radius: 16px;
   background: #ffffff;
   color: var(--mat-sys-on-surface);
+  transition: border-color 150ms;
+
+  &:hover {
+    border-color: #588157;
+  }
 }
 
 .cover {
@@ -61,6 +68,37 @@ p {
   overflow-wrap: anywhere;
 }
 
+// The title is a real button, so the card works with the keyboard and screen readers. Stretching its
+// clickable area over the card makes the whole card clickable without nesting the remove button
+// inside another button, which is invalid HTML.
+.open {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  &:focus-visible::after {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+    border-radius: 16px;
+  }
+}
+
 .authors {
   font: var(--mat-sys-body-medium);
   color: var(--mat-sys-on-surface-variant);
@@ -80,11 +118,6 @@ p {
   }
 }
 
-.notes {
-  font: var(--mat-sys-body-small);
-  color: var(--mat-sys-on-surface-variant);
-}
-
 .isbn {
   // Keeps the ISBN at the bottom of the card when the row has a taller neighbour
   margin-top: auto;
@@ -98,4 +131,9 @@ p {
   justify-content: flex-end;
   // The icon buttons have invisible padding: this aligns the icons with the card's content
   margin: 0 -8px -8px 0;
+}
+
+.remove {
+  // Above the clickable area of .open
+  z-index: 1;
 }

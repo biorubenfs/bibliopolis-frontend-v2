@@ -15,7 +15,7 @@ import { UserBook } from '../user-book.model';
 export class UserBookCard {
   readonly book = input.required<UserBook>();
 
-  readonly editRequested = output<void>();
+  readonly openRequested = output<void>();
   readonly removeRequested = output<void>();
 
   /** Covers come from external services, so a URL may stop working: show the placeholder then. */

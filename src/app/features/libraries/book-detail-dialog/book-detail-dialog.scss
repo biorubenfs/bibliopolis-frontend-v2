@@ -1,0 +1,100 @@
+h2 {
+  overflow-wrap: anywhere;
+}
+
+p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.summary {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.cover {
+  display: grid;
+  flex: none;
+  place-items: center;
+  align-self: flex-start;
+  width: 96px;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #dad7cd;
+  color: #3a5a40;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.placeholder {
+  width: 40px;
+  height: 40px;
+  font-size: 40px;
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  // Lets long words wrap instead of pushing the content wider than the dialog
+  min-width: 0;
+}
+
+.authors {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.isbn {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.rating {
+  margin-bottom: 16px;
+}
+
+.rating-label {
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.error:not(:empty) {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font: var(--mat-sys-body-medium);
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+// Keeps the three buttons in one row on a phone
+@media (max-width: 400px) {
+  mat-dialog-actions {
+    padding-inline: 16px;
+  }
+}
+
+.remove:not(:disabled) {
+  --mat-button-text-label-text-color: var(--mat-sys-error);
+  --mat-button-text-state-layer-color: var(--mat-sys-error);
+}
+
+.remove {
+  // Separates the destructive action from the other two
+  margin-right: auto;
+}

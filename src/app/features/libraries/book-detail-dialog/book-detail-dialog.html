@@ -1,0 +1,76 @@
+<h2 mat-dialog-title>{{ book.bookTitle }}</h2>
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    <div class="summary">
+      <div class="cover">
+        @if (book.bookCoverUrl && !coverFailed()) {
+          <!-- Empty alt: the cover is decorative because the title is right next to it -->
+          <img
+            [src]="book.bookCoverUrl"
+            alt=""
+            width="96"
+            height="144"
+            (error)="coverFailed.set(true)"
+          />
+        } @else {
+          <mat-icon class="placeholder" aria-hidden="true">menu_book</mat-icon>
+        }
+      </div>
+
+      <div class="info">
+        <p class="authors">{{ authors }}</p>
+
+        <div class="isbn">
+          <p>ISBN-13: {{ book.bookIsbn13 }}</p>
+          @if (book.bookIsbn10; as isbn10) {
+            <p>ISBN-10: {{ isbn10 }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <app-rating-input class="rating" formControlName="rating" aria-labelledby="book-rating-label">
+      <span id="book-rating-label" class="rating-label">Valoración</span>
+    </app-rating-input>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Notas</mat-label>
+      <textarea
+        matInput
+        formControlName="notes"
+        rows="3"
+        autocomplete="off"
+        [maxlength]="notesMaxLength"
+      ></textarea>
+      <mat-hint align="end">{{ form.controls.notes.value.length }} / {{ notesMaxLength }}</mat-hint>
+    </mat-form-field>
+
+    <div class="error" role="alert">
+      @if (errorMessage(); as message) {
+        {{ message }}
+      }
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <button
+      mat-button
+      type="button"
+      class="remove"
+      [disabled]="saving()"
+      (click)="openRemoveDialog()"
+    >
+      <mat-icon>delete</mat-icon>
+      Quitar
+    </button>
+    <button mat-button type="button" mat-dialog-close>Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">
+      @if (saving()) {
+        <mat-spinner diameter="20" aria-label="Guardando cambios" />
+      } @else {
+        Guardar
+      }
+    </button>
+  </mat-dialog-actions>
+</form>

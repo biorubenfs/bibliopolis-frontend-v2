@@ -9,8 +9,8 @@ import { of, throwError } from 'rxjs';
 import { ApiError } from '../../../core/http/api-error';
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
-import { UserBookFormDialog } from '../../user-books/user-book-form-dialog/user-book-form-dialog';
 import { AddBookDialog } from '../add-book-dialog/add-book-dialog';
+import { BookDetailDialog } from '../book-detail-dialog/book-detail-dialog';
 import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
 import { RemoveBookDialog } from '../remove-book-dialog/remove-book-dialog';
@@ -196,23 +196,59 @@ describe('LibraryDetailPage', () => {
       expect(openSnackBar).not.toHaveBeenCalled();
     });
 
-    it('shows the edited book without reloading the list', async () => {
-      const { harness, element, listByLibrary, openDialog } = await setup({
+    it('opens the detail of a book when clicking its card', async () => {
+      const { element, openDialog } = await setup({ listByLibrary: withRossiya() });
+
+      click(element, 'app-user-book-card h2 button');
+
+      expect(openDialog).toHaveBeenCalledWith(
+        BookDetailDialog,
+        expect.objectContaining({ data: { libraryId: 'l1', book: rossiya } }),
+      );
+    });
+
+    it('shows a book edited from its detail without reloading the list', async () => {
+      const { harness, element, listByLibrary, openSnackBar } = await setup({
         listByLibrary: withRossiya(),
         dialogResult: { ...rossiya, rating: 9 },
       });
 
-      click(element, 'app-user-book-card [aria-label^="Editar"]');
+      click(element, 'app-user-book-card h2 button');
       await harness.fixture.whenStable();
 
-      expect(openDialog).toHaveBeenCalledWith(
-        UserBookFormDialog,
-        expect.objectContaining({ data: rossiya }),
-      );
-      expect(element.querySelector('app-user-book-card')?.textContent).toContain(
-        'Valoración: 9/10',
-      );
+      expect(element.querySelector('app-user-book-card .rating')?.textContent).toContain('9/10');
+      expect(openSnackBar).toHaveBeenCalledWith('Cambios guardados', undefined, expect.anything());
       expect(listByLibrary).toHaveBeenCalledTimes(1);
+    });
+
+    it('reloads the list after removing a book from its detail', async () => {
+      const listByLibrary = vi
+        .fn()
+        .mockReturnValueOnce(of({ items: [rossiya], total: 1 }))
+        .mockReturnValue(of({ items: [], total: 0 }));
+      const { harness, element, openSnackBar } = await setup({
+        listByLibrary,
+        dialogResult: 'removed',
+      });
+
+      click(element, 'app-user-book-card h2 button');
+      await harness.fixture.whenStable();
+
+      expect(element.textContent).toContain('Esta biblioteca aún no tiene libros');
+      expect(openSnackBar.mock.lastCall?.[0]).toContain('Rossiya');
+    });
+
+    it('changes nothing when the detail is just closed', async () => {
+      const { harness, element, listByLibrary, openSnackBar } = await setup({
+        listByLibrary: withRossiya(),
+      });
+
+      click(element, 'app-user-book-card h2 button');
+      await harness.fixture.whenStable();
+
+      expect(element.querySelectorAll('app-user-book-card').length).toBe(1);
+      expect(listByLibrary).toHaveBeenCalledTimes(1);
+      expect(openSnackBar).not.toHaveBeenCalled();
     });
 
     it('reloads the list and keeps the focus in the page after removing a book', async () => {

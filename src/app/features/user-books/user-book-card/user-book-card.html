@@ -16,18 +16,20 @@
   </div>
 
   <div class="info">
-    <h2 class="title">{{ book().bookTitle }}</h2>
+    <h2 class="title">
+      <!-- Its clickable area covers the whole card, see .open in the styles -->
+      <button type="button" class="open" aria-haspopup="dialog" (click)="openRequested.emit()">
+        {{ book().bookTitle }}
+      </button>
+    </h2>
     <p class="authors">{{ authors() }}</p>
 
     @if (book().rating !== null) {
       <p class="rating">
-        <mat-icon aria-hidden="true">star</mat-icon>
-        Valoración: {{ book().rating }}/10
+        <!-- The star is the only hint of what the number means, so screen readers must get it -->
+        <mat-icon aria-hidden="false" aria-label="Valoración">star</mat-icon>
+        {{ book().rating }}/10
       </p>
-    }
-
-    @if (book().notes; as notes) {
-      <p class="notes">{{ notes }}</p>
     }
 
     <div class="isbn">
@@ -41,20 +43,12 @@
       <button
         mat-icon-button
         type="button"
-        matTooltip="Editar valoración y notas"
-        [attr.aria-label]="'Editar valoración y notas de ' + book().bookTitle"
-        (click)="editRequested.emit()"
-      >
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button
-        mat-icon-button
-        type="button"
+        class="remove"
         matTooltip="Quitar de la biblioteca"
         [attr.aria-label]="'Quitar ' + book().bookTitle + ' de la biblioteca'"
         (click)="removeRequested.emit()"
       >
-        <mat-icon>bookmark_remove</mat-icon>
+        <mat-icon>delete</mat-icon>
       </button>
     </div>
   </div>
