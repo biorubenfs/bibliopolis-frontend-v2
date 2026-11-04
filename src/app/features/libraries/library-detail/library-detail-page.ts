@@ -31,10 +31,14 @@ import {
   toPageSize,
 } from '../../../core/pagination/pagination';
 import { UserBookCard } from '../../user-books/user-book-card/user-book-card';
-import { UserBookFormDialog } from '../../user-books/user-book-form-dialog/user-book-form-dialog';
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
 import { AddBookDialog, AddBookDialogData } from '../add-book-dialog/add-book-dialog';
+import {
+  BookDetailDialog,
+  BookDetailDialogData,
+  BookDetailDialogResult,
+} from '../book-detail-dialog/book-detail-dialog';
 import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
 import { RemoveBookDialog, RemoveBookDialogData } from '../remove-book-dialog/remove-book-dialog';
@@ -47,6 +51,7 @@ import {
 type LoadState = 'loading' | 'loaded' | 'not-found' | 'error';
 
 const DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
+const DETAIL_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100vw - 32px)' };
 
 /**
  * A device mainly used by touch, so a phone or a tablet, with their rear camera. Screen width would
@@ -199,18 +204,18 @@ export class LibraryDetailPage {
       });
   }
 
-  protected openEditDialog(book: UserBook): void {
+  protected openDetailDialog(book: UserBook): void {
     this.dialog
-      .open<UserBookFormDialog, UserBook, UserBook>(UserBookFormDialog, {
-        ...DIALOG_SIZE,
-        data: book,
+      .open<BookDetailDialog, BookDetailDialogData, BookDetailDialogResult>(BookDetailDialog, {
+        ...DETAIL_DIALOG_SIZE,
+        data: { libraryId: this.id(), book },
       })
       .afterClosed()
-      .subscribe((updated) => {
-        if (updated) {
-          this.books.update((list) =>
-            list.map((item) => (item.id === updated.id ? updated : item)),
-          );
+      .subscribe((result) => {
+        if (result === 'removed') {
+          this.onBookRemoved(book);
+        } else if (result) {
+          this.books.update((list) => list.map((item) => (item.id === result.id ? result : item)));
           this.notify('Cambios guardados');
         }
       });
@@ -225,12 +230,16 @@ export class LibraryDetailPage {
       .afterClosed()
       .subscribe((removed) => {
         if (removed) {
-          this.notify(`«${book.bookTitle}» quitado de la biblioteca`);
-          // The button that opened the dialog is gone with its card: keep the keyboard focus nearby
-          this.addButton()?.nativeElement.focus();
-          this.load();
+          this.onBookRemoved(book);
         }
       });
+  }
+
+  private onBookRemoved(book: UserBook): void {
+    this.notify(`«${book.bookTitle}» quitado de la biblioteca`);
+    // The button that opened the dialog is gone with its card: keep the keyboard focus nearby
+    this.addButton()?.nativeElement.focus();
+    this.load();
   }
 
   private notify(message: string): void {
