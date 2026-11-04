@@ -192,6 +192,24 @@ describe('LibrariesPage', () => {
       expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '' });
     });
 
+    it('jumps to the last and the first page', async () => {
+      const { element, list, router, wait } = await setup('/?page=2', () =>
+        of({ items: [library('1', 'Novela')], total: 60 }),
+      );
+
+      element.querySelector<HTMLButtonElement>('button[aria-label="Última página"]')!.click();
+      await wait();
+
+      expect(router.url).toBe('/?page=5');
+      expect(list).toHaveBeenLastCalledWith({ skip: 48, limit: 12, search: '' });
+
+      element.querySelector<HTMLButtonElement>('button[aria-label="Primera página"]')!.click();
+      await wait();
+
+      expect(router.url).toBe('/');
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '' });
+    });
+
     it('keeps the paginator and the keyboard focus while the next page loads', async () => {
       const nextPage = new Subject<{ items: Library[]; total: number }>();
       const { element, wait } = await setup('/', (options) =>
