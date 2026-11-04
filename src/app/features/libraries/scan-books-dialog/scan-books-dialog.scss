@@ -1,0 +1,173 @@
+.scanner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 8px;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.camera {
+  position: relative;
+  flex: 1 1 0;
+  // The panel takes the room it needs, but the camera never disappears on small phones
+  min-height: 180px;
+  overflow: hidden;
+  background: #000;
+
+  &[hidden] {
+    display: none;
+  }
+
+  video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(80%, 360px);
+  aspect-ratio: 2 / 1;
+  max-height: 70%;
+  transform: translate(-50%, -50%);
+  border: 3px solid #fff;
+  border-radius: 12px;
+  // Darkens everything outside the frame
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 45%);
+}
+
+.help {
+  position: absolute;
+  right: 16px;
+  bottom: 8px;
+  left: 16px;
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  text-align: center;
+  color: #fff;
+}
+
+.panel {
+  flex: none;
+  // Long previews and summaries scroll inside the panel, with the buttons within reach
+  max-height: 65%;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+
+// The camera is hidden in these cases, so the panel has the whole screen
+.camera[hidden] + .panel {
+  flex: 1 1 auto;
+  max-height: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.searching {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  font: var(--mat-sys-body-medium);
+}
+
+.notice,
+.counter,
+.warning {
+  margin: 0 0 8px;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface);
+  overflow-wrap: anywhere;
+}
+
+.counter {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.camera-error {
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font: var(--mat-sys-body-medium);
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+
+  p {
+    margin: 0 0 8px;
+  }
+}
+
+.decision,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.decision {
+  margin-bottom: 12px;
+
+  button {
+    // Comfortable targets for a thumb, with the other hand holding the book
+    flex: 1 1 120px;
+    min-height: 48px;
+  }
+}
+
+.summary {
+  margin-bottom: 8px;
+
+  h3 {
+    margin: 8px 0;
+    font: var(--mat-sys-title-medium);
+    color: var(--mat-sys-on-surface);
+  }
+
+  ul {
+    margin: 0 0 12px;
+    padding-left: 20px;
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface);
+    overflow-wrap: anywhere;
+  }
+
+  .pending {
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    small {
+      display: block;
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+}

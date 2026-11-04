@@ -25,6 +25,7 @@ describe('AddBookDialog', () => {
     options: {
       findByIsbn?: ReturnType<typeof vi.fn>;
       addBook?: ReturnType<typeof vi.fn>;
+      isbn?: string;
     } = {},
   ) {
     const findByIsbn = options.findByIsbn ?? vi.fn(() => of(rossiya));
@@ -33,7 +34,7 @@ describe('AddBookDialog', () => {
     TestBed.configureTestingModule({
       imports: [AddBookDialog],
       providers: [
-        { provide: MAT_DIALOG_DATA, useValue: { libraryId: 'l1' } },
+        { provide: MAT_DIALOG_DATA, useValue: { libraryId: 'l1', isbn: options.isbn } },
         { provide: MatDialogRef, useValue: { close } },
         { provide: ExternalBooksService, useValue: { findByIsbn } },
         { provide: LibrariesService, useValue: { addBook } },
@@ -63,6 +64,13 @@ describe('AddBookDialog', () => {
 
     return { element, findByIsbn, addBook, close, type, button, search, submit };
   }
+
+  it('searches straight away for an ISBN it receives', async () => {
+    const { element, findByIsbn } = await setup({ isbn: '9780595385294' });
+
+    expect(findByIsbn).toHaveBeenCalledExactlyOnceWith('9780595385294');
+    expect(element.querySelector('.preview')?.textContent).toContain('Rossiya');
+  });
 
   it('does not search without an ISBN', async () => {
     const { search, findByIsbn } = await setup();

@@ -19,8 +19,10 @@
     "@angular/material": "^21.2.14",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
+    "barcode-detector": "3.2.3",
     "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "zxing-wasm": "3.1.6"
   },
   "devDependencies": {
     "@angular/build": "^21.2.29",

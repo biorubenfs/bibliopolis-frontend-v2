@@ -1,4 +1,4 @@
-import { BookCover } from '../books/external-book.model';
+import { BookCover, ExternalBook } from '../books/external-book.model';
 
 export interface Library {
   id: string;
@@ -33,4 +33,9 @@ export interface AddBookToLibrary {
   isbn10: string | null;
   authors: string[];
   cover?: BookCover;
+}
+
+export function toAddBookToLibrary(book: ExternalBook): AddBookToLibrary {
+  const { title, isbn13, isbn10, authors, cover } = book;
+  return { title, isbn13, isbn10, authors, cover };
 }

@@ -31,55 +31,6 @@ mat-dialog-content {
   font: var(--mat-sys-body-medium);
 }
 
-.preview {
-  display: flex;
-  gap: 16px;
-  padding: 4px 0 8px;
-}
-
-.cover {
-  display: grid;
-  flex: none;
-  place-items: center;
-  align-self: flex-start;
-  width: 72px;
-  aspect-ratio: 2 / 3;
-  overflow: hidden;
-  border-radius: 8px;
-  background: #dad7cd;
-  color: #3a5a40;
-
-  img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.book-data {
-  // Lets long words wrap instead of overflowing the dialog
-  min-width: 0;
-  overflow-wrap: anywhere;
-
-  h3 {
-    margin: 0 0 4px;
-    font: var(--mat-sys-title-medium);
-    color: var(--mat-sys-on-surface);
-  }
-
-  p {
-    margin: 0;
-    font: var(--mat-sys-body-medium);
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  .isbn {
-    margin-top: 4px;
-    font: var(--mat-sys-label-medium);
-  }
-}
-
 .not-found {
   margin: 0 0 8px;
   font: var(--mat-sys-body-medium);
