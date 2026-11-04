@@ -38,6 +38,22 @@ describe('UserBooksService', () => {
     expect(result).toEqual({ items: [{ id: 'ub-1', bookTitle: 'Rossiya' }], total: 13 });
   });
 
+  it('lists the books of the current user without narrowing to a library', () => {
+    let result: unknown;
+    service.list({ skip: 24, limit: 12 }).subscribe((page) => (result = page));
+
+    const req = backend.expectOne((r) => r.url === url);
+    expect(req.request.params.has('libraryId')).toBe(false);
+    expect(req.request.params.get('skip')).toBe('24');
+    expect(req.request.params.get('limit')).toBe('12');
+    req.flush({
+      results: [{ type: 'user-books', id: 'ub-1', attributes: { bookTitle: 'Rossiya' } }],
+      paginationInfo: { skip: 24, limit: 12, total: 25 },
+    });
+
+    expect(result).toEqual({ items: [{ id: 'ub-1', bookTitle: 'Rossiya' }], total: 25 });
+  });
+
   it('updates the rating and notes and returns the flat model', () => {
     let result: unknown;
     service.update('ub-1', { rating: 5, notes: null }).subscribe((book) => (result = book));

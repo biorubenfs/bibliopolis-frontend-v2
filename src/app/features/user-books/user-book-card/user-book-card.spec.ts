@@ -75,6 +75,38 @@ describe('UserBookCard', () => {
     expect(open).not.toHaveBeenCalled();
   });
 
+  it('does not offer removing the book when it is not removable', () => {
+    TestBed.configureTestingModule({ imports: [UserBookCard] });
+    const fixture = TestBed.createComponent(UserBookCard);
+    fixture.componentRef.setInput('book', book);
+    fixture.componentRef.setInput('removable', false);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('[aria-label^="Quitar"]')).toBeNull();
+    expect(element.querySelector('h2 button')).not.toBeNull();
+  });
+
+  it('hides the library count by default', () => {
+    const element = render().nativeElement as HTMLElement;
+
+    expect(element.querySelector('.libraries')).toBeNull();
+  });
+
+  it.each([
+    [['l1'], 'En 1 biblioteca'],
+    [['l1', 'l2', 'l3'], 'En 3 bibliotecas'],
+  ])('shows how many libraries contain the book: %j', (libraries, label) => {
+    TestBed.configureTestingModule({ imports: [UserBookCard] });
+    const fixture = TestBed.createComponent(UserBookCard);
+    fixture.componentRef.setInput('book', { ...book, libraries });
+    fixture.componentRef.setInput('showLibraryCount', true);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('.libraries')?.textContent).toContain(label);
+  });
+
   it('does not offer editing on the card', () => {
     const element = render().nativeElement as HTMLElement;
 

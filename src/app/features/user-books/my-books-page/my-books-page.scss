@@ -1,0 +1,69 @@
+:host {
+  display: block;
+  padding: 16px 16px 24px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+h1 {
+  margin: 0;
+  font: 500 2rem / 1.25 var(--app-font-display);
+  color: var(--mat-sys-on-surface);
+}
+
+.count {
+  margin: 4px 0 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 16px;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 48px;
+    color: var(--mat-sys-secondary);
+  }
+
+  h2 {
+    margin: 0;
+    font: var(--mat-sys-title-large);
+    color: var(--mat-sys-on-surface);
+  }
+
+  p {
+    margin: 0;
+    font: var(--mat-sys-body-large);
+  }
+}
+
+.grid {
+  display: grid;
+  // min(): never wider than the screen on very narrow phones
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+mat-paginator {
+  margin-top: 16px;
+  background: transparent;
+}
+
+@media (min-width: 900px) {
+  :host {
+    padding: 32px 48px 40px;
+  }
+}

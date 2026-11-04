@@ -27,6 +27,8 @@ describe('BookDetailDialog', () => {
   async function setup(
     options: {
       overrides?: Partial<UserBook>;
+      /** The library the dialog is opened from; null opens it outside any library. */
+      libraryId?: string | null;
       removeResult?: boolean;
       update?: ReturnType<typeof vi.fn>;
     } = {},
@@ -36,7 +38,8 @@ describe('BookDetailDialog', () => {
     const update =
       options.update ??
       vi.fn((_id: string, changes: Partial<UserBook>) => of({ ...book, ...changes }));
-    const data = { libraryId: 'l1', book: { ...book, ...options.overrides } };
+    const libraryId = options.libraryId === undefined ? 'l1' : (options.libraryId ?? undefined);
+    const data = { libraryId, book: { ...book, ...options.overrides } };
     // MatDialogModule brings its own MatDialog, which a plain provider would not replace
     TestBed.overrideProvider(MatDialog, { useValue: { open } });
     TestBed.configureTestingModule({
@@ -220,5 +223,25 @@ describe('BookDetailDialog', () => {
     await clickButton('Quitar');
 
     expect(close).not.toHaveBeenCalled();
+  });
+
+  it('does not offer removing the book when opened outside a library', async () => {
+    const { element } = await setup({ libraryId: null });
+
+    const labels = Array.from(element.querySelectorAll('mat-dialog-actions button')).map((button) =>
+      button.textContent?.trim(),
+    );
+    expect(labels).toEqual(['Cancelar', 'Guardar']);
+  });
+
+  it('still saves the changes when opened outside a library', async () => {
+    const update = vi.fn((_id: string, changes: Partial<UserBook>) => of({ ...book, ...changes }));
+    const { close, clickButton, typeNotes } = await setup({ libraryId: null, update });
+
+    await typeNotes('Otra nota');
+    await clickButton('Guardar');
+
+    expect(update).toHaveBeenCalledWith('ub1', { rating: 8, notes: 'Otra nota' });
+    expect(close).toHaveBeenCalledWith(expect.objectContaining({ notes: 'Otra nota' }));
   });
 });

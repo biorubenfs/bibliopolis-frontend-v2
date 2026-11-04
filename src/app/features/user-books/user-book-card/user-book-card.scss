@@ -118,6 +118,22 @@ p {
   }
 }
 
+.libraries {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: #588157;
+  }
+}
+
 .isbn {
   // Keeps the ISBN at the bottom of the card when the row has a taller neighbour
   margin-top: auto;
