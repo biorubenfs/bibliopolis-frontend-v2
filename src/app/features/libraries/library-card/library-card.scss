@@ -16,17 +16,10 @@
   border-radius: 16px;
   background: #ffffff;
   color: var(--mat-sys-on-surface);
-  transition: transform 150ms ease-out;
+  transition: border-color 150ms;
 
-  // Slight zoom to show which card is selected, with the mouse or the keyboard
-  &:hover,
-  &:has(.link:focus-visible) {
-    transform: scale(1.03);
-  }
-
-  // Respect the system setting for people who are sensitive to animations
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
+  &:hover {
+    border-color: #588157;
   }
 
   // Book "spine": same colour for every card; --spine-color allows overriding it per card
