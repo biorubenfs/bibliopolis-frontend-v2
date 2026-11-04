@@ -305,6 +305,26 @@ describe('LibraryDetailPage', () => {
       expect(element.querySelector('app-user-book-card')?.textContent).toContain('Libro 12');
     });
 
+    it('jumps to the last and the first page', async () => {
+      const listByLibrary = vi.fn(() => of({ items: [book('1', 'Rossiya')], total: 60 }));
+      const { harness, router, element } = await setup({
+        url: '/libraries/l1?page=2',
+        listByLibrary,
+      });
+
+      element.querySelector<HTMLButtonElement>('button[aria-label="Última página"]')!.click();
+      await harness.fixture.whenStable();
+
+      expect(router.url).toBe('/libraries/l1?page=5');
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 48, limit: 12 });
+
+      element.querySelector<HTMLButtonElement>('button[aria-label="Primera página"]')!.click();
+      await harness.fixture.whenStable();
+
+      expect(router.url).toBe('/libraries/l1');
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 0, limit: 12 });
+    });
+
     it('restores the page and its size from the URL', async () => {
       const listByLibrary = vi.fn(() => of({ items: [book('1', 'Rossiya')], total: 60 }));
       const { element } = await setup({ url: '/libraries/l1?page=2&limit=24', listByLibrary });
