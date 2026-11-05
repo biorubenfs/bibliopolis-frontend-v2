@@ -45,6 +45,13 @@ describe('Shell', () => {
     expect(links).toEqual(['Mis bibliotecas', 'Mis libros', 'Explorar']);
   });
 
+  it('links the avatar and the user name directly to the profile page', async () => {
+    const element = await render();
+
+    expect(element.querySelector('a.account')?.getAttribute('href')).toBe('/profile');
+    expect(element.querySelector('mat-menu')).toBeNull();
+  });
+
   it('logs out and goes to the login page', async () => {
     const element = await render();
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);

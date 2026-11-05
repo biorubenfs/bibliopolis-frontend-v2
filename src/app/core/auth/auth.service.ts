@@ -41,6 +41,11 @@ export class AuthService {
     );
   }
 
+  /** Replaces the user kept in memory, e.g. after a profile update returned the fresh data. */
+  setCurrentUser(user: User): void {
+    this.user.set(user);
+  }
+
   /** The backend is stateless (single JWT), so logging out only discards the local session. */
   logout(): void {
     this.setToken(null);

@@ -1,0 +1,153 @@
+<header class="page-header">
+  <h1>Perfil</h1>
+</header>
+
+<div class="sections">
+  <section class="card" aria-labelledby="name-section-title">
+    <h2 id="name-section-title">Datos de usuario</h2>
+
+    <form
+      #nameFormDirective="ngForm"
+      [formGroup]="nameForm"
+      (ngSubmit)="submitName(nameFormDirective)"
+      novalidate
+    >
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre de usuario</mat-label>
+        <input matInput formControlName="name" autocomplete="nickname" required />
+        @if (nameForm.controls.name.hasError('required')) {
+          <mat-error>Introduce un nombre de usuario.</mat-error>
+        } @else if (nameForm.controls.name.hasError('nameLength')) {
+          <mat-error>El nombre debe tener al menos {{ nameMinLength }} caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="error" role="alert">
+        @if (nameError(); as message) {
+          <mat-icon aria-hidden="true">error</mat-icon>
+          <span>{{ message }}</span>
+        }
+      </div>
+
+      <button mat-flat-button type="submit" class="submit" [disabled]="savingName()">
+        @if (savingName()) {
+          <mat-spinner diameter="20" aria-label="Actualizando perfil" />
+        } @else {
+          Actualizar perfil
+        }
+      </button>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="password-section-title">
+    <h2 id="password-section-title">Cambiar contraseña</h2>
+
+    <form
+      #passwordFormDirective="ngForm"
+      [formGroup]="passwordForm"
+      (ngSubmit)="submitPassword(passwordFormDirective)"
+      novalidate
+    >
+      <mat-form-field appearance="outline">
+        <mat-label>Contraseña actual</mat-label>
+        <input
+          matInput
+          [type]="currentPasswordVisible() ? 'text' : 'password'"
+          formControlName="currentPassword"
+          autocomplete="current-password"
+          required
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="toggleVisibility(currentPasswordVisible)"
+          [attr.aria-label]="
+            currentPasswordVisible() ? 'Ocultar contraseña actual' : 'Mostrar contraseña actual'
+          "
+          [attr.aria-pressed]="currentPasswordVisible()"
+        >
+          <mat-icon>{{ currentPasswordVisible() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (passwordForm.controls.currentPassword.hasError('required')) {
+          <mat-error>Introduce tu contraseña actual.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nueva contraseña</mat-label>
+        <input
+          matInput
+          [type]="newPasswordVisible() ? 'text' : 'password'"
+          formControlName="newPassword"
+          autocomplete="new-password"
+          required
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="toggleVisibility(newPasswordVisible)"
+          [attr.aria-label]="
+            newPasswordVisible() ? 'Ocultar nueva contraseña' : 'Mostrar nueva contraseña'
+          "
+          [attr.aria-pressed]="newPasswordVisible()"
+        >
+          <mat-icon>{{ newPasswordVisible() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-hint>Entre {{ passwordMinLength }} y {{ passwordMaxLength }} caracteres.</mat-hint>
+        @if (passwordForm.controls.newPassword.hasError('required')) {
+          <mat-error>Introduce la nueva contraseña.</mat-error>
+        } @else if (passwordForm.controls.newPassword.hasError('minlength')) {
+          <mat-error>Debe tener al menos {{ passwordMinLength }} caracteres.</mat-error>
+        } @else if (passwordForm.controls.newPassword.hasError('maxlength')) {
+          <mat-error>No puede tener más de {{ passwordMaxLength }} caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Repetir nueva contraseña</mat-label>
+        <input
+          matInput
+          [type]="confirmPasswordVisible() ? 'text' : 'password'"
+          formControlName="confirmPassword"
+          autocomplete="new-password"
+          [errorStateMatcher]="mismatchErrorMatcher"
+          required
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="toggleVisibility(confirmPasswordVisible)"
+          [attr.aria-label]="
+            confirmPasswordVisible() ? 'Ocultar contraseña repetida' : 'Mostrar contraseña repetida'
+          "
+          [attr.aria-pressed]="confirmPasswordVisible()"
+        >
+          <mat-icon>{{ confirmPasswordVisible() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (passwordForm.controls.confirmPassword.hasError('required')) {
+          <mat-error>Repite la nueva contraseña.</mat-error>
+        } @else if (passwordForm.hasError('passwordMismatch')) {
+          <mat-error>Las contraseñas no coinciden.</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="error" role="alert">
+        @if (passwordError(); as message) {
+          <mat-icon aria-hidden="true">error</mat-icon>
+          <span>{{ message }}</span>
+        }
+      </div>
+
+      <button mat-flat-button type="submit" class="submit" [disabled]="savingPassword()">
+        @if (savingPassword()) {
+          <mat-spinner diameter="20" aria-label="Actualizando contraseña" />
+        } @else {
+          Actualizar contraseña
+        }
+      </button>
+    </form>
+  </section>
+</div>
