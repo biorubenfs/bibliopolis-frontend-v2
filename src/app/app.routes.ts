@@ -34,8 +34,8 @@ export const routes: Routes = [
       {
         path: 'books',
         title: 'Mis libros · Bibliopolis',
-        data: { heading: 'Mis libros' },
-        loadComponent: comingSoon,
+        loadComponent: () =>
+          import('./features/user-books/my-books-page/my-books-page').then((m) => m.MyBooksPage),
       },
       {
         path: 'explore',

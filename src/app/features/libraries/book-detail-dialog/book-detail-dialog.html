@@ -53,17 +53,19 @@
     </div>
   </mat-dialog-content>
 
-  <mat-dialog-actions>
-    <button
-      mat-button
-      type="button"
-      class="remove"
-      [disabled]="saving()"
-      (click)="openRemoveDialog()"
-    >
-      <mat-icon>delete</mat-icon>
-      Quitar
-    </button>
+  <mat-dialog-actions align="end">
+    @if (libraryId; as libraryId) {
+      <button
+        mat-button
+        type="button"
+        class="remove"
+        [disabled]="saving()"
+        (click)="openRemoveDialog(libraryId)"
+      >
+        <mat-icon>delete</mat-icon>
+        Quitar
+      </button>
+    }
     <button mat-button type="button" mat-dialog-close>Cancelar</button>
     <button mat-flat-button type="submit" [disabled]="saving()">
       @if (saving()) {

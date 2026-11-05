@@ -14,6 +14,12 @@ export class UserBooksService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/user-books`;
 
+  /** Lists the books in any library of the current user. */
+  list(options: { skip: number; limit: number }): Observable<Page<UserBook>> {
+    const params = new HttpParams().set('skip', options.skip).set('limit', options.limit);
+    return this.fetchPage(params);
+  }
+
   /** Lists the books of a library. */
   listByLibrary(
     libraryId: string,
@@ -23,13 +29,7 @@ export class UserBooksService {
       .set('libraryId', libraryId)
       .set('skip', options.skip)
       .set('limit', options.limit);
-    return this.http.get<ApiCollectionResponse<UserBookAttributes>>(this.baseUrl, { params }).pipe(
-      map((response) => ({
-        items: response.results.map((item) => flatten(item)),
-        total: response.paginationInfo.total,
-      })),
-      catchError((error: HttpErrorResponse) => throwError(() => ApiError.fromHttpError(error))),
-    );
+    return this.fetchPage(params);
   }
 
   /** Changes the rating and notes of a book; send null to clear them. */
@@ -40,5 +40,15 @@ export class UserBooksService {
         map((response) => flatten(response.results)),
         catchError((error: HttpErrorResponse) => throwError(() => ApiError.fromHttpError(error))),
       );
+  }
+
+  private fetchPage(params: HttpParams): Observable<Page<UserBook>> {
+    return this.http.get<ApiCollectionResponse<UserBookAttributes>>(this.baseUrl, { params }).pipe(
+      map((response) => ({
+        items: response.results.map((item) => flatten(item)),
+        total: response.paginationInfo.total,
+      })),
+      catchError((error: HttpErrorResponse) => throwError(() => ApiError.fromHttpError(error))),
+    );
   }
 }

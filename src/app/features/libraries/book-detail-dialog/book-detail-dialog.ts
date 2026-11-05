@@ -18,7 +18,8 @@ import { UserBooksService } from '../../user-books/user-books.service';
 import { RemoveBookDialog, RemoveBookDialogData } from '../remove-book-dialog/remove-book-dialog';
 
 export interface BookDetailDialogData {
-  libraryId: string;
+  /** The library the book is being viewed from. Without it the book cannot be removed. */
+  libraryId?: string;
   book: UserBook;
 }
 
@@ -28,8 +29,8 @@ export type BookDetailDialogResult = UserBook | 'removed';
 const REMOVE_DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
 
 /**
- * Shows a book of a library and lets the user edit its rating and notes, which are only persisted
- * when saving, or remove it from the library.
+ * Shows a book and lets the user edit its rating and notes, which are only persisted when saving.
+ * When opened from a library, it also lets the user remove the book from that library.
  */
 @Component({
   selector: 'app-book-detail-dialog',
@@ -55,6 +56,7 @@ export class BookDetailDialog {
   private readonly data = inject<BookDetailDialogData>(MAT_DIALOG_DATA);
 
   protected readonly book = this.data.book;
+  protected readonly libraryId = this.data.libraryId;
   protected readonly authors = this.book.bookAuthors.join(', ') || 'Autor desconocido';
 
   protected readonly notesMaxLength = USER_BOOK_NOTES_MAX_LENGTH;
@@ -96,11 +98,11 @@ export class BookDetailDialog {
       });
   }
 
-  protected openRemoveDialog(): void {
+  protected openRemoveDialog(libraryId: string): void {
     this.dialog
       .open<RemoveBookDialog, RemoveBookDialogData, boolean>(RemoveBookDialog, {
         ...REMOVE_DIALOG_SIZE,
-        data: { libraryId: this.data.libraryId, book: this.book },
+        data: { libraryId, book: this.book },
       })
       .afterClosed()
       .subscribe((removed) => {

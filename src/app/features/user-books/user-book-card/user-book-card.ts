@@ -14,6 +14,10 @@ import { UserBook } from '../user-book.model';
 })
 export class UserBookCard {
   readonly book = input.required<UserBook>();
+  /** Offers removing the book from the library being shown. */
+  readonly removable = input(true);
+  /** Shows how many libraries contain the book, for lists that span several of them. */
+  readonly showLibraryCount = input(false);
 
   readonly openRequested = output<void>();
   readonly removeRequested = output<void>();
@@ -24,4 +28,9 @@ export class UserBookCard {
   protected readonly authors = computed(
     () => this.book().bookAuthors.join(', ') || 'Autor desconocido',
   );
+
+  protected readonly libraryCountLabel = computed(() => {
+    const count = this.book().libraries.length;
+    return `En ${count} ${count === 1 ? 'biblioteca' : 'bibliotecas'}`;
+  });
 }

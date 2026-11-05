@@ -32,6 +32,13 @@
       </p>
     }
 
+    @if (showLibraryCount()) {
+      <p class="libraries">
+        <mat-icon aria-hidden="true">local_library</mat-icon>
+        {{ libraryCountLabel() }}
+      </p>
+    }
+
     <div class="isbn">
       <p>ISBN-13: {{ book().bookIsbn13 }}</p>
       @if (book().bookIsbn10; as isbn10) {
@@ -39,17 +46,19 @@
       }
     </div>
 
-    <div class="actions">
-      <button
-        mat-icon-button
-        type="button"
-        class="remove"
-        matTooltip="Quitar de la biblioteca"
-        [attr.aria-label]="'Quitar ' + book().bookTitle + ' de la biblioteca'"
-        (click)="removeRequested.emit()"
-      >
-        <mat-icon>delete</mat-icon>
-      </button>
-    </div>
+    @if (removable()) {
+      <div class="actions">
+        <button
+          mat-icon-button
+          type="button"
+          class="remove"
+          matTooltip="Quitar de la biblioteca"
+          [attr.aria-label]="'Quitar ' + book().bookTitle + ' de la biblioteca'"
+          (click)="removeRequested.emit()"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    }
   </div>
 </article>
