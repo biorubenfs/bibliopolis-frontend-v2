@@ -46,8 +46,7 @@ export const routes: Routes = [
       {
         path: 'profile',
         title: 'Perfil · Bibliopolis',
-        data: { heading: 'Perfil' },
-        loadComponent: comingSoon,
+        loadComponent: () => import('./features/profile/profile-page').then((m) => m.ProfilePage),
       },
     ],
   },

@@ -45,14 +45,13 @@
   gap: 12px;
   width: 100%;
   padding: 8px;
-  border: 0;
   border-radius: 16px;
-  background: transparent;
+  box-sizing: border-box;
   color: inherit;
-  text-align: start;
-  cursor: pointer;
+  text-decoration: none;
 
-  &:hover {
+  &:hover,
+  &--active {
     background: var(--sidebar-hover);
   }
 }

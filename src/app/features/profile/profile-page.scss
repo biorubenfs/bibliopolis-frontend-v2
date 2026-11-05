@@ -1,0 +1,71 @@
+:host {
+  display: block;
+  padding: 16px 16px 24px;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+h1 {
+  margin: 0;
+  font: 500 2rem / 1.25 var(--app-font-display);
+  color: var(--mat-sys-on-surface);
+}
+
+.sections {
+  display: grid;
+  gap: 16px;
+  // Each card keeps its own height instead of stretching to match the taller one
+  align-items: start;
+}
+
+// Same look as the library and book cards
+.card {
+  padding: 24px;
+  border: 1px solid #dad7cd;
+  border-radius: 16px;
+  background: #ffffff;
+
+  h2 {
+    margin: 0 0 20px;
+    font: var(--mat-sys-title-large);
+    color: var(--mat-sys-on-surface);
+  }
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:not(:empty) {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font: var(--mat-sys-body-medium);
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+  }
+}
+
+.submit {
+  align-self: flex-end;
+}
+
+// Desktop: name on the left, password on the right
+@media (min-width: 900px) {
+  :host {
+    padding: 32px 48px 40px;
+  }
+
+  .sections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+}

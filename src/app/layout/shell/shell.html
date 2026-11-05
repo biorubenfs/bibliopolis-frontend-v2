@@ -7,7 +7,14 @@
     [disableClose]="isDesktop()"
   >
     <nav class="sidebar-content" aria-label="Navegación principal">
-      <button type="button" class="account" [matMenuTriggerFor]="accountMenu">
+      <a
+        class="account"
+        routerLink="/profile"
+        routerLinkActive="account--active"
+        ariaCurrentWhenActive="page"
+        title="Ver perfil"
+        (click)="closeOnMobile(sidenav)"
+      >
         @if (avatarUrl(); as url) {
           <img class="avatar" [src]="url" alt="" width="40" height="40" />
         } @else {
@@ -19,15 +26,7 @@
             <span class="account-email">{{ user.email }}</span>
           }
         </span>
-        <mat-icon aria-hidden="true">expand_more</mat-icon>
-      </button>
-
-      <mat-menu #accountMenu="matMenu" xPosition="after">
-        <a mat-menu-item routerLink="/profile" (click)="closeOnMobile(sidenav)">
-          <mat-icon>person</mat-icon>
-          <span>Perfil</span>
-        </a>
-      </mat-menu>
+      </a>
 
       <ul class="nav-list">
         @for (item of navItems; track item.path) {
