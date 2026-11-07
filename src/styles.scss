@@ -4,6 +4,8 @@ html {
   color-scheme: light;
   // Serif display font for brand and page titles; the rest of the UI uses Roboto
   --app-font-display: 'Lora', Georgia, serif;
+  // Rounded corners for every outlined field, including the paginator's page size select
+  --mat-form-field-outlined-container-shape: 12px;
 
   @include mat.theme(
     (
