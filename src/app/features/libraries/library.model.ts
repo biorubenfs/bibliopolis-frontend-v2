@@ -7,6 +7,8 @@ export interface Library {
   userId: string;
   /** IDs of the user books in this library. */
   books: string[];
+  /** Favorites are listed first in «Mis bibliotecas». */
+  isFavorite: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -22,7 +24,8 @@ export const LIBRARY_NAME_MAX_LENGTH = 50;
 export const LIBRARY_DESCRIPTION_MAX_LENGTH = 100;
 export const LIBRARY_SEARCH_MAX_LENGTH = 100;
 
-export type UpdateLibrary = Partial<CreateLibrary>;
+/** A new library is never a favorite: it can only be marked with an update. */
+export type UpdateLibrary = Partial<CreateLibrary> & { isFavorite?: boolean };
 
 export type LibraryExportFormat = 'pdf' | 'csv';
 

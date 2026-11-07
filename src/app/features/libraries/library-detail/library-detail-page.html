@@ -6,7 +6,16 @@
 @if (library(); as library) {
   <header class="page-header">
     <div class="heading">
-      <h1>{{ library.name }}</h1>
+      <div class="title-row">
+        <h1>{{ library.name }}</h1>
+        <app-favorite-button
+          class="favorite"
+          [favorite]="library.isFavorite"
+          [libraryName]="library.name"
+          [busy]="savingFavorite()"
+          (toggled)="toggleFavorite(library)"
+        />
+      </div>
       @if (library.description) {
         <p class="description">{{ library.description }}</p>
       }

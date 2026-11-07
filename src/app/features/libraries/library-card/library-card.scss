@@ -51,9 +51,20 @@
 }
 
 .title {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font: var(--mat-sys-title-medium);
   overflow-wrap: anywhere;
+}
+
+// Above the link stretched over the card, like .actions
+.favorite {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  margin: -8px -8px -8px 0;
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .link {

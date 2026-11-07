@@ -20,12 +20,24 @@ export class LibrariesService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/libraries`;
 
-  /** Lists the user's libraries; `search` filters by name or description (partial, case-insensitive). */
-  list(options: { skip: number; limit: number; search?: string }): Observable<Page<Library>> {
+  /**
+   * Lists the user's libraries, favorites first. `search` filters by name or description (partial,
+   * case-insensitive) and `favorites` keeps only the favorites.
+   */
+  list(options: {
+    skip: number;
+    limit: number;
+    search?: string;
+    favorites?: boolean;
+  }): Observable<Page<Library>> {
     let params = new HttpParams().set('skip', options.skip).set('limit', options.limit);
     const search = options.search?.trim();
     if (search) {
       params = params.set('search', search);
+    }
+    // The API only accepts "true": without the filter the param is left out
+    if (options.favorites) {
+      params = params.set('favorites', 'true');
     }
     return this.http.get<ApiCollectionResponse<LibraryAttributes>>(this.baseUrl, { params }).pipe(
       map((response) => ({

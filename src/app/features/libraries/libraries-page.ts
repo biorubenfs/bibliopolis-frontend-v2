@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipListboxChange, MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -38,6 +39,10 @@ export const SEARCH_DEBOUNCE_MS = 300;
 /** Query param that keeps the search in the URL (survives reloads and back/forward). */
 export const SEARCH_QUERY_PARAM = 'q';
 
+/** Query param that keeps only the favorites (`?favorites=true`). */
+export const FAVORITES_QUERY_PARAM = 'favorites';
+const FAVORITES_FILTER = 'favorites';
+
 const PAGE_QUERY_PARAM = 'page';
 const LIMIT_QUERY_PARAM = 'limit';
 
@@ -46,6 +51,7 @@ const LIMIT_QUERY_PARAM = 'limit';
   imports: [
     LibraryCard,
     MatButtonModule,
+    MatChipsModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -73,12 +79,21 @@ export class LibrariesPage {
   protected readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   protected readonly state = signal<LoadState>('loading');
   protected readonly exportingId = signal<string | null>(null);
+  /** Library whose favorite mark is being saved. */
+  protected readonly savingFavoriteId = signal<string | null>(null);
   /** Text in the search field, updated on every keystroke. */
   protected readonly query = signal('');
   /** Search applied to the list (debounced and trimmed). */
   protected readonly search = signal('');
-  /** Hide the search field while the user has no libraries at all. */
-  protected readonly showSearch = computed(() => this.search() !== '' || this.total() > 0);
+  /** Only list the favorites. */
+  protected readonly favoritesOnly = signal(false);
+  /** True when a search or a filter is applied. */
+  protected readonly filtered = computed(() => this.search() !== '' || this.favoritesOnly());
+  /**
+   * Hide the search and the filters while the user has no libraries at all. They stay visible with
+   * no results, so the user can change them.
+   */
+  protected readonly showFilters = computed(() => this.filtered() || this.total() > 0);
 
   private readonly searchInput = new Subject<string>();
   private loadSubscription?: Subscription;
@@ -93,9 +108,14 @@ export class LibrariesPage {
           term: (params.get(SEARCH_QUERY_PARAM) ?? '').trim().slice(0, LIBRARY_SEARCH_MAX_LENGTH),
           page: toPageNumber(params.get(PAGE_QUERY_PARAM)),
           limit: toPageSize(params.get(LIMIT_QUERY_PARAM)),
+          favorites: params.get(FAVORITES_QUERY_PARAM) === 'true',
         })),
         distinctUntilChanged(
-          (a, b) => a.term === b.term && a.page === b.page && a.limit === b.limit,
+          (a, b) =>
+            a.term === b.term &&
+            a.page === b.page &&
+            a.limit === b.limit &&
+            a.favorites === b.favorites,
         ),
         takeUntilDestroyed(),
       )
@@ -110,13 +130,24 @@ export class LibrariesPage {
       .subscribe((term) => this.updateUrl(term));
   }
 
-  protected load(): void {
-    this.state.set('loading');
+  /**
+   * Loads the current page. A quiet load keeps the current list on screen instead of the spinner,
+   * so the card that was just changed does not vanish with the keyboard focus.
+   */
+  protected load(options: { quiet?: boolean } = {}): void {
+    if (!options.quiet) {
+      this.state.set('loading');
+    }
     const limit = this.pageSize();
     // Drop the previous request so a slow, outdated search cannot overwrite newer results
     this.loadSubscription?.unsubscribe();
     this.loadSubscription = this.librariesService
-      .list({ skip: this.pageIndex() * limit, limit, search: this.search() })
+      .list({
+        skip: this.pageIndex() * limit,
+        limit,
+        search: this.search(),
+        favorites: this.favoritesOnly(),
+      })
       .subscribe({
         next: ({ items, total }) => {
           this.total.set(total);
@@ -147,6 +178,34 @@ export class LibrariesPage {
     this.updateUrl('');
   }
 
+  protected changeFilters(event: MatChipListboxChange): void {
+    const selected: string[] = event.value ?? [];
+    this.router.navigate([], {
+      relativeTo: this.route,
+      // Different filters have different results: start again from the first page
+      queryParams: {
+        [FAVORITES_QUERY_PARAM]: selected.includes(FAVORITES_FILTER) ? 'true' : null,
+        [PAGE_QUERY_PARAM]: null,
+      },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  protected clearFilters(): void {
+    this.query.set('');
+    // Replace any keystroke still waiting in the debounce
+    this.searchInput.next('');
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        [SEARCH_QUERY_PARAM]: null,
+        [FAVORITES_QUERY_PARAM]: null,
+        [PAGE_QUERY_PARAM]: null,
+      },
+      queryParamsHandling: 'merge',
+    });
+  }
+
   private updateUrl(term: string): void {
     // Typing a trailing space does not change the search, so it must not lose the current page
     if (term === this.search()) {
@@ -175,13 +234,19 @@ export class LibrariesPage {
     });
   }
 
-  private applyListParams(params: { term: string; page: number; limit: number }): void {
+  private applyListParams(params: {
+    term: string;
+    page: number;
+    limit: number;
+    favorites: boolean;
+  }): void {
     // Only overwrite the field when the change comes from outside (reload, link, back/forward),
     // so a trailing space being typed is not removed
     if (this.query().trim() !== params.term) {
       this.query.set(params.term);
     }
     this.search.set(params.term);
+    this.favoritesOnly.set(params.favorites);
     this.pageIndex.set(params.page - 1);
     this.pageSize.set(params.limit);
     this.load();
@@ -238,6 +303,27 @@ export class LibrariesPage {
           this.load();
         }
       });
+  }
+
+  protected toggleFavorite(library: Library): void {
+    const isFavorite = !library.isFavorite;
+    this.savingFavoriteId.set(library.id);
+    this.librariesService.update(library.id, { isFavorite }).subscribe({
+      next: () => {
+        this.savingFavoriteId.set(null);
+        // Favorites are listed first, so the card may move to another position or page
+        this.notify(
+          isFavorite
+            ? `«${library.name}» marcada como favorita`
+            : `«${library.name}» quitada de favoritas`,
+        );
+        this.load({ quiet: true });
+      },
+      error: () => {
+        this.savingFavoriteId.set(null);
+        this.notify('No se ha podido guardar el cambio. Inténtalo de nuevo.');
+      },
+    });
   }
 
   protected export(library: Library, format: LibraryExportFormat): void {

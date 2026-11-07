@@ -46,6 +46,7 @@ import {
   BookDetailDialogData,
   BookDetailDialogResult,
 } from '../book-detail-dialog/book-detail-dialog';
+import { FavoriteButton } from '../favorite-button/favorite-button';
 import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
 import { RemoveBookDialog, RemoveBookDialogData } from '../remove-book-dialog/remove-book-dialog';
@@ -70,6 +71,7 @@ const TOUCH_DEVICE_QUERY = '(hover: none) and (pointer: coarse)';
 @Component({
   selector: 'app-library-detail-page',
   imports: [
+    FavoriteButton,
     MatButtonModule,
     MatIconModule,
     MatPaginatorModule,
@@ -114,6 +116,7 @@ export class LibraryDetailPage {
   protected readonly books = signal<UserBook[]>([]);
   protected readonly total = signal(0);
   protected readonly state = signal<LoadState>('loading');
+  protected readonly savingFavorite = signal(false);
 
   /** The latest import of this library, to show how it went and link to its report. */
   protected readonly latestImport = signal<LibraryImport | null>(null);
@@ -218,6 +221,29 @@ export class LibraryDetailPage {
           this.load();
           this.loadLatestImport();
         }
+      });
+  }
+
+  protected toggleFavorite(library: Library): void {
+    const isFavorite = !library.isFavorite;
+    this.savingFavorite.set(true);
+    this.librariesService
+      .update(library.id, { isFavorite })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.savingFavorite.set(false);
+          this.library.set(updated);
+          this.notify(
+            isFavorite
+              ? `«${updated.name}» marcada como favorita`
+              : `«${updated.name}» quitada de favoritas`,
+          );
+        },
+        error: () => {
+          this.savingFavorite.set(false);
+          this.notify('No se ha podido guardar el cambio. Inténtalo de nuevo.');
+        },
       });
   }
 

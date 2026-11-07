@@ -1,17 +1,19 @@
 import { TestBed } from '@angular/core/testing';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, provideRouter } from '@angular/router';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { LibrariesService } from './libraries.service';
 import { LibrariesPage, SEARCH_DEBOUNCE_MS } from './libraries-page';
 import { Library } from './library.model';
 
-function library(id: string, name: string, books: string[] = []): Library {
+function library(id: string, name: string, books: string[] = [], isFavorite = false): Library {
   return {
     id,
     name,
     description: `Descripción de ${name}`,
     books,
+    isFavorite,
     userId: 'u1',
     createdAt: '',
     updatedAt: '',
@@ -101,7 +103,12 @@ describe('LibrariesPage', () => {
       await wait(1);
       expect(router.url).toBe('/?q=nov');
       expect(list).toHaveBeenCalledTimes(2);
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: 'nov' });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: 'nov',
+        favorites: false,
+      });
       expect(element.querySelectorAll('.card').length).toBe(1);
       expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
     });
@@ -110,7 +117,12 @@ describe('LibrariesPage', () => {
       const { element, list, input } = await setup(byName, '/?q=ensayo');
 
       expect(list).toHaveBeenCalledTimes(1);
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: 'ensayo' });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: 'ensayo',
+        favorites: false,
+      });
       expect(input()?.value).toBe('ensayo');
       expect(element.querySelectorAll('.card').length).toBe(1);
     });
@@ -121,7 +133,7 @@ describe('LibrariesPage', () => {
       await router.navigateByUrl('/');
       await wait();
 
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '' });
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '', favorites: false });
       expect(input()?.value).toBe('');
     });
 
@@ -139,7 +151,7 @@ describe('LibrariesPage', () => {
       clear.click();
       await wait();
       expect(router.url).toBe('/');
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '' });
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '', favorites: false });
       expect(element.querySelectorAll('.card').length).toBe(2);
 
       // The cleared search is not re-applied when the debounce time passes
@@ -189,7 +201,7 @@ describe('LibrariesPage', () => {
       await wait();
 
       expect(router.url).toBe('/?page=2');
-      expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '' });
+      expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '', favorites: false });
     });
 
     it('jumps to the last and the first page', async () => {
@@ -201,13 +213,13 @@ describe('LibrariesPage', () => {
       await wait();
 
       expect(router.url).toBe('/?page=5');
-      expect(list).toHaveBeenLastCalledWith({ skip: 48, limit: 12, search: '' });
+      expect(list).toHaveBeenLastCalledWith({ skip: 48, limit: 12, search: '', favorites: false });
 
       element.querySelector<HTMLButtonElement>('button[aria-label="Primera página"]')!.click();
       await wait();
 
       expect(router.url).toBe('/');
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '' });
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '', favorites: false });
     });
 
     it('keeps the paginator and the keyboard focus while the next page loads', async () => {
@@ -242,7 +254,7 @@ describe('LibrariesPage', () => {
       );
 
       expect(list).toHaveBeenCalledTimes(1);
-      expect(list).toHaveBeenCalledWith({ skip: 24, limit: 24, search: '' });
+      expect(list).toHaveBeenCalledWith({ skip: 24, limit: 24, search: '', favorites: false });
       expect(element.querySelector('.mat-mdc-paginator-range-label')?.textContent).toContain(
         '25 – 48 de 60',
       );
@@ -254,20 +266,20 @@ describe('LibrariesPage', () => {
       await router.navigateByUrl('/');
       await wait();
 
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '' });
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '', favorites: false });
     });
 
     it('falls back to the defaults on invalid values', async () => {
       const { list } = await setup('/?page=abc&limit=7');
 
-      expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12, search: '' });
+      expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12, search: '', favorites: false });
     });
 
     it('goes to the last page when the URL points past the end', async () => {
       const { element, list, router } = await setup('/?page=9');
 
       expect(router.url).toBe('/?page=2');
-      expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '' });
+      expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '', favorites: false });
       expect(element.querySelectorAll('.card').length).toBe(1);
     });
 
@@ -285,7 +297,12 @@ describe('LibrariesPage', () => {
       await wait(SEARCH_DEBOUNCE_MS);
 
       expect(router.parseUrl(router.url).queryParams).toEqual({ limit: '24', q: 'nov' });
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 24, search: 'nov' });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 24,
+        search: 'nov',
+        favorites: false,
+      });
     });
 
     it('stays on the same page when the search does not really change', async () => {
@@ -301,6 +318,142 @@ describe('LibrariesPage', () => {
 
       expect(router.url).toBe('/?page=2');
       expect(list).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('favorites', () => {
+    afterEach(() => vi.useRealTimers());
+
+    const novela = library('1', 'Novela', [], true);
+    const ensayo = library('2', 'Ensayo');
+
+    async function setup(
+      initialUrl = '/',
+      options: { update?: ReturnType<typeof vi.fn>; items?: Library[] } = {},
+    ) {
+      vi.useFakeTimers();
+      let items = options.items ?? [novela, ensayo];
+      const list = vi.fn((params: { favorites?: boolean }) => {
+        const found = params.favorites ? items.filter((item) => item.isFavorite) : items;
+        return of({ items: found, total: found.length });
+      });
+      const update =
+        options.update ??
+        vi.fn((id: string, changes: { isFavorite: boolean }) => {
+          items = items.map((item) => (item.id === id ? { ...item, ...changes } : item));
+          return of(items.find((item) => item.id === id));
+        });
+      const openSnackBar = vi.fn();
+      TestBed.configureTestingModule({
+        imports: [LibrariesPage],
+        providers: [
+          provideRouter([]),
+          { provide: LibrariesService, useValue: { list, update } },
+          { provide: MatSnackBar, useValue: { open: openSnackBar } },
+        ],
+      });
+      const router = TestBed.inject(Router);
+      await router.navigateByUrl(initialUrl);
+      const fixture = TestBed.createComponent(LibrariesPage);
+      const element = fixture.nativeElement as HTMLElement;
+      const wait = async () => {
+        await vi.advanceTimersByTimeAsync(0);
+        fixture.detectChanges();
+      };
+      await wait();
+      const chip = () => element.querySelector<HTMLElement>('mat-chip-option')!;
+      return { element, list, update, openSnackBar, router, chip, wait };
+    }
+
+    it('filters by favorites from the chip and keeps it in the URL', async () => {
+      const { element, list, router, chip, wait } = await setup('/?page=2&limit=24');
+
+      expect(chip().textContent).toContain('Favoritas');
+      chip().querySelector<HTMLElement>('[role="option"]')!.click();
+      await wait();
+
+      // A new filter starts again from the first page, keeping the page size
+      expect(router.parseUrl(router.url).queryParams).toEqual({ limit: '24', favorites: 'true' });
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 24, search: '', favorites: true });
+      expect(element.querySelectorAll('.card').length).toBe(1);
+      expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
+    });
+
+    it('restores the favorites filter from the URL', async () => {
+      const { list, chip } = await setup('/?favorites=true');
+
+      expect(list).toHaveBeenCalledTimes(1);
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '', favorites: true });
+      expect(chip().querySelector('[role="option"]')?.getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('keeps the filters visible and offers to show all when there are no favorites', async () => {
+      const { element, router, chip, wait } = await setup('/?favorites=true', {
+        items: [ensayo],
+      });
+
+      expect(element.textContent).toContain('Aún no tienes bibliotecas favoritas');
+      expect(chip()).not.toBeNull();
+      expect(element.querySelector('input[aria-label="Buscar bibliotecas"]')).not.toBeNull();
+
+      Array.from(element.querySelectorAll('button'))
+        .find((button) => button.textContent?.includes('Ver todas'))!
+        .click();
+      await wait();
+
+      expect(router.url).toBe('/');
+      expect(element.querySelectorAll('.card').length).toBe(1);
+    });
+
+    it('marks a library as favorite and reloads the list without the spinner', async () => {
+      const { element, list, update, openSnackBar, wait } = await setup();
+
+      element
+        .querySelector<HTMLButtonElement>('[aria-label="Marcar Ensayo como favorita"]')!
+        .click();
+      expect(element.querySelector('mat-spinner')).toBeNull();
+      await wait();
+
+      expect(update).toHaveBeenCalledWith('2', { isFavorite: true });
+      expect(list).toHaveBeenCalledTimes(2);
+      expect(openSnackBar).toHaveBeenCalledWith(
+        '«Ensayo» marcada como favorita',
+        undefined,
+        expect.anything(),
+      );
+      const button = element.querySelector('[aria-label="Marcar Ensayo como favorita"]');
+      expect(button?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('removes an unmarked library from the favorites list', async () => {
+      const { element, update, wait } = await setup('/?favorites=true');
+
+      element
+        .querySelector<HTMLButtonElement>('[aria-label="Marcar Novela como favorita"]')!
+        .click();
+      await wait();
+
+      expect(update).toHaveBeenCalledWith('1', { isFavorite: false });
+      expect(element.textContent).toContain('Aún no tienes bibliotecas favoritas');
+    });
+
+    it('keeps the list and reports the error when the change fails', async () => {
+      const { element, list, openSnackBar, wait } = await setup('/', {
+        update: vi.fn(() => throwError(() => new Error('down'))),
+      });
+
+      element
+        .querySelector<HTMLButtonElement>('[aria-label="Marcar Ensayo como favorita"]')!
+        .click();
+      await wait();
+
+      expect(list).toHaveBeenCalledTimes(1);
+      expect(element.querySelectorAll('.card').length).toBe(2);
+      expect(openSnackBar).toHaveBeenCalledWith(
+        'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+        undefined,
+        expect.anything(),
+      );
     });
   });
 });

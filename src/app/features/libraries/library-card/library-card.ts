@@ -6,11 +6,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 
+import { FavoriteButton } from '../favorite-button/favorite-button';
 import { Library, LibraryExportFormat } from '../library.model';
 
 @Component({
   selector: 'app-library-card',
   imports: [
+    FavoriteButton,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
@@ -26,7 +28,10 @@ export class LibraryCard {
   readonly library = input.required<Library>();
   /** True while an export of this library is being downloaded. */
   readonly exporting = input(false);
+  /** True while the favorite mark of this library is being saved. */
+  readonly savingFavorite = input(false);
 
+  readonly favoriteToggled = output<void>();
   readonly exportRequested = output<LibraryExportFormat>();
   readonly editRequested = output<void>();
   readonly deleteRequested = output<void>();
