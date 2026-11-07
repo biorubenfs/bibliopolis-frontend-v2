@@ -1,0 +1,159 @@
+<h2 mat-dialog-title>Importar CSV</h2>
+
+<mat-dialog-content>
+  <!-- Hidden, not removed: going back must not lose the selected file -->
+  <div class="step" [hidden]="step() !== 'file'">
+    @if (step() === 'file') {
+      <h3 #stepHeading class="step-title" tabindex="-1">Fichero</h3>
+    }
+
+    <p class="intro">
+      Los libros se añadirán a <strong>{{ library.name }}</strong
+      >.
+    </p>
+
+    <div class="file-field">
+      <label for="import-file">Fichero CSV</label>
+      <input
+        id="import-file"
+        type="file"
+        accept=".csv,text/csv"
+        aria-describedby="import-file-hint"
+        (change)="onFileSelected($event)"
+      />
+      <p id="import-file-hint" class="hint">
+        Con una fila de cabecera y una columna de ISBN. Hasta {{ maxRows }} filas y
+        {{ maxFileSizeMb }} MB.
+      </p>
+      <div class="field-error" role="alert">
+        @if (fileError(); as message) {
+          {{ message }}
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (step() === 'review') {
+    <div class="step">
+      <h3 #stepHeading class="step-title" tabindex="-1">Revisión</h3>
+
+      @if (analysis(); as analysis) {
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Columnas de ISBN</mat-label>
+          <mat-select
+            multiple
+            [value]="selectedColumns()"
+            [disabled]="importing()"
+            (selectionChange)="onColumnsChange($event)"
+          >
+            @for (column of analysis.columns; track column.index) {
+              <mat-option [value]="column.index">{{
+                column.name || 'Columna sin nombre'
+              }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (selectedColumns().length === 0) {
+          <p class="notice" role="alert">
+            No hemos encontrado la columna de ISBN. Elige cuál es para poder continuar.
+          </p>
+        } @else if (noValidRows()) {
+          <p class="notice" role="alert">
+            Con esta columna ninguna fila tiene un ISBN válido. Prueba con otra o revisa el fichero.
+          </p>
+        }
+
+        <!-- Announces the new count after changing the columns -->
+        <div role="status">
+          @if (analyzing()) {
+            <p class="analyzing">
+              <mat-spinner diameter="20" aria-hidden="true" />
+              Leyendo el fichero…
+            </p>
+          } @else if (selectedColumns().length > 0) {
+            <p class="total">
+              {{ analysis.counts.rows }}
+              {{ analysis.counts.rows === 1 ? 'fila leída' : 'filas leídas' }}:
+            </p>
+            <ul class="counts">
+              <li>
+                <strong>{{ analysis.counts.valid }}</strong> por añadir
+              </li>
+              @if (analysis.counts.alreadyInLibrary > 0) {
+                <li>
+                  <strong>{{ analysis.counts.alreadyInLibrary }}</strong> ya en la biblioteca
+                </li>
+              }
+              @if (analysis.counts.duplicateInFile > 0) {
+                <li>
+                  <strong>{{ analysis.counts.duplicateInFile }}</strong> repetidas en el fichero
+                </li>
+              }
+              @if (analysis.counts.invalidIsbn > 0) {
+                <li>
+                  <strong>{{ analysis.counts.invalidIsbn }}</strong> con un ISBN incorrecto
+                </li>
+              }
+              @if (analysis.counts.missingIsbn > 0) {
+                <li>
+                  <strong>{{ analysis.counts.missingIsbn }}</strong> sin ISBN
+                </li>
+              }
+            </ul>
+            @if (rowsNeedingAction() > 0) {
+              <p class="hint">
+                Las filas con problemas aparecerán en el informe para que puedas resolverlas.
+              </p>
+            }
+          }
+        </div>
+
+        @if (selectedColumns().length > 0 && analysis.sample.length > 0) {
+          <h4 class="sample-title">Primeras filas</h4>
+          <ul class="sample">
+            @for (row of analysis.sample; track row.row) {
+              <li>
+                <span class="row-number">Fila {{ row.row }}</span>
+                <span class="isbn">{{ row.isbn || 'Sin ISBN' }}</span>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </div>
+  }
+
+  <div class="error" role="alert">
+    @if (errorMessage(); as message) {
+      {{ message }}
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Cancelar</button>
+  @if (step() === 'file') {
+    <button mat-flat-button type="button" [disabled]="analyzing()" (click)="continue()">
+      @if (analyzing()) {
+        <mat-spinner diameter="20" aria-label="Leyendo el fichero" />
+      } @else {
+        Continuar
+      }
+    </button>
+  } @else {
+    <button mat-button type="button" [disabled]="importing()" (click)="back()">Atrás</button>
+    <button
+      mat-flat-button
+      type="button"
+      [disabled]="!canImport() || importing()"
+      (click)="import()"
+    >
+      @if (importing()) {
+        <mat-spinner diameter="20" aria-label="Iniciando la importación" />
+      } @else {
+        Importar
+      }
+    </button>
+  }
+</mat-dialog-actions>
