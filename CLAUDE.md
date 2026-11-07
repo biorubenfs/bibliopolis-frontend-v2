@@ -32,6 +32,8 @@ Node 22 (gestionado con nvm). Angular 22 exige Node ≥ 22.22.3, por eso el proy
 
 ## Despliegue
 
+`.github/workflows/ci.yml` compila en producción y ejecuta los tests en cada push a una rama de trabajo. `deploy.yml` lo reutiliza y no despliega si falla.
+
 `.github/workflows/deploy.yml` compila con pnpm y copia `dist/bibliopolis-frontend-v2/browser/` al VPS con rsync. Un push a `main` despliega en el entorno `dev` de GitHub (`--configuration dev`) y un push a `production`, en el entorno `production`. También se puede lanzar a mano eligiendo el entorno. Los secretos `VPS_*` se configuran en GitHub.
 
 ## Convenciones de Angular y TypeScript
