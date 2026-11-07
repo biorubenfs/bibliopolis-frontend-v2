@@ -1,0 +1,225 @@
+<a mat-button class="back" [routerLink]="['/libraries', id()]">
+  <mat-icon>arrow_back</mat-icon>
+  Volver a la biblioteca
+</a>
+
+<!-- Always in the DOM so that screen readers announce the changes -->
+<div class="visually-hidden" role="status">{{ announcement() }}</div>
+
+@switch (state()) {
+  @case ('loading') {
+    <div class="status">
+      <mat-spinner diameter="40" aria-label="Cargando la importación" />
+    </div>
+  }
+  @case ('not-found') {
+    <div class="status" role="alert">
+      <mat-icon aria-hidden="true">search_off</mat-icon>
+      <h1>No hemos encontrado esta importación</h1>
+      <p>Puede que se haya borrado con su biblioteca o que el enlace no sea correcto.</p>
+    </div>
+  }
+  @case ('error') {
+    <div class="status" role="alert">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <p>No se ha podido consultar la importación. Sigue en marcha aunque no veas su progreso.</p>
+      <button mat-stroked-button type="button" (click)="follow()">Reintentar</button>
+    </div>
+  }
+  @default {
+    @if (job(); as job) {
+      @if (active()) {
+        <section class="progress">
+          <h1 #progressHeading tabindex="-1">Importando «{{ job.fileName }}»</h1>
+          <mat-progress-bar
+            mode="determinate"
+            [value]="progress()"
+            aria-label="Progreso de la importación"
+          />
+          <p class="processed">
+            {{ job.counts.processed }} de {{ job.counts.total }} filas procesadas
+          </p>
+          <p>
+            Puedes salir de esta página: la importación continúa, y el informe se quedará guardado
+            en la biblioteca.
+          </p>
+        </section>
+      } @else {
+        <h1 #reportHeading class="report-title" tabindex="-1">Informe de «{{ job.fileName }}»</h1>
+
+        <dl class="summary">
+          <div>
+            <dt>Añadidos</dt>
+            <dd>{{ job.counts.added }}</dd>
+          </div>
+          <div>
+            <dt>Ya estaban</dt>
+            <dd>{{ job.counts.alreadyInLibrary }}</dd>
+          </div>
+          <div>
+            <dt>Duplicados</dt>
+            <dd>{{ job.counts.duplicateInFile }}</dd>
+          </div>
+          <div [class.attention]="job.counts.pending > 0">
+            <dt>Pendientes</dt>
+            <dd>{{ job.counts.pending }}</dd>
+          </div>
+        </dl>
+
+        @if (job.status === 'failed') {
+          <div class="banner failure" role="alert">
+            <p>
+              La importación se ha interrumpido por un error inesperado. Lo ya procesado está
+              guardado.
+            </p>
+            <button mat-stroked-button type="button" [disabled]="retrying()" (click)="retry()">
+              Reintentar la importación
+            </button>
+          </div>
+        } @else if (job.counts.pending === 0) {
+          <div class="banner success">
+            <mat-icon aria-hidden="true">check_circle</mat-icon>
+            <p>No queda nada pendiente.</p>
+            <a mat-stroked-button [routerLink]="['/libraries', job.libraryId]"
+              >Ir a la biblioteca</a
+            >
+          </div>
+        }
+
+        <div class="list-header">
+          <h2 #listHeading tabindex="-1">Filas del fichero</h2>
+          <div class="list-actions">
+            @if (job.status === 'completed' && job.counts.retryable > 0) {
+              <button mat-flat-button type="button" [disabled]="retrying()" (click)="retry()">
+                <mat-icon>refresh</mat-icon>
+                Reintentar {{ job.counts.retryable }}
+                {{ job.counts.retryable === 1 ? 'fila' : 'filas' }} con error
+              </button>
+            }
+            @if (job.counts.pending > 0) {
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="downloading()"
+                (click)="downloadPending()"
+              >
+                <mat-icon>download</mat-icon>
+                Descargar pendientes
+              </button>
+            }
+          </div>
+        </div>
+
+        <mat-button-toggle-group
+          class="filter"
+          aria-label="Filas que se muestran"
+          [value]="filter()"
+          (change)="changeFilter($event)"
+        >
+          <mat-button-toggle value="pending">
+            Pendientes ({{ job.counts.pending }})
+          </mat-button-toggle>
+          <mat-button-toggle value="added">Añadidos ({{ job.counts.added }})</mat-button-toggle>
+          <mat-button-toggle value="already_in_library">
+            Ya estaban ({{ job.counts.alreadyInLibrary }})
+          </mat-button-toggle>
+          <mat-button-toggle value="duplicate_in_file">
+            Duplicados ({{ job.counts.duplicateInFile }})
+          </mat-button-toggle>
+          <mat-button-toggle value="all">Todas ({{ job.counts.total }})</mat-button-toggle>
+        </mat-button-toggle-group>
+
+        @switch (itemsState()) {
+          @case ('loading') {
+            <div class="status">
+              <mat-spinner diameter="32" aria-label="Cargando las filas" />
+            </div>
+          }
+          @case ('error') {
+            <div class="status" role="alert">
+              <p>No se han podido cargar las filas.</p>
+              <button mat-stroked-button type="button" (click)="loadItems()">Reintentar</button>
+            </div>
+          }
+          @default {
+            @if (items().length === 0) {
+              <p class="empty">No hay filas que mostrar.</p>
+            } @else {
+              <ul class="items">
+                @for (item of items(); track item.id) {
+                  <li class="item">
+                    <div class="item-data">
+                      <p class="item-meta">
+                        <span>Fila {{ item.row }}</span>
+                        <span class="isbn">{{ item.rawIsbn || 'Sin ISBN' }}</span>
+                      </p>
+                      @if (item.bookTitle) {
+                        <p class="item-title">{{ item.bookTitle }}</p>
+                      }
+                      <p class="item-outcome" [class.attention]="item.pending">
+                        {{ outcomeLabels[item.outcome] }}
+                        @if (item.resolution === 'dismissed') {
+                          · Descartada
+                        } @else if (item.resolution === 'manual') {
+                          · Añadida manualmente
+                        } @else if (reachedLibraryAnotherWay(item)) {
+                          · Ya en la biblioteca
+                        }
+                      </p>
+                    </div>
+                    @if (item.pending) {
+                      <div class="item-actions">
+                        <button
+                          mat-stroked-button
+                          type="button"
+                          [disabled]="busyItemId() === item.id"
+                          [attr.aria-label]="'Añadir manualmente: ' + itemName(item)"
+                          (click)="addManually(item)"
+                        >
+                          Añadir manualmente
+                        </button>
+                        <button
+                          mat-button
+                          type="button"
+                          [disabled]="busyItemId() === item.id"
+                          [attr.aria-label]="'Descartar: ' + itemName(item)"
+                          (click)="dismiss(item)"
+                        >
+                          Descartar
+                        </button>
+                      </div>
+                    } @else if (item.resolution === 'dismissed') {
+                      <div class="item-actions">
+                        <button
+                          mat-button
+                          type="button"
+                          [disabled]="busyItemId() === item.id"
+                          [attr.aria-label]="'Deshacer el descarte: ' + itemName(item)"
+                          (click)="undoDismiss(item)"
+                        >
+                          Deshacer
+                        </button>
+                      </div>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          }
+        }
+
+        @if (itemsTotal() > pageSizeOptions[0]) {
+          <mat-paginator
+            [length]="itemsTotal()"
+            [pageIndex]="pageIndex()"
+            [pageSize]="pageSize()"
+            [pageSizeOptions]="pageSizeOptions"
+            showFirstLastButtons
+            (page)="changePage($event)"
+            aria-label="Páginas de filas"
+          />
+        }
+      }
+    }
+  }
+}

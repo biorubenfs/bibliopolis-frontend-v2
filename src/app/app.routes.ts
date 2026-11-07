@@ -32,6 +32,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'libraries/:id/imports/:importId',
+        title: 'Importación · Bibliopolis',
+        loadComponent: () =>
+          import('./features/imports/import-report-page/import-report-page').then(
+            (m) => m.ImportReportPage,
+          ),
+      },
+      {
         path: 'books',
         title: 'Mis libros · Bibliopolis',
         loadComponent: () =>

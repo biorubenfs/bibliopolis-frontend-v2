@@ -78,7 +78,7 @@ Node 22 (gestionado con nvm). Angular 22 exige Node ≥ 22.22.3, por eso el proy
 
 ## Contrato con el backend
 
-Referencia completa: `../bibliopolis-backend/docs/index.md` (autenticación, formato de respuestas, paginación, tabla de códigos de error) y una página por recurso en `../bibliopolis-backend/docs/api/` (`auth`, `users`, `books`, `libraries`, `user-books`, `external`). Consultarla antes de implementar una llamada; no inventar campos ni endpoints.
+Referencia completa: `../bibliopolis-backend/docs/index.md` (autenticación, formato de respuestas, paginación, tabla de códigos de error) y una página por recurso en `../bibliopolis-backend/docs/api/` (`auth`, `users`, `books`, `libraries`, `user-books`, `external`, `imports`). Consultarla antes de implementar una llamada; no inventar campos ni endpoints.
 
 ### URLs por entorno
 

@@ -30,6 +30,13 @@ import {
   toPageNumber,
   toPageSize,
 } from '../../../core/pagination/pagination';
+import {
+  IMPORT_DIALOG_SIZE,
+  ImportCsvDialog,
+  ImportCsvDialogData,
+} from '../../imports/import-csv-dialog/import-csv-dialog';
+import { LibraryImport, isActiveImport } from '../../imports/import.model';
+import { ImportsService } from '../../imports/imports.service';
 import { UserBookCard } from '../../user-books/user-book-card/user-book-card';
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
@@ -78,6 +85,7 @@ const TOUCH_DEVICE_QUERY = '(hover: none) and (pointer: coarse)';
 export class LibraryDetailPage {
   private readonly librariesService = inject(LibrariesService);
   private readonly userBooksService = inject(UserBooksService);
+  private readonly importsService = inject(ImportsService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -107,6 +115,13 @@ export class LibraryDetailPage {
   protected readonly total = signal(0);
   protected readonly state = signal<LoadState>('loading');
 
+  /** The latest import of this library, to show how it went and link to its report. */
+  protected readonly latestImport = signal<LibraryImport | null>(null);
+  protected readonly latestImportActive = computed(() => {
+    const latest = this.latestImport();
+    return latest !== null && isActiveImport(latest);
+  });
+
   /** The paginator counts pages from 0. */
   protected readonly pageIndex = computed(() => this.page() - 1);
 
@@ -116,6 +131,7 @@ export class LibraryDetailPage {
   });
 
   private loadSubscription?: Subscription;
+  private latestImportSubscription?: Subscription;
 
   constructor() {
     // The URL is the source of truth: the paginator only updates it, and the list reacts to any
@@ -127,6 +143,22 @@ export class LibraryDetailPage {
       this.limit();
       untracked(() => this.load());
     });
+    effect(() => {
+      this.id();
+      untracked(() => this.loadLatestImport());
+    });
+  }
+
+  private loadLatestImport(): void {
+    this.latestImportSubscription?.unsubscribe();
+    this.latestImportSubscription = this.importsService
+      .listByLibrary(this.id(), { skip: 0, limit: 1 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ items }) => this.latestImport.set(items[0] ?? null),
+        // The books are what matters here: without this notice the page still works
+        error: () => this.latestImport.set(null),
+      });
   }
 
   protected load(): void {
@@ -184,8 +216,16 @@ export class LibraryDetailPage {
         if (title) {
           this.notify(`«${title}» añadido a la biblioteca`);
           this.load();
+          this.loadLatestImport();
         }
       });
+  }
+
+  protected openImportDialog(library: Library): void {
+    this.dialog.open<ImportCsvDialog, ImportCsvDialogData, LibraryImport>(ImportCsvDialog, {
+      ...IMPORT_DIALOG_SIZE,
+      data: { library },
+    });
   }
 
   protected openScanDialog(): void {
@@ -200,6 +240,7 @@ export class LibraryDetailPage {
       .subscribe((added) => {
         if (added) {
           this.load();
+          this.loadLatestImport();
         }
       });
   }

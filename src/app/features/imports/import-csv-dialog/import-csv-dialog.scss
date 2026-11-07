@@ -1,0 +1,129 @@
+mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  // `display: flex` would otherwise win over the hidden attribute
+  &[hidden] {
+    display: none;
+  }
+}
+
+.step-title {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+  color: var(--mat-sys-on-surface);
+  outline: none;
+}
+
+.intro,
+.total,
+.hint {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+}
+
+.hint {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.file-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  label {
+    font: var(--mat-sys-label-large);
+    color: var(--mat-sys-on-surface);
+  }
+
+  input {
+    // The native control: it already works with the keyboard and with screen readers
+    width: 100%;
+    padding: 8px 0;
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface);
+
+    &::file-selector-button {
+      margin-right: 12px;
+      padding: 8px 16px;
+      border: 1px solid var(--mat-sys-outline);
+      border-radius: 20px;
+      font: var(--mat-sys-label-large);
+      color: var(--mat-sys-primary);
+      background: transparent;
+      cursor: pointer;
+    }
+  }
+}
+
+.field-error:not(:empty) {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-error);
+}
+
+.notice {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font: var(--mat-sys-body-medium);
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.analyzing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+}
+
+.counts {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface);
+}
+
+.sample-title {
+  margin: 4px 0 0;
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface);
+}
+
+.sample {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font: var(--mat-sys-body-small);
+    color: var(--mat-sys-on-surface-variant);
+    background: var(--mat-sys-surface-container);
+    overflow-wrap: anywhere;
+  }
+}
+
+.error:not(:empty) {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font: var(--mat-sys-body-medium);
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}

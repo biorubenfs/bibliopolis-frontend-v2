@@ -21,12 +21,36 @@
           Escanear libros
         </button>
       }
+      <button mat-stroked-button type="button" (click)="openImportDialog(library)">
+        <mat-icon>upload_file</mat-icon>
+        Importar CSV
+      </button>
       <button #addButton mat-flat-button type="button" (click)="openAddDialog()">
         <mat-icon>add</mat-icon>
         Añadir libro
       </button>
     </div>
   </header>
+
+  @if (latestImport(); as latest) {
+    <p class="import-notice" [class.attention]="latestImportActive() || latest.counts.pending > 0">
+      @if (latestImportActive()) {
+        <span>Hay una importación en curso.</span>
+        <a [routerLink]="['imports', latest.id]">Ver el progreso</a>
+      } @else if (latest.status === 'failed') {
+        <span>La última importación se ha interrumpido.</span>
+        <a [routerLink]="['imports', latest.id]">Ver el informe</a>
+      } @else if (latest.counts.pending > 0) {
+        <span>
+          La última importación tiene {{ latest.counts.pending }}
+          {{ latest.counts.pending === 1 ? 'fila pendiente' : 'filas pendientes' }}.
+        </span>
+        <a [routerLink]="['imports', latest.id]">Ver el informe</a>
+      } @else {
+        <a [routerLink]="['imports', latest.id]">Ver el informe de la última importación</a>
+      }
+    </p>
+  }
 }
 
 @switch (state()) {

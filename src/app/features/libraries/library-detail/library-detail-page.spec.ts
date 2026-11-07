@@ -7,6 +7,9 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
 import { ApiError } from '../../../core/http/api-error';
+import { ImportCsvDialog } from '../../imports/import-csv-dialog/import-csv-dialog';
+import { LibraryImport } from '../../imports/import.model';
+import { ImportsService } from '../../imports/imports.service';
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
 import { AddBookDialog } from '../add-book-dialog/add-book-dialog';
@@ -57,12 +60,14 @@ describe('LibraryDetailPage', () => {
       url?: string;
       get?: ReturnType<typeof vi.fn>;
       listByLibrary?: ReturnType<typeof vi.fn>;
+      listImports?: ReturnType<typeof vi.fn>;
       dialogResult?: unknown;
       touchDevice?: boolean;
     } = {},
   ) {
     const get = options.get ?? vi.fn(() => of(library));
     const listByLibrary = options.listByLibrary ?? vi.fn(() => of({ items: [], total: 0 }));
+    const listImports = options.listImports ?? vi.fn(() => of({ items: [], total: 0 }));
     const openDialog = vi.fn(() => ({ afterClosed: () => of(options.dialogResult) }));
     const openSnackBar = vi.fn();
     TestBed.configureTestingModule({
@@ -74,6 +79,7 @@ describe('LibraryDetailPage', () => {
         ),
         { provide: LibrariesService, useValue: { get } },
         { provide: UserBooksService, useValue: { listByLibrary } },
+        { provide: ImportsService, useValue: { listByLibrary: listImports } },
         { provide: MatDialog, useValue: { open: openDialog } },
         { provide: MatSnackBar, useValue: { open: openSnackBar } },
         {
@@ -90,10 +96,96 @@ describe('LibraryDetailPage', () => {
       element: harness.routeNativeElement as HTMLElement,
       get,
       listByLibrary,
+      listImports,
       openDialog,
       openSnackBar,
     };
   }
+
+  describe('imports', () => {
+    function latestImport(changes: Partial<LibraryImport> = {}, pending = 0): LibraryImport {
+      return {
+        id: 'i1',
+        userId: 'u1',
+        libraryId: 'l1',
+        fileName: 'libros.csv',
+        status: 'completed',
+        createdAt: '',
+        updatedAt: '',
+        finishedAt: '',
+        counts: { pending } as LibraryImport['counts'],
+        ...changes,
+      };
+    }
+    const listing = (item: LibraryImport) => vi.fn(() => of({ items: [item], total: 1 }));
+    const notice = (element: HTMLElement) => element.querySelector('.import-notice');
+
+    it('opens the import dialog with this library as the destination', async () => {
+      const { element, openDialog } = await setup();
+
+      Array.from(element.querySelectorAll('button'))
+        .find((button) => button.textContent?.includes('Importar CSV'))!
+        .click();
+
+      expect(openDialog).toHaveBeenCalledWith(
+        ImportCsvDialog,
+        expect.objectContaining({ data: { library } }),
+      );
+    });
+
+    it('shows nothing without imports', async () => {
+      const { element, listImports } = await setup();
+
+      expect(listImports).toHaveBeenCalledWith('l1', { skip: 0, limit: 1 });
+      expect(notice(element)).toBeNull();
+    });
+
+    it('still shows the library if the imports cannot be loaded', async () => {
+      const { element } = await setup({
+        listImports: vi.fn(() => throwError(() => new ApiError(500, null, 'error'))),
+      });
+
+      expect(element.querySelector('h1')?.textContent).toContain('Novela');
+      expect(notice(element)).toBeNull();
+    });
+
+    it('warns about an import in progress and links to it', async () => {
+      const { element } = await setup({
+        listImports: listing(latestImport({ status: 'running', finishedAt: null })),
+      });
+
+      expect(notice(element)?.textContent).toContain('en curso');
+      expect(notice(element)?.querySelector('a')?.getAttribute('href')).toBe(
+        '/libraries/l1/imports/i1',
+      );
+    });
+
+    it('warns about pending rows', async () => {
+      const { element } = await setup({ listImports: listing(latestImport({}, 3)) });
+
+      expect(notice(element)?.textContent).toContain('3');
+      expect(notice(element)?.textContent).toContain('filas pendientes');
+      expect(notice(element)?.classList).toContain('attention');
+    });
+
+    it('keeps a discreet link to a report without pending rows', async () => {
+      const { element } = await setup({ listImports: listing(latestImport()) });
+
+      expect(notice(element)?.textContent).toContain('Ver el informe de la última importación');
+      expect(notice(element)?.classList).not.toContain('attention');
+    });
+
+    it('reloads the notice after adding a book, which may resolve a pending row', async () => {
+      const { element, listImports } = await setup({ dialogResult: 'Rossiya' });
+      listImports.mockClear();
+
+      Array.from(element.querySelectorAll('button'))
+        .find((button) => button.textContent?.includes('Añadir libro'))!
+        .click();
+
+      expect(listImports).toHaveBeenCalledTimes(1);
+    });
+  });
 
   it('shows the library and its books', async () => {
     const { element, get, listByLibrary } = await setup({
@@ -175,7 +267,7 @@ describe('LibraryDetailPage', () => {
         dialogResult: 'Ulises',
       });
 
-      click(element, '.page-header button');
+      click(element, '.page-header button[mat-flat-button]');
       await harness.fixture.whenStable();
 
       expect(openDialog).toHaveBeenCalledWith(
@@ -189,7 +281,7 @@ describe('LibraryDetailPage', () => {
     it('does nothing when adding a book is cancelled', async () => {
       const { harness, element, listByLibrary, openSnackBar } = await setup();
 
-      click(element, '.page-header button');
+      click(element, '.page-header button[mat-flat-button]');
       await harness.fixture.whenStable();
 
       expect(listByLibrary).toHaveBeenCalledTimes(1);
@@ -267,7 +359,9 @@ describe('LibraryDetailPage', () => {
         expect.objectContaining({ data: { libraryId: 'l1', book: rossiya } }),
       );
       expect(element.textContent).toContain('Esta biblioteca aún no tiene libros');
-      expect(document.activeElement).toBe(element.querySelector('.page-header button'));
+      expect(document.activeElement).toBe(
+        element.querySelector('.page-header button[mat-flat-button]'),
+      );
       element.remove();
     });
 

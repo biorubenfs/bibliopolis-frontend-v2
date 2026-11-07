@@ -1,0 +1,242 @@
+:host {
+  display: block;
+  padding: 16px 16px 24px;
+}
+
+.back {
+  margin: 0 0 8px -12px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font: 500 2rem / 1.25 var(--app-font-display);
+  color: var(--mat-sys-on-surface);
+  overflow-wrap: anywhere;
+  outline: none;
+}
+
+h2 {
+  margin: 0;
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-on-surface);
+  outline: none;
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 16px;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 48px;
+    color: var(--mat-sys-secondary);
+  }
+
+  h1 {
+    margin: 0;
+    font: var(--mat-sys-title-large);
+  }
+
+  p {
+    margin: 0;
+    font: var(--mat-sys-body-large);
+  }
+}
+
+.progress {
+  max-width: 640px;
+
+  p {
+    margin: 12px 0 0;
+    font: var(--mat-sys-body-large);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .processed {
+    color: var(--mat-sys-on-surface);
+  }
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 0 0 16px;
+
+  > div {
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: var(--mat-sys-surface-container);
+  }
+
+  dt {
+    font: var(--mat-sys-label-large);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  dd {
+    margin: 0;
+    font: var(--mat-sys-headline-small);
+    color: var(--mat-sys-on-surface);
+  }
+
+  .attention {
+    background: var(--mat-sys-secondary-container);
+
+    dt,
+    dd {
+      color: var(--mat-sys-on-secondary-container);
+    }
+  }
+}
+
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+
+  p {
+    flex: 1 1 200px;
+    margin: 0;
+    font: var(--mat-sys-body-medium);
+  }
+
+  &.success {
+    background: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+  }
+
+  &.failure {
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+  }
+}
+
+.list-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 24px 0 12px;
+}
+
+.list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  // Long labels wrap instead of pushing the page wider on a narrow phone
+  max-width: 100%;
+
+  button {
+    max-width: 100%;
+    height: auto;
+    min-height: 40px;
+    white-space: normal;
+  }
+}
+
+.filter {
+  // The default pill shape would clip the corners when the options take more than one line
+  --mat-button-toggle-shape: 12px;
+
+  // On a phone they do not fit in one line, and the page must not scroll sideways
+  flex-wrap: wrap;
+  max-width: 100%;
+  margin-bottom: 12px;
+}
+
+.empty {
+  padding: 24px 0;
+  font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container);
+}
+
+.item-data {
+  flex: 1 1 240px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  p {
+    margin: 0;
+  }
+}
+
+.item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.item-title {
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface);
+}
+
+.item-outcome {
+  margin-top: 4px;
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+
+  &.attention {
+    color: var(--mat-sys-error);
+  }
+}
+
+.item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+mat-paginator {
+  margin-top: 16px;
+  background: transparent;
+}
+
+@media (min-width: 900px) {
+  :host {
+    padding: 32px 48px 40px;
+  }
+}
