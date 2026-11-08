@@ -67,7 +67,13 @@ describe('LibrariesPage', () => {
     const element = await render([]);
 
     expect(element.textContent).toContain('Aún no tienes bibliotecas');
-    expect(element.querySelector('.fab')?.textContent).toContain('Nueva biblioteca');
+    expect(element.querySelector('.status .create')?.textContent).toContain('Nueva biblioteca');
+  });
+
+  it('shows the create button in the filters row when there are libraries', async () => {
+    const element = await render([library('1', 'Novela', ['a'])]);
+
+    expect(element.querySelector('.filters .create')?.textContent).toContain('Nueva biblioteca');
   });
 
   describe('search', () => {

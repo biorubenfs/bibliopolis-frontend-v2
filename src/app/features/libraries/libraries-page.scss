@@ -1,6 +1,6 @@
 :host {
   display: block;
-  padding: 24px 16px 104px;
+  padding: 24px 16px;
 }
 
 .page-header {
@@ -42,7 +42,8 @@ h1 {
   text-align: center;
   color: var(--mat-sys-on-surface-variant);
 
-  mat-icon {
+  // Only the big state icon, not the one inside the create button
+  > mat-icon {
     width: 48px;
     height: 48px;
     font-size: 48px;
@@ -72,6 +73,11 @@ h1 {
   &:has(+ .active-tags) {
     margin-bottom: 12px;
   }
+}
+
+// Pushed to the right edge, under the search field; wraps onto its own line on narrow screens
+.filters .create {
+  margin-left: auto;
 }
 
 // Same look as the Material 3 filter chip next to it: 32px high, 8px corners, outlined when off
@@ -166,28 +172,12 @@ mat-paginator {
   background: transparent;
 }
 
-.fab {
-  // Primary colour so the main action stands out from the tonal cards
-  --mat-fab-container-color: var(--mat-sys-primary);
-  --mat-fab-foreground-color: var(--mat-sys-on-primary);
-  --mat-fab-state-layer-color: var(--mat-sys-on-primary);
-
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-}
-
 @media (min-width: 900px) {
   :host {
-    padding: 40px 48px 112px;
+    padding: 40px 48px;
   }
 
   .search {
     flex: 0 1 360px;
-  }
-
-  .fab {
-    right: 32px;
-    bottom: 32px;
   }
 }
