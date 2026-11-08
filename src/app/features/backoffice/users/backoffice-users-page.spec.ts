@@ -77,4 +77,14 @@ describe('BackofficeUsersPage', () => {
       expect.objectContaining({ data: { user: users[0] } }),
     );
   });
+
+  it('opens the dialog to create a user from the header', async () => {
+    const { element, openDialog } = await setup();
+
+    const create = element.querySelector<HTMLButtonElement>('.page-header .create')!;
+    expect(create.textContent).toContain('Nuevo usuario');
+
+    create.click();
+    expect(openDialog).toHaveBeenCalled();
+  });
 });

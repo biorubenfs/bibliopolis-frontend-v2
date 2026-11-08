@@ -12,31 +12,38 @@
     }
   </div>
 
-  <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic" role="search">
-    <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-    <input
-      matInput
-      type="text"
-      placeholder="Buscar por nombre o email"
-      aria-label="Buscar usuarios"
-      autocomplete="off"
-      [attr.maxlength]="searchMaxLength"
-      [value]="query()"
-      (input)="onSearchInput($any($event.target).value)"
-      (keydown.escape)="clearSearch()"
-    />
-    @if (query()) {
-      <button
-        mat-icon-button
-        matSuffix
-        type="button"
-        aria-label="Borrar búsqueda"
-        (click)="clearSearch()"
-      >
-        <mat-icon>close</mat-icon>
-      </button>
-    }
-  </mat-form-field>
+  <div class="header-actions">
+    <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic" role="search">
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <input
+        matInput
+        type="text"
+        placeholder="Buscar por nombre o email"
+        aria-label="Buscar usuarios"
+        autocomplete="off"
+        [attr.maxlength]="searchMaxLength"
+        [value]="query()"
+        (input)="onSearchInput($any($event.target).value)"
+        (keydown.escape)="clearSearch()"
+      />
+      @if (query()) {
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          aria-label="Borrar búsqueda"
+          (click)="clearSearch()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <button mat-flat-button type="button" class="create" (click)="openCreateDialog()">
+      <mat-icon>person_add</mat-icon>
+      Nuevo usuario
+    </button>
+  </div>
 </header>
 
 @switch (state()) {
@@ -105,8 +112,3 @@
     aria-label="Páginas de usuarios"
   />
 }
-
-<button mat-fab extended type="button" class="fab" (click)="openCreateDialog()">
-  <mat-icon>person_add</mat-icon>
-  Nuevo usuario
-</button>
