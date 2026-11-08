@@ -10,15 +10,17 @@ describe('LibraryCard', () => {
     name: 'Novela',
     description: 'Mis novelas',
     books: ['b1'],
+    isFavorite: false,
+    tagIds: [],
     userId: 'u1',
     createdAt: '',
     updatedAt: '',
   };
 
-  function render() {
+  function render(changes: Partial<Library> = {}) {
     TestBed.configureTestingModule({ imports: [LibraryCard], providers: [provideRouter([])] });
     const fixture = TestBed.createComponent(LibraryCard);
-    fixture.componentRef.setInput('library', library);
+    fixture.componentRef.setInput('library', { ...library, ...changes });
     fixture.detectChanges();
     return fixture;
   }
@@ -51,5 +53,60 @@ describe('LibraryCard', () => {
     expect(element.querySelector('[aria-label="Descargar Novela"]')).not.toBeNull();
     expect(edit).toHaveBeenCalled();
     expect(remove).toHaveBeenCalled();
+  });
+
+  describe('favorite button', () => {
+    const favoriteButton = (element: HTMLElement) =>
+      element.querySelector<HTMLButtonElement>('[aria-label="Marcar Novela como favorita"]')!;
+
+    it('shows an empty bookmark when the library is not a favorite', () => {
+      const button = favoriteButton(render().nativeElement);
+      expect(button.getAttribute('aria-pressed')).toBe('false');
+      expect(button.classList).not.toContain('active');
+    });
+
+    it('shows a filled bookmark, not a star, when the library is a favorite', () => {
+      const button = favoriteButton(render({ isFavorite: true }).nativeElement);
+      expect(button.getAttribute('aria-pressed')).toBe('true');
+      expect(button.classList).toContain('active');
+      expect(button.querySelector('mat-icon')).toBeNull();
+    });
+
+    it('emits when pressed and is disabled while saving', () => {
+      const fixture = render();
+      const toggled = vi.fn();
+      fixture.componentInstance.favoriteToggled.subscribe(toggled);
+
+      favoriteButton(fixture.nativeElement).click();
+      expect(toggled).toHaveBeenCalledTimes(1);
+
+      fixture.componentRef.setInput('savingFavorite', true);
+      fixture.detectChanges();
+      expect(favoriteButton(fixture.nativeElement).disabled).toBe(true);
+    });
+  });
+
+  it('shows every tag as a badge, and no list when there are none', () => {
+    const fixture = render();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('.tags')).toBeNull();
+
+    const tags = ['Novela', 'Prestados', 'Clásicos'].map((name, i) => ({
+      id: `t${i}`,
+      name,
+      color: 'green' as const,
+      userId: 'u1',
+      createdAt: '',
+      updatedAt: '',
+    }));
+    fixture.componentRef.setInput('tags', tags);
+    fixture.detectChanges();
+
+    const badges = element.querySelectorAll('.tags app-tag-badge');
+    expect(Array.from(badges).map((badge) => badge.textContent?.trim())).toEqual([
+      'Novela',
+      'Prestados',
+      'Clásicos',
+    ]);
   });
 });

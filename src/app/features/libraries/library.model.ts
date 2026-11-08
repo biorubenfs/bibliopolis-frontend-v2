@@ -7,6 +7,10 @@ export interface Library {
   userId: string;
   /** IDs of the user books in this library. */
   books: string[];
+  /** Favorites are listed first in «Mis bibliotecas». */
+  isFavorite: boolean;
+  /** IDs of its tags, own or global (at most 5). */
+  tagIds: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -14,6 +18,8 @@ export interface Library {
 export interface CreateLibrary {
   name: string;
   description: string;
+  /** Replaces all the tags of the library when updating. */
+  tagIds?: string[];
 }
 
 /** Validation limits defined by the backend (see docs/api/libraries.md). */
@@ -22,7 +28,8 @@ export const LIBRARY_NAME_MAX_LENGTH = 50;
 export const LIBRARY_DESCRIPTION_MAX_LENGTH = 100;
 export const LIBRARY_SEARCH_MAX_LENGTH = 100;
 
-export type UpdateLibrary = Partial<CreateLibrary>;
+/** A new library is never a favorite: it can only be marked with an update. */
+export type UpdateLibrary = Partial<CreateLibrary> & { isFavorite?: boolean };
 
 export type LibraryExportFormat = 'pdf' | 'csv';
 

@@ -18,6 +18,8 @@ import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
 import { RemoveBookDialog } from '../remove-book-dialog/remove-book-dialog';
 import { ScanBooksDialog } from '../scan-books-dialog/scan-books-dialog';
+import { Tag } from '../../tags/tag.model';
+import { TagsService } from '../../tags/tags.service';
 import { LibraryDetailPage } from './library-detail-page';
 
 const library: Library = {
@@ -25,6 +27,8 @@ const library: Library = {
   name: 'Novela',
   description: 'Mis novelas',
   books: [],
+  isFavorite: false,
+  tagIds: [],
   userId: 'u1',
   createdAt: '',
   updatedAt: '',
@@ -59,6 +63,8 @@ describe('LibraryDetailPage', () => {
     options: {
       url?: string;
       get?: ReturnType<typeof vi.fn>;
+      update?: ReturnType<typeof vi.fn>;
+      tags?: Tag[];
       listByLibrary?: ReturnType<typeof vi.fn>;
       listImports?: ReturnType<typeof vi.fn>;
       dialogResult?: unknown;
@@ -66,6 +72,9 @@ describe('LibraryDetailPage', () => {
     } = {},
   ) {
     const get = options.get ?? vi.fn(() => of(library));
+    const update =
+      options.update ??
+      vi.fn((_id: string, changes: Partial<Library>) => of({ ...library, ...changes }));
     const listByLibrary = options.listByLibrary ?? vi.fn(() => of({ items: [], total: 0 }));
     const listImports = options.listImports ?? vi.fn(() => of({ items: [], total: 0 }));
     const openDialog = vi.fn(() => ({ afterClosed: () => of(options.dialogResult) }));
@@ -77,7 +86,8 @@ describe('LibraryDetailPage', () => {
           [{ path: 'libraries/:id', component: LibraryDetailPage }],
           withComponentInputBinding(),
         ),
-        { provide: LibrariesService, useValue: { get } },
+        { provide: LibrariesService, useValue: { get, update } },
+        { provide: TagsService, useValue: { listAll: () => of(options.tags ?? []) } },
         { provide: UserBooksService, useValue: { listByLibrary } },
         { provide: ImportsService, useValue: { listByLibrary: listImports } },
         { provide: MatDialog, useValue: { open: openDialog } },
@@ -95,6 +105,7 @@ describe('LibraryDetailPage', () => {
       router: TestBed.inject(Router),
       element: harness.routeNativeElement as HTMLElement,
       get,
+      update,
       listByLibrary,
       listImports,
       openDialog,
@@ -245,6 +256,65 @@ describe('LibraryDetailPage', () => {
       scanButton(element)!.click();
 
       expect(listByLibrary).not.toHaveBeenCalled();
+    });
+  });
+
+  it('shows the tags of the library and skips unknown ones', async () => {
+    const tag = (id: string, name: string): Tag => ({
+      id,
+      name,
+      color: 'blue',
+      userId: 'u1',
+      createdAt: '',
+      updatedAt: '',
+    });
+    const { element } = await setup({
+      get: vi.fn(() => of({ ...library, tagIds: ['t2', 'deleted'] })),
+      tags: [tag('t1', 'Novela'), tag('t2', 'Prestados')],
+    });
+
+    const badges = element.querySelectorAll('.tags app-tag-badge');
+    expect(Array.from(badges).map((badge) => badge.textContent?.trim())).toEqual(['Prestados']);
+  });
+
+  describe('favorite', () => {
+    const favoriteButton = (element: HTMLElement) =>
+      element.querySelector<HTMLButtonElement>('[aria-label="Marcar Novela como favorita"]')!;
+
+    it('marks the library as favorite with a bookmark', async () => {
+      const { harness, element, update, listByLibrary, openSnackBar } = await setup();
+      expect(favoriteButton(element).getAttribute('aria-pressed')).toBe('false');
+
+      favoriteButton(element).click();
+      await harness.fixture.whenStable();
+
+      expect(update).toHaveBeenCalledWith('l1', { isFavorite: true });
+      expect(favoriteButton(element).getAttribute('aria-pressed')).toBe('true');
+      expect(favoriteButton(element).classList).toContain('active');
+      // The books do not change: they are not requested again
+      expect(listByLibrary).toHaveBeenCalledTimes(1);
+      expect(openSnackBar).toHaveBeenCalledWith(
+        '«Novela» marcada como favorita',
+        undefined,
+        expect.anything(),
+      );
+    });
+
+    it('keeps the mark and reports the error when the change fails', async () => {
+      const { harness, element, openSnackBar } = await setup({
+        update: vi.fn(() => throwError(() => new Error('down'))),
+      });
+
+      favoriteButton(element).click();
+      await harness.fixture.whenStable();
+
+      expect(favoriteButton(element).getAttribute('aria-pressed')).toBe('false');
+      expect(favoriteButton(element).disabled).toBe(false);
+      expect(openSnackBar).toHaveBeenCalledWith(
+        'No se ha podido guardar el cambio. Inténtalo de nuevo.',
+        undefined,
+        expect.anything(),
+      );
     });
   });
 

@@ -61,6 +61,97 @@ h1 {
   }
 }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: -8px 0 24px;
+
+  // With selected tags below, the chips sit closer to the filters they belong to
+  &:has(+ .active-tags) {
+    margin-bottom: 12px;
+  }
+}
+
+// Same look as the Material 3 filter chip next to it: 32px high, 8px corners, outlined when off
+// and tonal when some tag is selected
+.tag-filter {
+  // The select text uses the chip label font and colours
+  --mat-select-trigger-text-font: var(--mat-sys-label-large-font);
+  --mat-select-trigger-text-size: var(--mat-sys-label-large-size);
+  --mat-select-trigger-text-weight: var(--mat-sys-label-large-weight);
+  --mat-select-trigger-text-line-height: var(--mat-sys-label-large-line-height);
+  --mat-select-trigger-text-tracking: var(--mat-sys-label-large-tracking);
+  --mat-select-enabled-trigger-text-color: var(--mat-sys-on-surface-variant);
+  --mat-select-placeholder-text-color: var(--mat-sys-on-surface-variant);
+  --mat-select-enabled-arrow-color: var(--mat-sys-on-surface-variant);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 160px;
+  height: 32px;
+  box-sizing: border-box;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  color: var(--mat-sys-on-surface-variant);
+
+  &.active {
+    --mat-select-enabled-trigger-text-color: var(--mat-sys-on-secondary-container);
+    --mat-select-enabled-arrow-color: var(--mat-sys-on-secondary-container);
+
+    border-color: transparent;
+    background: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+  }
+
+  &.disabled {
+    opacity: 0.38;
+  }
+
+  &:has(.tag-select:focus-visible) {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+
+  // Decorative: clicks go through to the select, which covers the whole chip
+  mat-icon {
+    position: absolute;
+    left: 8px;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    pointer-events: none;
+  }
+}
+
+// Covers the whole chip, so a click anywhere opens it; flex centres the text vertically
+.tag-select {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 8px 0 32px;
+  box-sizing: border-box;
+}
+
+.active-tags {
+  display: block;
+  margin-bottom: 24px;
+}
+
+// Also styled inside the options panel: the options come from this template, so they keep its styles
+.tag-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 2px solid;
+  border-radius: 50%;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

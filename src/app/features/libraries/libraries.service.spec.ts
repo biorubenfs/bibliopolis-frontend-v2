@@ -71,6 +71,17 @@ describe('LibrariesService', () => {
     });
   });
 
+  it('only sends the favorites filter when it is on', () => {
+    service.list({ skip: 0, limit: 12, favorites: true }).subscribe();
+    service.list({ skip: 0, limit: 12, favorites: false }).subscribe();
+
+    const [on, off] = backend.match((r) => r.url === `${environment.apiUrl}/libraries`);
+    expect(on.request.params.get('favorites')).toBe('true');
+    expect(off.request.params.has('favorites')).toBe(false);
+    on.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
+    off.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
+  });
+
   it('sends the trimmed search term', () => {
     service.list({ skip: 0, limit: 12, search: '  novela ' }).subscribe();
 

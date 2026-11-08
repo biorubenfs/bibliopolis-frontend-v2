@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipListboxChange, MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -19,6 +21,12 @@ import {
   toPageNumber,
   toPageSize,
 } from '../../core/pagination/pagination';
+import {
+  MANAGE_TAGS_DIALOG_SIZE,
+  ManageTagsDialog,
+} from '../tags/manage-tags-dialog/manage-tags-dialog';
+import { MAX_TAGS_PER_LIBRARY, TAG_COLOR_STYLES, Tag } from '../tags/tag.model';
+import { TagsService } from '../tags/tags.service';
 import { DeleteLibraryDialog } from './delete-library-dialog/delete-library-dialog';
 import { LibrariesService } from './libraries.service';
 import { LibraryCard } from './library-card/library-card';
@@ -38,6 +46,25 @@ export const SEARCH_DEBOUNCE_MS = 300;
 /** Query param that keeps the search in the URL (survives reloads and back/forward). */
 export const SEARCH_QUERY_PARAM = 'q';
 
+/** Query param that keeps only the favorites (`?favorites=true`). */
+export const FAVORITES_QUERY_PARAM = 'favorites';
+const FAVORITES_FILTER = 'favorites';
+
+/** Query param with the IDs of the selected tags, separated by commas (`?tags=id1,id2`). */
+export const TAGS_QUERY_PARAM = 'tags';
+
+/** Which filters are applied, to pick the message shown when nothing matches. */
+type FilterKind = 'none' | 'search' | 'favorites' | 'mixed';
+
+function parseTagIds(value: string | null): string[] {
+  const ids = (value ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter((id) => id !== '');
+  // Repeated IDs would not change the results; more than the maximum cannot match any library
+  return [...new Set(ids)].slice(0, MAX_TAGS_PER_LIBRARY);
+}
+
 const PAGE_QUERY_PARAM = 'page';
 const LIMIT_QUERY_PARAM = 'limit';
 
@@ -46,11 +73,13 @@ const LIMIT_QUERY_PARAM = 'limit';
   imports: [
     LibraryCard,
     MatButtonModule,
+    MatChipsModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
+    MatSelectModule,
   ],
   templateUrl: './libraries-page.html',
   styleUrl: './libraries-page.scss',
@@ -59,6 +88,7 @@ const LIMIT_QUERY_PARAM = 'limit';
 })
 export class LibrariesPage {
   private readonly librariesService = inject(LibrariesService);
+  private readonly tagsService = inject(TagsService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
@@ -66,6 +96,7 @@ export class LibrariesPage {
 
   protected readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
   protected readonly searchMaxLength = LIBRARY_SEARCH_MAX_LENGTH;
+  protected readonly tagStyles = TAG_COLOR_STYLES;
 
   protected readonly libraries = signal<Library[]>([]);
   protected readonly total = signal(0);
@@ -73,12 +104,56 @@ export class LibrariesPage {
   protected readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   protected readonly state = signal<LoadState>('loading');
   protected readonly exportingId = signal<string | null>(null);
+  /** Library whose favorite mark is being saved. */
+  protected readonly savingFavoriteId = signal<string | null>(null);
   /** Text in the search field, updated on every keystroke. */
   protected readonly query = signal('');
   /** Search applied to the list (debounced and trimmed). */
   protected readonly search = signal('');
-  /** Hide the search field while the user has no libraries at all. */
-  protected readonly showSearch = computed(() => this.search() !== '' || this.total() > 0);
+  /** Only list the favorites. */
+  protected readonly favoritesOnly = signal(false);
+  /** Only list the libraries that have all these tags. */
+  protected readonly selectedTagIds = signal<string[]>([]);
+  /** No more tags can be selected: no library has more than the maximum. */
+  protected readonly tagFilterFull = computed(
+    () => this.selectedTagIds().length >= MAX_TAGS_PER_LIBRARY,
+  );
+  protected readonly filterKind = computed<FilterKind>(() => {
+    const search = this.search() !== '';
+    const favorites = this.favoritesOnly();
+    const tags = this.selectedTagIds().length > 0;
+    if (!search && !favorites && !tags) return 'none';
+    if (search && !favorites && !tags) return 'search';
+    if (favorites && !search && !tags) return 'favorites';
+    return 'mixed';
+  });
+  /** True when a search or a filter is applied. */
+  protected readonly filtered = computed(() => this.filterKind() !== 'none');
+
+  /** Tags the user can use, own and global, sorted by name. */
+  protected readonly tags = signal<Tag[]>([]);
+  /**
+   * Tags of each library listed, resolved from its IDs and sorted by name. IDs of tags that are
+   * not loaded (e.g. just deleted) are skipped.
+   */
+  /** Selected tags that are loaded, in name order, shown as removable chips. */
+  protected readonly selectedTags = computed(() =>
+    this.tags().filter((tag) => this.selectedTagIds().includes(tag.id)),
+  );
+  protected readonly cardTags = computed(
+    () =>
+      new Map(
+        this.libraries().map((library) => [
+          library.id,
+          this.tags().filter((tag) => library.tagIds.includes(tag.id)),
+        ]),
+      ),
+  );
+  /**
+   * Hide the search and the filters while the user has no libraries at all. They stay visible with
+   * no results, so the user can change them.
+   */
+  protected readonly showFilters = computed(() => this.filtered() || this.total() > 0);
 
   private readonly searchInput = new Subject<string>();
   private loadSubscription?: Subscription;
@@ -93,9 +168,17 @@ export class LibrariesPage {
           term: (params.get(SEARCH_QUERY_PARAM) ?? '').trim().slice(0, LIBRARY_SEARCH_MAX_LENGTH),
           page: toPageNumber(params.get(PAGE_QUERY_PARAM)),
           limit: toPageSize(params.get(LIMIT_QUERY_PARAM)),
+          favorites: params.get(FAVORITES_QUERY_PARAM) === 'true',
+          tags: parseTagIds(params.get(TAGS_QUERY_PARAM)),
         })),
         distinctUntilChanged(
-          (a, b) => a.term === b.term && a.page === b.page && a.limit === b.limit,
+          (a, b) =>
+            a.term === b.term &&
+            a.page === b.page &&
+            a.limit === b.limit &&
+            a.favorites === b.favorites &&
+            // Compared as text: two arrays with the same IDs are different objects
+            a.tags.join(',') === b.tags.join(','),
         ),
         takeUntilDestroyed(),
       )
@@ -108,15 +191,47 @@ export class LibrariesPage {
         takeUntilDestroyed(),
       )
       .subscribe((term) => this.updateUrl(term));
+
+    this.loadTags();
   }
 
-  protected load(): void {
-    this.state.set('loading');
+  /**
+   * Loads the tags. After managing them, `cleanUrl` drops from the filter the tags that no longer
+   * exist, which would otherwise leave the list empty.
+   */
+  private loadTags(options: { cleanUrl?: boolean } = {}): void {
+    this.tagsService.listAll().subscribe({
+      next: (tags) => {
+        this.tags.set(tags);
+        const existing = this.selectedTagIds().filter((id) => tags.some((tag) => tag.id === id));
+        if (options.cleanUrl && existing.length !== this.selectedTagIds().length) {
+          this.navigateWithFilters({ tags: existing }, true);
+        }
+      },
+      // The libraries are what matters here: without tags the cards and filters still work
+      error: () => undefined,
+    });
+  }
+
+  /**
+   * Loads the current page. A quiet load keeps the current list on screen instead of the spinner,
+   * so the card that was just changed does not vanish with the keyboard focus.
+   */
+  protected load(options: { quiet?: boolean } = {}): void {
+    if (!options.quiet) {
+      this.state.set('loading');
+    }
     const limit = this.pageSize();
     // Drop the previous request so a slow, outdated search cannot overwrite newer results
     this.loadSubscription?.unsubscribe();
     this.loadSubscription = this.librariesService
-      .list({ skip: this.pageIndex() * limit, limit, search: this.search() })
+      .list({
+        skip: this.pageIndex() * limit,
+        limit,
+        search: this.search(),
+        favorites: this.favoritesOnly(),
+        tagIds: this.selectedTagIds(),
+      })
       .subscribe({
         next: ({ items, total }) => {
           this.total.set(total);
@@ -147,6 +262,67 @@ export class LibrariesPage {
     this.updateUrl('');
   }
 
+  protected changeFavorites(event: MatChipListboxChange): void {
+    this.navigateWithFilters({ favorites: event.value === FAVORITES_FILTER });
+  }
+
+  protected changeTags(tagIds: string[]): void {
+    this.navigateWithFilters({ tags: tagIds.slice(0, MAX_TAGS_PER_LIBRARY) });
+  }
+
+  protected removeTagFilter(tagId: string): void {
+    this.navigateWithFilters({ tags: this.selectedTagIds().filter((id) => id !== tagId) });
+  }
+
+  private navigateWithFilters(
+    filters: { favorites?: boolean; tags?: string[] },
+    replaceUrl = false,
+  ): void {
+    const queryParams: Record<string, string | null> = {
+      // Different filters have different results: start again from the first page
+      [PAGE_QUERY_PARAM]: null,
+    };
+    if (filters.favorites !== undefined) {
+      queryParams[FAVORITES_QUERY_PARAM] = filters.favorites ? 'true' : null;
+    }
+    if (filters.tags !== undefined) {
+      queryParams[TAGS_QUERY_PARAM] = filters.tags.length > 0 ? filters.tags.join(',') : null;
+    }
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+      replaceUrl,
+    });
+  }
+
+  protected openManageTagsDialog(): void {
+    this.dialog
+      .open(ManageTagsDialog, MANAGE_TAGS_DIALOG_SIZE)
+      .afterClosed()
+      .subscribe(() => {
+        // Renamed, recoloured or deleted tags change the cards and the filters
+        this.loadTags({ cleanUrl: true });
+        this.load({ quiet: true });
+      });
+  }
+
+  protected clearFilters(): void {
+    this.query.set('');
+    // Replace any keystroke still waiting in the debounce
+    this.searchInput.next('');
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        [SEARCH_QUERY_PARAM]: null,
+        [FAVORITES_QUERY_PARAM]: null,
+        [TAGS_QUERY_PARAM]: null,
+        [PAGE_QUERY_PARAM]: null,
+      },
+      queryParamsHandling: 'merge',
+    });
+  }
+
   private updateUrl(term: string): void {
     // Typing a trailing space does not change the search, so it must not lose the current page
     if (term === this.search()) {
@@ -175,13 +351,21 @@ export class LibrariesPage {
     });
   }
 
-  private applyListParams(params: { term: string; page: number; limit: number }): void {
+  private applyListParams(params: {
+    term: string;
+    page: number;
+    limit: number;
+    favorites: boolean;
+    tags: string[];
+  }): void {
     // Only overwrite the field when the change comes from outside (reload, link, back/forward),
     // so a trailing space being typed is not removed
     if (this.query().trim() !== params.term) {
       this.query.set(params.term);
     }
     this.search.set(params.term);
+    this.favoritesOnly.set(params.favorites);
+    this.selectedTagIds.set(params.tags);
     this.pageIndex.set(params.page - 1);
     this.pageSize.set(params.limit);
     this.load();
@@ -196,6 +380,8 @@ export class LibrariesPage {
       .open<LibraryFormDialog, LibraryFormDialogData, Library>(LibraryFormDialog, DIALOG_SIZE)
       .afterClosed()
       .subscribe((library) => {
+        // The form may have created tags, even if it was cancelled afterwards
+        this.loadTags();
         if (library) {
           this.notify(`Biblioteca «${library.name}» creada`);
           // On the first page the URL does not change, so nothing else would reload the list
@@ -216,10 +402,15 @@ export class LibrariesPage {
       })
       .afterClosed()
       .subscribe((updated) => {
+        this.loadTags();
         if (updated) {
           this.libraries.update((list) =>
             list.map((item) => (item.id === updated.id ? updated : item)),
           );
+          // With a tag filter, changing the tags may take the library out of the results
+          if (this.selectedTagIds().length > 0) {
+            this.load({ quiet: true });
+          }
           this.notify('Cambios guardados');
         }
       });
@@ -238,6 +429,27 @@ export class LibrariesPage {
           this.load();
         }
       });
+  }
+
+  protected toggleFavorite(library: Library): void {
+    const isFavorite = !library.isFavorite;
+    this.savingFavoriteId.set(library.id);
+    this.librariesService.update(library.id, { isFavorite }).subscribe({
+      next: () => {
+        this.savingFavoriteId.set(null);
+        // Favorites are listed first, so the card may move to another position or page
+        this.notify(
+          isFavorite
+            ? `«${library.name}» marcada como favorita`
+            : `«${library.name}» quitada de favoritas`,
+        );
+        this.load({ quiet: true });
+      },
+      error: () => {
+        this.savingFavoriteId.set(null);
+        this.notify('No se ha podido guardar el cambio. Inténtalo de nuevo.');
+      },
+    });
   }
 
   protected export(library: Library, format: LibraryExportFormat): void {

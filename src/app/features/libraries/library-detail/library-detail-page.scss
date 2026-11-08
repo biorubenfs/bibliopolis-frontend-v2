@@ -52,7 +52,21 @@
   min-width: 0;
 }
 
+.title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.favorite {
+  flex: none;
+  // Centres the 48px button on the first line of the title (2rem × 1.25 = 40px)
+  margin-top: -4px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
 h1 {
+  min-width: 0;
   margin: 0;
   font: 500 2rem / 1.25 var(--app-font-display);
   color: var(--mat-sys-on-surface);
@@ -64,6 +78,15 @@ h1 {
   font: var(--mat-sys-body-large);
   color: var(--mat-sys-on-surface);
   overflow-wrap: anywhere;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 .count {

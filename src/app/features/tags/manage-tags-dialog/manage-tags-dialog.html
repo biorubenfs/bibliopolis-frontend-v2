@@ -1,0 +1,189 @@
+<h2 mat-dialog-title>Gestionar etiquetas</h2>
+
+<mat-dialog-content>
+  @switch (state()) {
+    @case ('loading') {
+      <div class="status">
+        <mat-spinner diameter="32" aria-label="Cargando etiquetas" />
+      </div>
+    }
+    @case ('error') {
+      <div class="status" role="alert">
+        <p>No se han podido cargar tus etiquetas.</p>
+        <button mat-stroked-button type="button" (click)="load()">Reintentar</button>
+      </div>
+    }
+    @default {
+      <form class="new" (submit)="create($event)" novalidate>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Nueva etiqueta</mat-label>
+          <input
+            matInput
+            autocomplete="off"
+            [attr.maxlength]="nameMaxLength"
+            [value]="newName()"
+            [disabled]="limitReached()"
+            (input)="newName.set(inputValue($event))"
+          />
+          <mat-hint align="end">{{ newName().length }} / {{ nameMaxLength }}</mat-hint>
+        </mat-form-field>
+        <app-tag-color-picker
+          label="Color de la nueva etiqueta"
+          [(value)]="newColor"
+          [disabled]="limitReached()"
+        />
+        <div class="form-actions">
+          <button mat-flat-button type="submit" [disabled]="!canCreate() || creating()">
+            @if (creating()) {
+              <mat-spinner diameter="20" aria-label="Creando etiqueta" />
+            } @else {
+              Crear etiqueta
+            }
+          </button>
+        </div>
+        @if (limitReached()) {
+          <p class="note">Has llegado al máximo de {{ maxTags }} etiquetas.</p>
+        }
+        <div class="error" role="alert">
+          @if (createError(); as message) {
+            {{ message }}
+          }
+        </div>
+      </form>
+
+      <h3>Tus etiquetas ({{ ownTags().length }} de {{ maxTags }})</h3>
+      @if (ownTags().length === 0) {
+        <p class="note">Aún no has creado ninguna.</p>
+      } @else {
+        <ul class="list">
+          @for (tag of ownTags(); track tag.id) {
+            <li>
+              @if (editingId() === tag.id) {
+                <form class="edit" (submit)="saveEdit($event, tag)" novalidate>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                    <mat-label>Nombre</mat-label>
+                    <input
+                      matInput
+                      autocomplete="off"
+                      [attr.maxlength]="nameMaxLength"
+                      [value]="editName()"
+                      (input)="editName.set(inputValue($event))"
+                      (keydown.escape)="$event.stopPropagation(); cancelEdit()"
+                    />
+                    <mat-hint align="end">{{ editName().length }} / {{ nameMaxLength }}</mat-hint>
+                  </mat-form-field>
+                  <app-tag-color-picker [(value)]="editColor" />
+                  <div class="form-actions">
+                    <button mat-button type="button" (click)="cancelEdit()">Cancelar</button>
+                    <button
+                      mat-flat-button
+                      type="submit"
+                      [disabled]="!canSaveEdit() || savingEdit()"
+                    >
+                      @if (savingEdit()) {
+                        <mat-spinner diameter="20" aria-label="Guardando etiqueta" />
+                      } @else {
+                        Guardar
+                      }
+                    </button>
+                  </div>
+                  <div class="error" role="alert">
+                    @if (editError(); as message) {
+                      {{ message }}
+                    }
+                  </div>
+                </form>
+              } @else if (confirmingDeleteId() === tag.id) {
+                <div class="confirm">
+                  <p>
+                    ¿Borrar <app-tag-badge [tag]="tag" />?
+                    @switch (deleteUsage()) {
+                      @case (null) {
+                        Comprobando en qué bibliotecas está…
+                      }
+                      @case (-1) {
+                        Se quitará de las bibliotecas que la tengan.
+                      }
+                      @case (0) {
+                        No está en ninguna biblioteca.
+                      }
+                      @case (1) {
+                        Se quitará de 1 biblioteca.
+                      }
+                      @default {
+                        Se quitará de {{ deleteUsage() }} bibliotecas.
+                      }
+                    }
+                  </p>
+                  <div class="form-actions">
+                    <button mat-button type="button" data-cancel (click)="cancelDelete()">
+                      Cancelar
+                    </button>
+                    <button
+                      mat-flat-button
+                      type="button"
+                      class="danger"
+                      [disabled]="deleting()"
+                      (click)="confirmDelete(tag)"
+                    >
+                      @if (deleting()) {
+                        <mat-spinner diameter="20" aria-label="Borrando etiqueta" />
+                      } @else {
+                        Borrar
+                      }
+                    </button>
+                  </div>
+                  <div class="error" role="alert">
+                    @if (deleteError(); as message) {
+                      {{ message }}
+                    }
+                  </div>
+                </div>
+              } @else {
+                <div class="row">
+                  <app-tag-badge [tag]="tag" />
+                  <span class="row-actions">
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Editar"
+                      [attr.data-edit]="tag.id"
+                      [attr.aria-label]="'Editar ' + tag.name"
+                      (click)="startEdit(tag)"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Borrar"
+                      [attr.data-delete]="tag.id"
+                      [attr.aria-label]="'Borrar ' + tag.name"
+                      (click)="startDelete(tag)"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </span>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      @if (globalTags().length > 0) {
+        <h3>Predeterminadas</h3>
+        <p class="note">Disponibles para todos los usuarios. No se pueden cambiar ni borrar.</p>
+        <ul class="list globals">
+          @for (tag of globalTags(); track tag.id) {
+            <li><app-tag-badge [tag]="tag" /></li>
+          }
+        </ul>
+      }
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Cerrar</button>
+</mat-dialog-actions>

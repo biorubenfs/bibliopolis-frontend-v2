@@ -37,6 +37,9 @@ import {
 } from '../../imports/import-csv-dialog/import-csv-dialog';
 import { LibraryImport, isActiveImport } from '../../imports/import.model';
 import { ImportsService } from '../../imports/imports.service';
+import { TagBadge } from '../../tags/tag-badge/tag-badge';
+import { Tag } from '../../tags/tag.model';
+import { TagsService } from '../../tags/tags.service';
 import { UserBookCard } from '../../user-books/user-book-card/user-book-card';
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
@@ -46,6 +49,7 @@ import {
   BookDetailDialogData,
   BookDetailDialogResult,
 } from '../book-detail-dialog/book-detail-dialog';
+import { FavoriteButton } from '../favorite-button/favorite-button';
 import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
 import { RemoveBookDialog, RemoveBookDialogData } from '../remove-book-dialog/remove-book-dialog';
@@ -70,11 +74,13 @@ const TOUCH_DEVICE_QUERY = '(hover: none) and (pointer: coarse)';
 @Component({
   selector: 'app-library-detail-page',
   imports: [
+    FavoriteButton,
     MatButtonModule,
     MatIconModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     RouterLink,
+    TagBadge,
     UserBookCard,
   ],
   templateUrl: './library-detail-page.html',
@@ -86,6 +92,7 @@ export class LibraryDetailPage {
   private readonly librariesService = inject(LibrariesService);
   private readonly userBooksService = inject(UserBooksService);
   private readonly importsService = inject(ImportsService);
+  private readonly tagsService = inject(TagsService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -114,6 +121,14 @@ export class LibraryDetailPage {
   protected readonly books = signal<UserBook[]>([]);
   protected readonly total = signal(0);
   protected readonly state = signal<LoadState>('loading');
+  protected readonly savingFavorite = signal(false);
+
+  /** Tags the user can use, to show the names and colours of the library tags. */
+  private readonly allTags = signal<Tag[]>([]);
+  protected readonly libraryTags = computed(() => {
+    const ids = this.library()?.tagIds ?? [];
+    return this.allTags().filter((tag) => ids.includes(tag.id));
+  });
 
   /** The latest import of this library, to show how it went and link to its report. */
   protected readonly latestImport = signal<LibraryImport | null>(null);
@@ -147,6 +162,11 @@ export class LibraryDetailPage {
       this.id();
       untracked(() => this.loadLatestImport());
     });
+    this.tagsService
+      .listAll()
+      .pipe(takeUntilDestroyed())
+      // Without the tags the page still works: the library is shown without them
+      .subscribe({ next: (tags) => this.allTags.set(tags), error: () => undefined });
   }
 
   private loadLatestImport(): void {
@@ -218,6 +238,29 @@ export class LibraryDetailPage {
           this.load();
           this.loadLatestImport();
         }
+      });
+  }
+
+  protected toggleFavorite(library: Library): void {
+    const isFavorite = !library.isFavorite;
+    this.savingFavorite.set(true);
+    this.librariesService
+      .update(library.id, { isFavorite })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.savingFavorite.set(false);
+          this.library.set(updated);
+          this.notify(
+            isFavorite
+              ? `«${updated.name}» marcada como favorita`
+              : `«${updated.name}» quitada de favoritas`,
+          );
+        },
+        error: () => {
+          this.savingFavorite.set(false);
+          this.notify('No se ha podido guardar el cambio. Inténtalo de nuevo.');
+        },
       });
   }
 
