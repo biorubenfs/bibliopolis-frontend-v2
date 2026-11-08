@@ -1,7 +1,7 @@
 <header class="page-header">
   <div>
     <h1>Mis bibliotecas</h1>
-    @if (state() === 'loaded' && total() > 0) {
+    @if (total() > 0) {
       <p class="count">
         @if (filtered()) {
           {{ total() }} {{ total() === 1 ? 'resultado' : 'resultados' }}
@@ -90,6 +90,11 @@
     <button mat-button type="button" class="manage-tags" (click)="openManageTagsDialog()">
       Gestionar etiquetas
     </button>
+
+    <button mat-flat-button type="button" class="create" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      Nueva biblioteca
+    </button>
   </div>
 
   @if (selectedTags().length > 0) {
@@ -154,6 +159,11 @@
         <mat-icon aria-hidden="true">shelves</mat-icon>
         <h2>Aún no tienes bibliotecas</h2>
         <p>Crea tu primera biblioteca para empezar a organizar tus libros.</p>
+        <!-- Without libraries the filters row is hidden, so its create button is shown here -->
+        <button mat-flat-button type="button" class="create" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          Nueva biblioteca
+        </button>
       </div>
     } @else {
       <ul class="grid">
@@ -188,8 +198,3 @@
     aria-label="Páginas de bibliotecas"
   />
 }
-
-<button mat-fab extended type="button" class="fab" (click)="openCreateDialog()">
-  <mat-icon>add</mat-icon>
-  Nueva biblioteca
-</button>

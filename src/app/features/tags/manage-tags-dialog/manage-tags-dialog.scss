@@ -1,3 +1,6 @@
+// Material pone padding-top: 0 al contenido que va justo tras el título, y el
+// label flotante del primer campo outline se corta. Ganamos en especificidad.
+.mat-mdc-dialog-title + .mat-mdc-dialog-content,
 mat-dialog-content {
   display: flex;
   flex-direction: column;
