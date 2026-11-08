@@ -6,8 +6,8 @@ import { environment } from '../../../environments/environment';
 import { ApiError } from '../http/api-error';
 import { AuthService } from './auth.service';
 
-function fakeToken(exp: number): string {
-  return `header.${btoa(JSON.stringify({ exp }))}.signature`;
+function fakeToken(exp: number, role?: string): string {
+  return `header.${btoa(JSON.stringify({ exp, role }))}.signature`;
 }
 
 describe('AuthService', () => {
@@ -69,5 +69,32 @@ describe('AuthService', () => {
 
     expect(service.isAuthenticated()).toBe(false);
     expect(localStorage.getItem('bibliopolis.accessToken')).toBeNull();
+  });
+
+  it('reads the role from the token and chooses the home page', () => {
+    service.login({ email: 'a@b.com', password: 'secret' }).subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/login`).flush({
+      results: {
+        type: 'auth',
+        attributes: { accessToken: fakeToken(Date.now() / 1000 + 3600, 'admin') },
+      },
+    });
+
+    expect(service.role()).toBe('admin');
+    expect(service.homeUrl()).toBe('/backoffice');
+
+    service.logout();
+    expect(service.role()).toBeNull();
+    expect(service.homeUrl()).toBe('/libraries');
+  });
+
+  it('treats a token without a known role as a regular user', () => {
+    service.login({ email: 'a@b.com', password: 'secret' }).subscribe();
+    http.expectOne(`${environment.apiUrl}/auth/login`).flush({
+      results: { type: 'auth', attributes: { accessToken: fakeToken(Date.now() / 1000 + 3600) } },
+    });
+
+    expect(service.role()).toBe('regular');
+    expect(service.homeUrl()).toBe('/libraries');
   });
 });

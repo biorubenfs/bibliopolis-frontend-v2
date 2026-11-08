@@ -1,0 +1,126 @@
+<header class="page-header">
+  <div>
+    <h1>Libros</h1>
+    @if (state() === 'loaded' && total() > 0) {
+      <p class="count">
+        @if (search()) {
+          {{ total() }} {{ total() === 1 ? 'resultado' : 'resultados' }}
+        } @else {
+          {{ total() }} {{ total() === 1 ? 'libro en el catálogo' : 'libros en el catálogo' }}
+        }
+      </p>
+    }
+  </div>
+
+  <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic" role="search">
+    <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+    <input
+      matInput
+      type="text"
+      placeholder="Buscar por ISBN, título o autor"
+      aria-label="Buscar libros"
+      autocomplete="off"
+      [attr.maxlength]="searchMaxLength"
+      [value]="query()"
+      (input)="onSearchInput($any($event.target).value)"
+      (keydown.escape)="clearSearch()"
+    />
+    @if (query()) {
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        aria-label="Borrar búsqueda"
+        (click)="clearSearch()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </mat-form-field>
+</header>
+
+<div class="actions">
+  <button mat-flat-button type="button" class="create" (click)="openNewBookDialog()">
+    <mat-icon>add</mat-icon>
+    Nuevo libro
+  </button>
+</div>
+
+@switch (state()) {
+  @case ('loading') {
+    <div class="status">
+      <mat-spinner diameter="40" aria-label="Cargando libros" />
+    </div>
+  }
+  @case ('error') {
+    <div class="status" role="alert">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <p>No se han podido cargar los libros.</p>
+      <button mat-stroked-button type="button" (click)="load()">Reintentar</button>
+    </div>
+  }
+  @default {
+    @if (items().length === 0) {
+      @if (search()) {
+        <div class="status empty">
+          <mat-icon aria-hidden="true">search_off</mat-icon>
+          <h2>Ningún libro coincide con «{{ search() }}»</h2>
+          <p>Busca por el ISBN exacto o por una palabra del título o del autor.</p>
+          <button mat-stroked-button type="button" (click)="clearSearch()">Borrar búsqueda</button>
+        </div>
+      } @else {
+        <div class="status empty">
+          <mat-icon aria-hidden="true">library_books</mat-icon>
+          <h2>El catálogo está vacío</h2>
+        </div>
+      }
+    } @else {
+      <ul class="list">
+        @for (book of items(); track book.id) {
+          <li class="row">
+            <div class="cover" aria-hidden="true">
+              @if (book.coverUrl) {
+                <img [src]="book.coverUrl" alt="" width="48" height="72" loading="lazy" />
+              } @else {
+                <mat-icon>menu_book</mat-icon>
+              }
+            </div>
+            <div class="row-main">
+              <p class="row-title">{{ book.title }}</p>
+              <p class="row-detail">{{ book.authors.join(', ') || 'Autor desconocido' }}</p>
+              <p class="row-detail isbn">
+                {{ book.isbn13 }}
+                @if (book.isbn10) {
+                  · {{ book.isbn10 }}
+                }
+              </p>
+            </div>
+            <div class="row-actions">
+              <button
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="'Editar ' + book.title"
+                (click)="openEditDialog(book)"
+              >
+                <mat-icon aria-hidden="true">edit</mat-icon>
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  }
+}
+
+<!-- Outside the @switch so it stays in the DOM while a page loads and keeps the keyboard focus -->
+@if (showPaginator()) {
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="pageSizeOptions"
+    showFirstLastButtons
+    (page)="changePage($event)"
+    aria-label="Páginas de libros"
+  />
+}

@@ -1,0 +1,23 @@
+<div class="scanner">
+  <header class="toolbar">
+    <h2 mat-dialog-title>Escanear ISBN</h2>
+    <button mat-icon-button type="button" mat-dialog-close aria-label="Cerrar el escáner">
+      <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+  </header>
+
+  <!-- Always in the DOM: the camera needs the element -->
+  <div class="camera" [hidden]="cameraError() !== null">
+    <video #video autoplay muted playsinline aria-label="Imagen de la cámara"></video>
+    <div class="guide" aria-hidden="true"></div>
+    <p class="help">Encuadra el código de barras del libro</p>
+  </div>
+
+  @if (cameraError(); as message) {
+    <div class="camera-error" role="alert">
+      <p>{{ message }}</p>
+      <p>También puedes cerrar el escáner y escribir el ISBN a mano.</p>
+      <button mat-stroked-button type="button" (click)="startCamera()">Reintentar</button>
+    </div>
+  }
+</div>

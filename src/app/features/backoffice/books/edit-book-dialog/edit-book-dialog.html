@@ -1,0 +1,122 @@
+<h2 mat-dialog-title>Editar libro</h2>
+
+<form (submit)="save($event)" novalidate>
+  <mat-dialog-content>
+    <dl class="isbns">
+      <div>
+        <dt>ISBN-13</dt>
+        <dd>{{ book.isbn13 }}</dd>
+      </div>
+      @if (book.isbn10) {
+        <div>
+          <dt>ISBN-10</dt>
+          <dd>{{ book.isbn10 }}</dd>
+        </div>
+      }
+    </dl>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Título</mat-label>
+      <input matInput [formControl]="title" required />
+      <mat-error>Introduce el título.</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Autores</mat-label>
+      <mat-chip-grid #authorGrid aria-label="Autores">
+        @for (author of authors(); track $index) {
+          <mat-chip-row (removed)="removeAuthor($index)">
+            {{ author }}
+            <button matChipRemove type="button" [attr.aria-label]="'Quitar a ' + author">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+        }
+        <input
+          placeholder="Añadir autor"
+          [matChipInputFor]="authorGrid"
+          [matChipInputAddOnBlur]="true"
+          (matChipInputTokenEnd)="addAuthor($event)"
+        />
+      </mat-chip-grid>
+      <mat-hint>Pulsa Intro para añadir cada autor</mat-hint>
+    </mat-form-field>
+
+    <fieldset class="covers">
+      <legend>Portada</legend>
+      @switch (coversState()) {
+        @case ('loading') {
+          <div class="covers-status" role="status">
+            <mat-spinner diameter="24" aria-hidden="true" />
+            Buscando portadas en las fuentes…
+          </div>
+        }
+        @case ('error') {
+          <div class="covers-status" role="alert">
+            No se han podido consultar las fuentes.
+            <button mat-button type="button" (click)="loadCovers()">Reintentar</button>
+          </div>
+        }
+        @default {
+          @if (covers().length === 0) {
+            <p class="covers-status" role="status">Ninguna fuente tiene portada para este libro.</p>
+          }
+        }
+      }
+      <mat-radio-group
+        class="cover-options"
+        aria-label="Portada"
+        [value]="coverChoice()"
+        (change)="coverChoice.set($event.value)"
+      >
+        @if (hasCurrentCover) {
+          <mat-radio-button value="current">
+            <span class="cover-option">
+              <img [src]="book.coverUrl" alt="" width="64" height="96" />
+              <span class="cover-label">Actual</span>
+            </span>
+          </mat-radio-button>
+        }
+        @for (cover of covers(); track cover.source) {
+          <mat-radio-button [value]="cover.source">
+            <span class="cover-option">
+              @if (cover.coverUrl) {
+                <img [src]="cover.coverUrl" alt="" width="64" height="96" />
+              }
+              <span class="cover-label">{{ sourceLabels[cover.source] }}</span>
+            </span>
+          </mat-radio-button>
+        }
+        <mat-radio-button value="none">
+          <span class="cover-option">
+            <span class="no-cover" aria-hidden="true"><mat-icon>hide_image</mat-icon></span>
+            <span class="cover-label">Sin portada</span>
+          </span>
+        </mat-radio-button>
+      </mat-radio-group>
+    </fieldset>
+
+    <p class="warning">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      Los cambios se aplicarán también a este libro en las bibliotecas de los usuarios que lo
+      tienen.
+    </p>
+
+    <div class="error" role="alert">
+      @if (errorMessage(); as message) {
+        {{ message }}
+      }
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">
+      @if (saving()) {
+        <mat-spinner diameter="20" aria-label="Guardando cambios" />
+      } @else {
+        Guardar
+      }
+    </button>
+  </mat-dialog-actions>
+</form>

@@ -9,11 +9,15 @@ import { Login } from './login';
 describe('Login', () => {
   let loginResult: Observable<void>;
   const login = vi.fn(() => loginResult);
+  let homeUrl = '/libraries';
 
   function setup() {
     TestBed.configureTestingModule({
       imports: [Login],
-      providers: [provideRouter([]), { provide: AuthService, useValue: { login } }],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: { login, homeUrl: () => homeUrl } },
+      ],
     });
     const fixture = TestBed.createComponent(Login);
     fixture.detectChanges();
@@ -46,6 +50,18 @@ describe('Login', () => {
 
     expect(login).toHaveBeenCalledWith({ email: 'user@email.com', password: 'secret' });
     expect(navigate).toHaveBeenCalledWith('/libraries');
+  });
+
+  it('navigates an admin to the backoffice after a successful login', () => {
+    loginResult = of(undefined);
+    homeUrl = '/backoffice';
+    const fixture = setup();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+    fillAndSubmit(fixture.nativeElement, 'admin@email.com', 'secret');
+
+    expect(navigate).toHaveBeenCalledWith('/backoffice');
+    homeUrl = '/libraries';
   });
 
   it('shows a Spanish message when the credentials are wrong', async () => {

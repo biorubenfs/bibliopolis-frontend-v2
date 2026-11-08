@@ -1,0 +1,102 @@
+<h2 mat-dialog-title>Nuevo libro</h2>
+
+<form [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <mat-dialog-content>
+    <div class="search">
+      <mat-form-field appearance="outline">
+        <mat-label>ISBN</mat-label>
+        <input
+          matInput
+          formControlName="isbn"
+          autocomplete="off"
+          required
+          (keydown.enter)="onIsbnEnter($event)"
+        />
+        <mat-hint>ISBN-10 o ISBN-13</mat-hint>
+        @if (form.controls.isbn.hasError('isbn')) {
+          <mat-error>Ese ISBN no es válido.</mat-error>
+        } @else {
+          <mat-error>Introduce un ISBN.</mat-error>
+        }
+      </mat-form-field>
+      @if (!manual()) {
+        <button mat-stroked-button type="button" [disabled]="searching()" (click)="search()">
+          Buscar
+        </button>
+        <button mat-icon-button type="button" aria-label="Escanear el ISBN" (click)="openScanner()">
+          <mat-icon aria-hidden="true">barcode_scanner</mat-icon>
+        </button>
+      }
+    </div>
+
+    <!-- Always in the DOM so that screen readers announce the result of the search -->
+    <div role="status">
+      @if (searching()) {
+        <div class="searching">
+          <mat-spinner diameter="24" aria-hidden="true" />
+          Buscando libro…
+        </div>
+      }
+      @if (catalogBook(); as book) {
+        <p class="notice">Este libro ya está en el catálogo.</p>
+        <app-book-preview [book]="book" />
+      }
+      @if (previewBook(); as book) {
+        <p class="notice">Comprueba que es el libro correcto antes de darlo de alta.</p>
+        <app-book-preview [book]="book" />
+      }
+      @if (manual() && notFoundInSources()) {
+        <p class="notice">
+          No hemos encontrado ese ISBN en las fuentes. Si es correcto, escribe sus datos.
+        </p>
+      }
+    </div>
+
+    @if (manual()) {
+      <mat-form-field appearance="outline">
+        <mat-label>Título</mat-label>
+        <input matInput formControlName="title" required />
+        <mat-error>Introduce el título.</mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Autores</mat-label>
+        <input matInput formControlName="authors" required />
+        <mat-hint>Separa los autores con comas</mat-hint>
+        <mat-error>Introduce al menos un autor.</mat-error>
+      </mat-form-field>
+      <p class="hint">
+        El libro se crea sin portada. Podrás elegirla después si alguna fuente la tiene.
+      </p>
+    } @else if (!catalogBook() && !previewBook()) {
+      <button mat-button type="button" class="manual-link" (click)="openManualEntry()">
+        Escribir los datos a mano
+      </button>
+    }
+
+    <div class="error" role="alert">
+      @if (errorMessage(); as message) {
+        {{ message }}
+      }
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    @if (manual()) {
+      <button mat-button type="button" (click)="backToSearch()">Volver</button>
+    } @else {
+      <button mat-button type="button" mat-dialog-close>Cancelar</button>
+    }
+    @if (catalogBook(); as book) {
+      <button mat-flat-button type="button" (click)="editExisting(book)">Editar libro</button>
+    }
+    @if (previewBook() || manual()) {
+      <button mat-flat-button type="submit" [disabled]="saving()">
+        @if (saving()) {
+          <mat-spinner diameter="20" aria-label="Dando de alta el libro" />
+        } @else {
+          Dar de alta
+        }
+      </button>
+    }
+  </mat-dialog-actions>
+</form>

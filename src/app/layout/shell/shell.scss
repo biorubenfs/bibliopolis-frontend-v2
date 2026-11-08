@@ -95,6 +95,14 @@
   font: var(--mat-sys-body-small);
 }
 
+.area-label {
+  margin: 0 0 -16px;
+  padding: 0 16px;
+  font: var(--mat-sys-label-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .nav-list {
   display: flex;
   flex: 1;
@@ -148,4 +156,11 @@
 .topbar-brand {
   font: 600 1.25rem / 1 var(--app-font-display);
   color: var(--mat-sys-primary);
+}
+
+.topbar-area {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }

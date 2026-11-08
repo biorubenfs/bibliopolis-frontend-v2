@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -19,11 +19,12 @@ describe('Shell', () => {
     updatedAt: '',
   };
 
-  async function render() {
+  async function render(area?: 'backoffice') {
     TestBed.configureTestingModule({
       imports: [Shell],
       providers: [
         provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { data: area ? { area } : {} } } },
         {
           provide: AuthService,
           useValue: { currentUser: signal(user), loadCurrentUser: () => of(user), logout },
@@ -50,6 +51,16 @@ describe('Shell', () => {
 
     expect(element.querySelector('a.account')?.getAttribute('href')).toBe('/profile');
     expect(element.querySelector('mat-menu')).toBeNull();
+  });
+
+  it('shows the backoffice sections and profile in the backoffice', async () => {
+    const element = await render('backoffice');
+
+    const links = Array.from(element.querySelectorAll('.nav-list a span')).map((a) =>
+      a.textContent?.trim(),
+    );
+    expect(links).toEqual(['Libros', 'Usuarios']);
+    expect(element.querySelector('a.account')?.getAttribute('href')).toBe('/backoffice/profile');
   });
 
   it('logs out and goes to the login page', async () => {
