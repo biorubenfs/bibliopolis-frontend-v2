@@ -1,23 +1,38 @@
 import { TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 
+import { Tag } from '../tags/tag.model';
+import { TagsService } from '../tags/tags.service';
 import { LibrariesService } from './libraries.service';
 import { LibrariesPage, SEARCH_DEBOUNCE_MS } from './libraries-page';
 import { Library } from './library.model';
 
-function library(id: string, name: string, books: string[] = [], isFavorite = false): Library {
+function library(
+  id: string,
+  name: string,
+  books: string[] = [],
+  isFavorite = false,
+  tagIds: string[] = [],
+): Library {
   return {
     id,
     name,
     description: `Descripción de ${name}`,
     books,
     isFavorite,
+    tagIds,
     userId: 'u1',
     createdAt: '',
     updatedAt: '',
   };
+}
+
+/** The tags of the user, served without HTTP. */
+function tagsStub(tags: Tag[] = []) {
+  return { provide: TagsService, useValue: { listAll: () => of(tags) } };
 }
 
 describe('LibrariesPage', () => {
@@ -26,6 +41,7 @@ describe('LibrariesPage', () => {
       imports: [LibrariesPage],
       providers: [
         provideRouter([]),
+        tagsStub(),
         { provide: LibrariesService, useValue: { list: () => of({ items, total: items.length }) } },
       ],
     });
@@ -65,7 +81,11 @@ describe('LibrariesPage', () => {
       });
       TestBed.configureTestingModule({
         imports: [LibrariesPage],
-        providers: [provideRouter([]), { provide: LibrariesService, useValue: { list } }],
+        providers: [
+          provideRouter([]),
+          tagsStub(),
+          { provide: LibrariesService, useValue: { list } },
+        ],
       });
       const router = TestBed.inject(Router);
       await router.navigateByUrl(initialUrl);
@@ -108,6 +128,7 @@ describe('LibrariesPage', () => {
         limit: 12,
         search: 'nov',
         favorites: false,
+        tagIds: [],
       });
       expect(element.querySelectorAll('.card').length).toBe(1);
       expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
@@ -122,6 +143,7 @@ describe('LibrariesPage', () => {
         limit: 12,
         search: 'ensayo',
         favorites: false,
+        tagIds: [],
       });
       expect(input()?.value).toBe('ensayo');
       expect(element.querySelectorAll('.card').length).toBe(1);
@@ -133,7 +155,13 @@ describe('LibrariesPage', () => {
       await router.navigateByUrl('/');
       await wait();
 
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '', favorites: false });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: '',
+        favorites: false,
+        tagIds: [],
+      });
       expect(input()?.value).toBe('');
     });
 
@@ -151,7 +179,13 @@ describe('LibrariesPage', () => {
       clear.click();
       await wait();
       expect(router.url).toBe('/');
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '', favorites: false });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: '',
+        favorites: false,
+        tagIds: [],
+      });
       expect(element.querySelectorAll('.card').length).toBe(2);
 
       // The cleared search is not re-applied when the debounce time passes
@@ -181,7 +215,11 @@ describe('LibrariesPage', () => {
       const list = vi.fn(results);
       TestBed.configureTestingModule({
         imports: [LibrariesPage],
-        providers: [provideRouter([]), { provide: LibrariesService, useValue: { list } }],
+        providers: [
+          provideRouter([]),
+          tagsStub(),
+          { provide: LibrariesService, useValue: { list } },
+        ],
       });
       const router = TestBed.inject(Router);
       await router.navigateByUrl(initialUrl);
@@ -201,7 +239,13 @@ describe('LibrariesPage', () => {
       await wait();
 
       expect(router.url).toBe('/?page=2');
-      expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '', favorites: false });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 12,
+        limit: 12,
+        search: '',
+        favorites: false,
+        tagIds: [],
+      });
     });
 
     it('jumps to the last and the first page', async () => {
@@ -213,13 +257,25 @@ describe('LibrariesPage', () => {
       await wait();
 
       expect(router.url).toBe('/?page=5');
-      expect(list).toHaveBeenLastCalledWith({ skip: 48, limit: 12, search: '', favorites: false });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 48,
+        limit: 12,
+        search: '',
+        favorites: false,
+        tagIds: [],
+      });
 
       element.querySelector<HTMLButtonElement>('button[aria-label="Primera página"]')!.click();
       await wait();
 
       expect(router.url).toBe('/');
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '', favorites: false });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: '',
+        favorites: false,
+        tagIds: [],
+      });
     });
 
     it('keeps the paginator and the keyboard focus while the next page loads', async () => {
@@ -254,7 +310,13 @@ describe('LibrariesPage', () => {
       );
 
       expect(list).toHaveBeenCalledTimes(1);
-      expect(list).toHaveBeenCalledWith({ skip: 24, limit: 24, search: '', favorites: false });
+      expect(list).toHaveBeenCalledWith({
+        skip: 24,
+        limit: 24,
+        search: '',
+        favorites: false,
+        tagIds: [],
+      });
       expect(element.querySelector('.mat-mdc-paginator-range-label')?.textContent).toContain(
         '25 – 48 de 60',
       );
@@ -266,20 +328,38 @@ describe('LibrariesPage', () => {
       await router.navigateByUrl('/');
       await wait();
 
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '', favorites: false });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: '',
+        favorites: false,
+        tagIds: [],
+      });
     });
 
     it('falls back to the defaults on invalid values', async () => {
       const { list } = await setup('/?page=abc&limit=7');
 
-      expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12, search: '', favorites: false });
+      expect(list).toHaveBeenCalledWith({
+        skip: 0,
+        limit: 12,
+        search: '',
+        favorites: false,
+        tagIds: [],
+      });
     });
 
     it('goes to the last page when the URL points past the end', async () => {
       const { element, list, router } = await setup('/?page=9');
 
       expect(router.url).toBe('/?page=2');
-      expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '', favorites: false });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 12,
+        limit: 12,
+        search: '',
+        favorites: false,
+        tagIds: [],
+      });
       expect(element.querySelectorAll('.card').length).toBe(1);
     });
 
@@ -302,6 +382,7 @@ describe('LibrariesPage', () => {
         limit: 24,
         search: 'nov',
         favorites: false,
+        tagIds: [],
       });
     });
 
@@ -348,6 +429,7 @@ describe('LibrariesPage', () => {
         imports: [LibrariesPage],
         providers: [
           provideRouter([]),
+          tagsStub(),
           { provide: LibrariesService, useValue: { list, update } },
           { provide: MatSnackBar, useValue: { open: openSnackBar } },
         ],
@@ -374,7 +456,13 @@ describe('LibrariesPage', () => {
 
       // A new filter starts again from the first page, keeping the page size
       expect(router.parseUrl(router.url).queryParams).toEqual({ limit: '24', favorites: 'true' });
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 24, search: '', favorites: true });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 24,
+        search: '',
+        favorites: true,
+        tagIds: [],
+      });
       expect(element.querySelectorAll('.card').length).toBe(1);
       expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
     });
@@ -383,7 +471,13 @@ describe('LibrariesPage', () => {
       const { list, chip } = await setup('/?favorites=true');
 
       expect(list).toHaveBeenCalledTimes(1);
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '', favorites: true });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: '',
+        favorites: true,
+        tagIds: [],
+      });
       expect(chip().querySelector('[role="option"]')?.getAttribute('aria-selected')).toBe('true');
     });
 
@@ -454,6 +548,206 @@ describe('LibrariesPage', () => {
         undefined,
         expect.anything(),
       );
+    });
+  });
+
+  describe('tags', () => {
+    afterEach(() => vi.useRealTimers());
+
+    const tag = (id: string, name: string, userId: string | null = 'u1'): Tag => ({
+      id,
+      name,
+      color: 'green',
+      userId,
+      createdAt: '',
+      updatedAt: '',
+    });
+    const novela = tag('t1', 'Novela');
+    const prestados = tag('t2', 'Prestados');
+    const clasicos = tag('t3', 'Clásicos', null);
+    const novelaLibrary = library('1', 'Novela', [], false, ['t1', 't3']);
+    const ensayoLibrary = library('2', 'Ensayo', [], false, ['t2']);
+
+    async function setup(
+      initialUrl = '/',
+      options: { tags?: Tag[]; tagsAfterManaging?: Tag[] } = {},
+    ) {
+      vi.useFakeTimers();
+      const items = [novelaLibrary, ensayoLibrary];
+      const list = vi.fn((params: { tagIds?: string[] }) => {
+        const found = items.filter((item) =>
+          (params.tagIds ?? []).every((id) => item.tagIds.includes(id)),
+        );
+        return of({ items: found, total: found.length });
+      });
+      let tagsLoads = 0;
+      const listAll = vi.fn(() => {
+        tagsLoads++;
+        return of(
+          tagsLoads > 1 && options.tagsAfterManaging
+            ? options.tagsAfterManaging
+            : (options.tags ?? [clasicos, novela, prestados]),
+        );
+      });
+      const openDialog = vi.fn(() => ({ afterClosed: () => of(undefined) }));
+      TestBed.configureTestingModule({
+        imports: [LibrariesPage],
+        providers: [
+          provideRouter([]),
+          { provide: LibrariesService, useValue: { list } },
+          { provide: TagsService, useValue: { listAll } },
+          { provide: MatDialog, useValue: { open: openDialog } },
+        ],
+      });
+      const router = TestBed.inject(Router);
+      await router.navigateByUrl(initialUrl);
+      const fixture = TestBed.createComponent(LibrariesPage);
+      const element = fixture.nativeElement as HTMLElement;
+      const wait = async () => {
+        await vi.advanceTimersByTimeAsync(0);
+        fixture.detectChanges();
+      };
+      await wait();
+      /** Opens the tags dropdown and returns its options, rendered in the overlay. */
+      const openTagSelect = async () => {
+        element.querySelector<HTMLElement>('.tag-select .mat-mdc-select-trigger')!.click();
+        await wait();
+        return Array.from(document.querySelectorAll<HTMLElement>('.tag-select-panel mat-option'));
+      };
+      const option = (options: HTMLElement[], name: string) =>
+        options.find((item) => item.textContent?.includes(name))!;
+      const activeChips = () =>
+        Array.from(element.querySelectorAll('.active-tags mat-chip')).map((chip) =>
+          chip.textContent?.replace('cancel', '').trim(),
+        );
+      return {
+        element,
+        list,
+        listAll,
+        openDialog,
+        router,
+        openTagSelect,
+        option,
+        activeChips,
+        wait,
+      };
+    }
+
+    it('shows the tags of each library on its card, sorted by name', async () => {
+      const { element } = await setup();
+
+      const firstCard = element.querySelectorAll('app-library-card')[0];
+      const badges = firstCard.querySelectorAll('app-tag-badge');
+      expect(Array.from(badges).map((badge) => badge.textContent?.trim())).toEqual([
+        'Clásicos',
+        'Novela',
+      ]);
+    });
+
+    it('lists the tags in a dropdown instead of one chip per tag', async () => {
+      const { element, openTagSelect, activeChips } = await setup();
+
+      // Only the favorites filter is a chip; no tag is selected yet
+      expect(element.querySelectorAll('mat-chip-option').length).toBe(1);
+      expect(activeChips()).toEqual([]);
+      const options = await openTagSelect();
+      expect(options.map((item) => item.textContent?.trim())).toEqual([
+        'Clásicos',
+        'Novela',
+        'Prestados',
+      ]);
+    });
+
+    it('filters by the tags chosen in the dropdown and keeps them in the URL', async () => {
+      const { element, list, router, openTagSelect, option, activeChips, wait } =
+        await setup('/?page=2');
+
+      option(await openTagSelect(), 'Novela').click();
+      await wait();
+
+      expect(router.parseUrl(router.url).queryParams).toEqual({ tags: 't1' });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: '',
+        favorites: false,
+        tagIds: ['t1'],
+      });
+      expect(element.querySelectorAll('.card').length).toBe(1);
+      expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
+      expect(activeChips()).toEqual(['Novela']);
+
+      // The panel stays open: a second tag is added to the first one
+      option(
+        Array.from(document.querySelectorAll('.tag-select-panel mat-option')),
+        'Clásicos',
+      ).click();
+      await wait();
+
+      expect(router.parseUrl(router.url).queryParams).toEqual({ tags: 't3,t1' });
+      expect(activeChips()).toEqual(['Clásicos', 'Novela']);
+    });
+
+    it('restores the tag filter from the URL', async () => {
+      const { element, list, activeChips } = await setup('/?tags=t2');
+
+      expect(list).toHaveBeenCalledTimes(1);
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: '',
+        favorites: false,
+        tagIds: ['t2'],
+      });
+      expect(activeChips()).toEqual(['Prestados']);
+      expect(element.querySelector('.tag-select')?.textContent).toContain('Etiquetas (1)');
+    });
+
+    it('removes a tag from the filter with its chip', async () => {
+      const { element, router, activeChips, wait } = await setup('/?tags=t1,t2');
+
+      element.querySelector<HTMLButtonElement>('[aria-label="Quitar el filtro Novela"]')!.click();
+      await wait();
+
+      expect(router.parseUrl(router.url).queryParams).toEqual({ tags: 't2' });
+      expect(activeChips()).toEqual(['Prestados']);
+    });
+
+    it('does not allow selecting more tags than a library can have', async () => {
+      const many = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => tag(id, `Tag ${id}`));
+      const { openTagSelect, option } = await setup('/?tags=a,b,c,d,e', { tags: many });
+
+      const options = await openTagSelect();
+      expect(option(options, 'Tag f').getAttribute('aria-disabled')).toBe('true');
+      expect(option(options, 'Tag a').getAttribute('aria-disabled')).toBe('false');
+    });
+
+    it('shows a no-results state that clears every filter', async () => {
+      const { element, router, wait } = await setup('/?tags=t1,t2&q=nada');
+
+      expect(element.textContent).toContain('Ninguna biblioteca coincide con los filtros');
+      Array.from(element.querySelectorAll('button'))
+        .find((button) => button.textContent?.includes('Quitar filtros'))!
+        .click();
+      await wait();
+
+      expect(router.url).toBe('/');
+    });
+
+    it('reloads the tags after managing them and drops deleted ones from the filter', async () => {
+      const { element, list, listAll, openDialog, router, wait } = await setup('/?tags=t1,t2', {
+        tagsAfterManaging: [clasicos, prestados],
+      });
+
+      Array.from(element.querySelectorAll('button'))
+        .find((button) => button.textContent?.includes('Gestionar etiquetas'))!
+        .click();
+      await wait();
+
+      expect(openDialog).toHaveBeenCalled();
+      expect(listAll).toHaveBeenCalledTimes(2);
+      expect(router.parseUrl(router.url).queryParams).toEqual({ tags: 't2' });
+      expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ tagIds: ['t2'] }));
     });
   });
 });

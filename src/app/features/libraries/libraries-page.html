@@ -42,12 +42,73 @@
 </header>
 
 @if (showFilters()) {
-  <mat-chip-listbox class="filters" multiple aria-label="Filtros" (change)="changeFilters($event)">
-    <mat-chip-option value="favorites" [selected]="favoritesOnly()">
-      <mat-icon matChipAvatar aria-hidden="true">bookmark</mat-icon>
-      Favoritas
-    </mat-chip-option>
-  </mat-chip-listbox>
+  <div class="filters">
+    <mat-chip-listbox aria-label="Filtro de favoritas" (change)="changeFavorites($event)">
+      <mat-chip-option value="favorites" [selected]="favoritesOnly()">
+        <mat-icon matChipAvatar aria-hidden="true">bookmark</mat-icon>
+        Favoritas
+      </mat-chip-option>
+    </mat-chip-listbox>
+
+    <!-- A select without its form field, styled as one more filter chip -->
+    <div
+      class="tag-filter"
+      [class.active]="selectedTags().length > 0"
+      [class.disabled]="tags().length === 0"
+    >
+      <mat-icon aria-hidden="true">sell</mat-icon>
+      <!-- The menu stays open while choosing, so several tags can be picked at once -->
+      <mat-select
+        class="tag-select"
+        multiple
+        placeholder="Etiquetas"
+        aria-label="Filtrar por etiquetas"
+        panelClass="tag-select-panel"
+        [panelWidth]="null"
+        [value]="selectedTagIds()"
+        [disabled]="tags().length === 0"
+        (selectionChange)="changeTags($event.value)"
+      >
+        <mat-select-trigger>Etiquetas ({{ selectedTags().length }})</mat-select-trigger>
+        @for (tag of tags(); track tag.id) {
+          <mat-option
+            [value]="tag.id"
+            [disabled]="tagFilterFull() && !selectedTagIds().includes(tag.id)"
+          >
+            <span
+              class="tag-dot"
+              aria-hidden="true"
+              [style.background-color]="tagStyles[tag.color].background"
+              [style.border-color]="tagStyles[tag.color].text"
+            ></span>
+            {{ tag.name }}
+          </mat-option>
+        }
+      </mat-select>
+    </div>
+
+    <button mat-button type="button" class="manage-tags" (click)="openManageTagsDialog()">
+      Gestionar etiquetas
+    </button>
+  </div>
+
+  @if (selectedTags().length > 0) {
+    <mat-chip-set class="active-tags" aria-label="Etiquetas del filtro">
+      @for (tag of selectedTags(); track tag.id) {
+        <mat-chip
+          [style.--mat-chip-elevated-container-color]="tagStyles[tag.color].background"
+          [style.--mat-chip-label-text-color]="tagStyles[tag.color].text"
+          [style.--mat-chip-with-trailing-icon-trailing-icon-color]="tagStyles[tag.color].text"
+          (removed)="removeTagFilter(tag.id)"
+        >
+          {{ tag.name }}
+          <button matChipRemove type="button" [attr.aria-label]="'Quitar el filtro ' + tag.name">
+            <mat-icon>cancel</mat-icon>
+          </button>
+        </mat-chip>
+      }
+    </mat-chip-set>
+  }
 }
 
 @switch (state()) {
@@ -64,21 +125,21 @@
     </div>
   }
   @default {
-    @if (libraries().length === 0 && search() && favoritesOnly()) {
+    @if (libraries().length === 0 && filterKind() === 'mixed') {
       <div class="status empty">
-        <mat-icon aria-hidden="true">search_off</mat-icon>
-        <h2>Ninguna biblioteca favorita coincide con «{{ search() }}»</h2>
-        <p>Prueba con otra palabra o quita el filtro de favoritas.</p>
+        <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+        <h2>Ninguna biblioteca coincide con los filtros</h2>
+        <p>Prueba a quitar alguno de los filtros o a cambiar la búsqueda.</p>
         <button mat-stroked-button type="button" (click)="clearFilters()">Quitar filtros</button>
       </div>
-    } @else if (libraries().length === 0 && search()) {
+    } @else if (libraries().length === 0 && filterKind() === 'search') {
       <div class="status empty">
         <mat-icon aria-hidden="true">search_off</mat-icon>
         <h2>Ninguna biblioteca coincide con «{{ search() }}»</h2>
         <p>Prueba con otra palabra del nombre o de la descripción.</p>
         <button mat-stroked-button type="button" (click)="clearSearch()">Borrar búsqueda</button>
       </div>
-    } @else if (libraries().length === 0 && favoritesOnly()) {
+    } @else if (libraries().length === 0 && filterKind() === 'favorites') {
       <div class="status empty">
         <mat-icon aria-hidden="true">bookmark_border</mat-icon>
         <h2>Aún no tienes bibliotecas favoritas</h2>
@@ -100,6 +161,7 @@
           <li>
             <app-library-card
               [library]="library"
+              [tags]="cardTags().get(library.id) ?? []"
               [exporting]="exportingId() === library.id"
               [savingFavorite]="savingFavoriteId() === library.id"
               (favoriteToggled)="toggleFavorite(library)"

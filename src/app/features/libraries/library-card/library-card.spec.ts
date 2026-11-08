@@ -11,6 +11,7 @@ describe('LibraryCard', () => {
     description: 'Mis novelas',
     books: ['b1'],
     isFavorite: false,
+    tagIds: [],
     userId: 'u1',
     createdAt: '',
     updatedAt: '',
@@ -83,5 +84,29 @@ describe('LibraryCard', () => {
       fixture.detectChanges();
       expect(favoriteButton(fixture.nativeElement).disabled).toBe(true);
     });
+  });
+
+  it('shows every tag as a badge, and no list when there are none', () => {
+    const fixture = render();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('.tags')).toBeNull();
+
+    const tags = ['Novela', 'Prestados', 'Clásicos'].map((name, i) => ({
+      id: `t${i}`,
+      name,
+      color: 'green' as const,
+      userId: 'u1',
+      createdAt: '',
+      updatedAt: '',
+    }));
+    fixture.componentRef.setInput('tags', tags);
+    fixture.detectChanges();
+
+    const badges = element.querySelectorAll('.tags app-tag-badge');
+    expect(Array.from(badges).map((badge) => badge.textContent?.trim())).toEqual([
+      'Novela',
+      'Prestados',
+      'Clásicos',
+    ]);
   });
 });

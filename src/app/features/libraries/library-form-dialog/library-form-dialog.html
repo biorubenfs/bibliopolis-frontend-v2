@@ -30,6 +30,62 @@
       }
     </mat-form-field>
 
+    <mat-form-field appearance="outline">
+      <mat-label>Etiquetas</mat-label>
+      <mat-chip-grid #chipGrid aria-label="Etiquetas de la biblioteca">
+        @for (tag of selectedTags(); track tag.id) {
+          <mat-chip-row
+            [style.--mat-chip-elevated-container-color]="tagStyles[tag.color].background"
+            [style.--mat-chip-label-text-color]="tagStyles[tag.color].text"
+            [style.--mat-chip-with-trailing-icon-trailing-icon-color]="tagStyles[tag.color].text"
+            (removed)="removeTag(tag.id)"
+          >
+            {{ tag.name }}
+            <button matChipRemove type="button" [attr.aria-label]="'Quitar ' + tag.name">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+        }
+        <input
+          #tagInput
+          autocomplete="off"
+          [placeholder]="
+            tagsFull() ? 'Máximo de ' + maxTags + ' etiquetas' : 'Añadir o crear etiqueta'
+          "
+          [attr.maxlength]="tagNameMaxLength"
+          [matChipInputFor]="chipGrid"
+          [matAutocomplete]="tagAutocomplete"
+          [disabled]="tagsFull() || creatingTag() || tagsError()"
+          (input)="onTagInput($event)"
+        />
+      </mat-chip-grid>
+      <mat-autocomplete
+        #tagAutocomplete="matAutocomplete"
+        autoActiveFirstOption
+        (optionSelected)="onTagSelected($event)"
+      >
+        @for (tag of suggestions(); track tag.id) {
+          <mat-option [value]="tag.id"><app-tag-badge [tag]="tag" /></mat-option>
+        }
+        @if (canCreateTag()) {
+          <mat-option [value]="createOption">
+            <mat-icon>add</mat-icon>
+            Crear «{{ trimmedQuery() }}»
+          </mat-option>
+        }
+      </mat-autocomplete>
+      @if (tagsError()) {
+        <mat-hint>No se han podido cargar tus etiquetas.</mat-hint>
+      } @else {
+        <mat-hint>{{ selectedTags().length }} de {{ maxTags }} etiquetas</mat-hint>
+      }
+    </mat-form-field>
+    <div class="error" role="alert">
+      @if (tagError(); as message) {
+        {{ message }}
+      }
+    </div>
+
     <div class="error" role="alert">
       @if (errorMessage(); as message) {
         {{ message }}

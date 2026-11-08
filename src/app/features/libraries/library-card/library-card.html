@@ -17,6 +17,14 @@
 
   <p class="description">{{ library().description }}</p>
 
+  @if (tags().length > 0) {
+    <ul class="tags" aria-label="Etiquetas">
+      @for (tag of tags(); track tag.id) {
+        <li><app-tag-badge [tag]="tag" /></li>
+      }
+    </ul>
+  }
+
   <footer class="footer">
     <span class="count">
       <mat-icon aria-hidden="true">menu_book</mat-icon>

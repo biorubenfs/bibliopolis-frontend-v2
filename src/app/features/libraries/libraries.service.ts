@@ -22,13 +22,15 @@ export class LibrariesService {
 
   /**
    * Lists the user's libraries, favorites first. `search` filters by name or description (partial,
-   * case-insensitive) and `favorites` keeps only the favorites.
+   * case-insensitive), `favorites` keeps only the favorites and `tagIds` the libraries that have
+   * all of those tags.
    */
   list(options: {
     skip: number;
     limit: number;
     search?: string;
     favorites?: boolean;
+    tagIds?: readonly string[];
   }): Observable<Page<Library>> {
     let params = new HttpParams().set('skip', options.skip).set('limit', options.limit);
     const search = options.search?.trim();
@@ -38,6 +40,9 @@ export class LibrariesService {
     // The API only accepts "true": without the filter the param is left out
     if (options.favorites) {
       params = params.set('favorites', 'true');
+    }
+    if (options.tagIds?.length) {
+      params = params.set('tags', options.tagIds.join(','));
     }
     return this.http.get<ApiCollectionResponse<LibraryAttributes>>(this.baseUrl, { params }).pipe(
       map((response) => ({

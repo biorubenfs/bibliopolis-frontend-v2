@@ -80,6 +80,15 @@ h1 {
   overflow-wrap: anywhere;
 }
 
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
 .count {
   margin: 4px 0 0;
   font: var(--mat-sys-body-medium);

@@ -19,6 +19,13 @@
       @if (library.description) {
         <p class="description">{{ library.description }}</p>
       }
+      @if (libraryTags().length > 0) {
+        <ul class="tags" aria-label="Etiquetas">
+          @for (tag of libraryTags(); track tag.id) {
+            <li><app-tag-badge [tag]="tag" /></li>
+          }
+        </ul>
+      }
       @if (total() > 0) {
         <p class="count">{{ booksLabel() }}</p>
       }

@@ -98,6 +98,16 @@
   overflow-wrap: anywhere;
 }
 
+// Below the description, which takes the free space: the footer stays aligned across a row
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0 8px 0 0;
+  list-style: none;
+}
+
 .footer {
   display: flex;
   align-items: center;

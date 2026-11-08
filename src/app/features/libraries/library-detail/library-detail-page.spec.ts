@@ -18,6 +18,8 @@ import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
 import { RemoveBookDialog } from '../remove-book-dialog/remove-book-dialog';
 import { ScanBooksDialog } from '../scan-books-dialog/scan-books-dialog';
+import { Tag } from '../../tags/tag.model';
+import { TagsService } from '../../tags/tags.service';
 import { LibraryDetailPage } from './library-detail-page';
 
 const library: Library = {
@@ -26,6 +28,7 @@ const library: Library = {
   description: 'Mis novelas',
   books: [],
   isFavorite: false,
+  tagIds: [],
   userId: 'u1',
   createdAt: '',
   updatedAt: '',
@@ -61,6 +64,7 @@ describe('LibraryDetailPage', () => {
       url?: string;
       get?: ReturnType<typeof vi.fn>;
       update?: ReturnType<typeof vi.fn>;
+      tags?: Tag[];
       listByLibrary?: ReturnType<typeof vi.fn>;
       listImports?: ReturnType<typeof vi.fn>;
       dialogResult?: unknown;
@@ -83,6 +87,7 @@ describe('LibraryDetailPage', () => {
           withComponentInputBinding(),
         ),
         { provide: LibrariesService, useValue: { get, update } },
+        { provide: TagsService, useValue: { listAll: () => of(options.tags ?? []) } },
         { provide: UserBooksService, useValue: { listByLibrary } },
         { provide: ImportsService, useValue: { listByLibrary: listImports } },
         { provide: MatDialog, useValue: { open: openDialog } },
@@ -252,6 +257,24 @@ describe('LibraryDetailPage', () => {
 
       expect(listByLibrary).not.toHaveBeenCalled();
     });
+  });
+
+  it('shows the tags of the library and skips unknown ones', async () => {
+    const tag = (id: string, name: string): Tag => ({
+      id,
+      name,
+      color: 'blue',
+      userId: 'u1',
+      createdAt: '',
+      updatedAt: '',
+    });
+    const { element } = await setup({
+      get: vi.fn(() => of({ ...library, tagIds: ['t2', 'deleted'] })),
+      tags: [tag('t1', 'Novela'), tag('t2', 'Prestados')],
+    });
+
+    const badges = element.querySelectorAll('.tags app-tag-badge');
+    expect(Array.from(badges).map((badge) => badge.textContent?.trim())).toEqual(['Prestados']);
   });
 
   describe('favorite', () => {
