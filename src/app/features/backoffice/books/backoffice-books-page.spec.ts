@@ -114,7 +114,7 @@ describe('BackofficeBooksPage', () => {
   it('opens the dialog to add a book', async () => {
     const { element, openDialog } = await setup();
 
-    element.querySelector<HTMLButtonElement>('.page-header .create')!.click();
+    element.querySelector<HTMLButtonElement>('.actions .create')!.click();
 
     expect(openDialog).toHaveBeenCalled();
   });

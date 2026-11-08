@@ -78,10 +78,10 @@ describe('BackofficeUsersPage', () => {
     );
   });
 
-  it('opens the dialog to create a user from the header', async () => {
+  it('opens the dialog to create a user from the button under the header', async () => {
     const { element, openDialog } = await setup();
 
-    const create = element.querySelector<HTMLButtonElement>('.page-header .create')!;
+    const create = element.querySelector<HTMLButtonElement>('.actions .create')!;
     expect(create.textContent).toContain('Nuevo usuario');
 
     create.click();

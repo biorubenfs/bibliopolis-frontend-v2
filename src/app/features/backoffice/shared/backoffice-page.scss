@@ -25,26 +25,22 @@ h1 {
   color: var(--mat-sys-on-surface-variant);
 }
 
-.header-actions {
-  display: flex;
-  flex: 1 1 100%;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 16px;
-}
-
 .search {
   // Pill shape: half of the field's 56px height
   --mat-form-field-outlined-container-shape: 28px;
 
-  flex: 1 1 240px;
+  // Full width on phones; a fixed comfortable width next to the title on larger screens, pushed to
+  // the right edge as in the libraries page
+  flex: 1 1 100%;
   max-width: 100%;
 }
 
-// Next to the search field; on narrow screens it wraps onto its own line, pushed to the right
-.create {
-  flex: none;
-  margin-left: auto;
+// Under the header, with the create button at the right edge: the same place as the create button
+// of the libraries page, which shares its row with the filters
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -8px 0 24px;
 }
 
 .status {
@@ -129,10 +125,6 @@ mat-paginator {
 @media (min-width: 900px) {
   :host {
     padding: 32px 48px 40px;
-  }
-
-  .header-actions {
-    flex: 0 1 auto;
   }
 
   .search {

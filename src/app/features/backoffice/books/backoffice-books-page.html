@@ -12,39 +12,39 @@
     }
   </div>
 
-  <div class="header-actions">
-    <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic" role="search">
-      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-      <input
-        matInput
-        type="text"
-        placeholder="Buscar por ISBN, título o autor"
-        aria-label="Buscar libros"
-        autocomplete="off"
-        [attr.maxlength]="searchMaxLength"
-        [value]="query()"
-        (input)="onSearchInput($any($event.target).value)"
-        (keydown.escape)="clearSearch()"
-      />
-      @if (query()) {
-        <button
-          mat-icon-button
-          matSuffix
-          type="button"
-          aria-label="Borrar búsqueda"
-          (click)="clearSearch()"
-        >
-          <mat-icon>close</mat-icon>
-        </button>
-      }
-    </mat-form-field>
-
-    <button mat-flat-button type="button" class="create" (click)="openNewBookDialog()">
-      <mat-icon>add</mat-icon>
-      Nuevo libro
-    </button>
-  </div>
+  <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic" role="search">
+    <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+    <input
+      matInput
+      type="text"
+      placeholder="Buscar por ISBN, título o autor"
+      aria-label="Buscar libros"
+      autocomplete="off"
+      [attr.maxlength]="searchMaxLength"
+      [value]="query()"
+      (input)="onSearchInput($any($event.target).value)"
+      (keydown.escape)="clearSearch()"
+    />
+    @if (query()) {
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        aria-label="Borrar búsqueda"
+        (click)="clearSearch()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </mat-form-field>
 </header>
+
+<div class="actions">
+  <button mat-flat-button type="button" class="create" (click)="openNewBookDialog()">
+    <mat-icon>add</mat-icon>
+    Nuevo libro
+  </button>
+</div>
 
 @switch (state()) {
   @case ('loading') {
