@@ -9,7 +9,7 @@
     <nav class="sidebar-content" aria-label="Navegación principal">
       <a
         class="account"
-        routerLink="/profile"
+        [routerLink]="profilePath"
         routerLinkActive="account--active"
         ariaCurrentWhenActive="page"
         title="Ver perfil"
@@ -27,6 +27,10 @@
           }
         </span>
       </a>
+
+      @if (isBackoffice) {
+        <p class="area-label">Backoffice</p>
+      }
 
       <ul class="nav-list">
         @for (item of navItems; track item.path) {
@@ -64,6 +68,9 @@
           <mat-icon>menu</mat-icon>
         </button>
         <span class="topbar-brand">Bibliopolis</span>
+        @if (isBackoffice) {
+          <span class="topbar-area">Backoffice</span>
+        }
       </header>
     }
     <main>

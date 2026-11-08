@@ -4,7 +4,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  ActivatedRoute,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 import { map } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -14,6 +20,17 @@ interface NavItem {
   icon: string;
   path: string;
 }
+
+const READER_NAV: NavItem[] = [
+  { label: 'Mis bibliotecas', icon: 'shelves', path: '/libraries' },
+  { label: 'Mis libros', icon: 'menu_book', path: '/books' },
+  { label: 'Explorar', icon: 'explore', path: '/explore' },
+];
+
+const BACKOFFICE_NAV: NavItem[] = [
+  { label: 'Libros', icon: 'library_books', path: '/backoffice/books' },
+  { label: 'Usuarios', icon: 'group', path: '/backoffice/users' },
+];
 
 /** Desktop breakpoint: the sidebar stays open next to the content. */
 const DESKTOP_QUERY = '(min-width: 900px)';
@@ -36,11 +53,10 @@ export class Shell {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  protected readonly navItems: NavItem[] = [
-    { label: 'Mis bibliotecas', icon: 'shelves', path: '/libraries' },
-    { label: 'Mis libros', icon: 'menu_book', path: '/books' },
-    { label: 'Explorar', icon: 'explore', path: '/explore' },
-  ];
+  /** The same layout serves the reader screens and the backoffice, set by the route data. */
+  protected readonly isBackoffice = inject(ActivatedRoute).snapshot.data['area'] === 'backoffice';
+  protected readonly navItems = this.isBackoffice ? BACKOFFICE_NAV : READER_NAV;
+  protected readonly profilePath = this.isBackoffice ? '/backoffice/profile' : '/profile';
 
   protected readonly isDesktop = toSignal(
     inject(BreakpointObserver)

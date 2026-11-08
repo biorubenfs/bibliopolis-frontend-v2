@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { authGuard, guestGuard } from './core/auth/auth.guards';
+import { adminGuard, authGuard, guestGuard, regularGuard } from './core/auth/auth.guards';
 
 const comingSoon = () => import('./pages/coming-soon/coming-soon').then((m) => m.ComingSoon);
 
@@ -12,8 +12,38 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/login/login').then((m) => m.Login),
   },
   {
+    path: 'backoffice',
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
+    data: { area: 'backoffice' },
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'books' },
+      {
+        path: 'books',
+        title: 'Libros · Backoffice · Bibliopolis',
+        loadComponent: () =>
+          import('./features/backoffice/books/backoffice-books-page').then(
+            (m) => m.BackofficeBooksPage,
+          ),
+      },
+      {
+        path: 'users',
+        title: 'Usuarios · Backoffice · Bibliopolis',
+        loadComponent: () =>
+          import('./features/backoffice/users/backoffice-users-page').then(
+            (m) => m.BackofficeUsersPage,
+          ),
+      },
+      {
+        path: 'profile',
+        title: 'Perfil · Bibliopolis',
+        loadComponent: () => import('./features/profile/profile-page').then((m) => m.ProfilePage),
+      },
+    ],
+  },
+  {
     path: '',
-    canActivate: [authGuard],
+    canActivate: [authGuard, regularGuard],
     loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'libraries' },

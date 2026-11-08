@@ -1,0 +1,135 @@
+// Shared by the backoffice list pages
+:host {
+  display: block;
+  padding: 24px 16px 104px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 24px;
+}
+
+h1 {
+  margin: 0;
+  font: 500 2rem / 1.25 var(--app-font-display);
+  color: var(--mat-sys-on-surface);
+}
+
+.count {
+  margin: 4px 0 0;
+  font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.search {
+  // Pill shape: half of the field's 56px height
+  --mat-form-field-outlined-container-shape: 28px;
+
+  flex: 1 1 100%;
+  max-width: 100%;
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 16px;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 48px;
+    color: var(--mat-sys-secondary);
+  }
+
+  h2 {
+    margin: 0;
+    font: var(--mat-sys-title-large);
+    color: var(--mat-sys-on-surface);
+  }
+
+  p {
+    margin: 0;
+    font: var(--mat-sys-body-large);
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--mat-sys-surface-container-low);
+}
+
+.row-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.row-title {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+  color: var(--mat-sys-on-surface);
+  overflow-wrap: anywhere;
+}
+
+.row-detail {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+.row-actions {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+
+mat-paginator {
+  margin-top: 16px;
+  background: transparent;
+}
+
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1;
+}
+
+@media (min-width: 900px) {
+  :host {
+    padding: 32px 48px 40px;
+  }
+
+  .search {
+    flex: 0 1 360px;
+  }
+
+  .fab {
+    right: 32px;
+    bottom: 32px;
+  }
+}
