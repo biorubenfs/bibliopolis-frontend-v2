@@ -72,6 +72,14 @@ describe('UserBooksTable', () => {
     ]);
   });
 
+  it('repeats the authors under the title, for phones where their column is hidden', () => {
+    const { rows } = render();
+
+    const inline = (row: Element) => row.querySelector('.mat-column-title .inline-authors');
+    expect(inline(rows[0])?.textContent?.trim()).toBe('Alex Shishin, Otra Autora');
+    expect(inline(rows[1])?.textContent?.trim()).toBe('Autor desconocido');
+  });
+
   it('fills in the optional data the book does not have', () => {
     const { rows } = render();
 
