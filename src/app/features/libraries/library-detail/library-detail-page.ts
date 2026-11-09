@@ -15,15 +15,22 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription, forkJoin, map, of } from 'rxjs';
+import { Subject, Subscription, debounceTime, forkJoin, map, of } from 'rxjs';
 
 import { ApiError } from '../../../core/http/api-error';
 import { SpanishPaginatorIntl } from '../../../core/i18n/paginator-intl';
+import {
+  SEARCH_DEBOUNCE_MS,
+  SEARCH_MAX_LENGTH,
+  toSearchTerm,
+} from '../../../core/lists/searchable-list';
 import {
   DEFAULT_PAGE_SIZE,
   PAGE_SIZE_OPTIONS,
@@ -70,13 +77,15 @@ const DETAIL_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100vw - 32px)' };
  */
 const TOUCH_DEVICE_QUERY = '(hover: none) and (pointer: coarse)';
 
-/** Shows a library and the books it contains. */
+/** Shows a library and the books it contains, with a search by title, author or ISBN. */
 @Component({
   selector: 'app-library-detail-page',
   imports: [
     FavoriteButton,
     MatButtonModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     RouterLink,
@@ -107,8 +116,15 @@ export class LibraryDetailPage {
   readonly page = input(1, { transform: toPageNumber });
   /** Books per page, bound from the `?limit=` query param. */
   readonly limit = input(DEFAULT_PAGE_SIZE, { transform: toPageSize });
+  /** Search applied to the books (trimmed), bound from the `?q=` query param. */
+  readonly q = input('', { transform: toSearchTerm });
 
   protected readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
+  protected readonly searchMaxLength = SEARCH_MAX_LENGTH;
+
+  /** Text in the search field, updated on every keystroke. */
+  protected readonly query = signal('');
+  private readonly searchInput = new Subject<string>();
 
   protected readonly canScan = toSignal(
     inject(BreakpointObserver)
@@ -142,8 +158,17 @@ export class LibraryDetailPage {
 
   protected readonly booksLabel = computed(() => {
     const count = this.total();
+    if (this.q()) {
+      return `${count} ${count === 1 ? 'resultado' : 'resultados'}`;
+    }
     return `${count} ${count === 1 ? 'libro' : 'libros'}`;
   });
+
+  /**
+   * Hide the search while the library has no books at all. It stays visible with no results, so
+   * the user can change it.
+   */
+  protected readonly showSearch = computed(() => this.q() !== '' || this.total() > 0);
 
   private loadSubscription?: Subscription;
   private latestImportSubscription?: Subscription;
@@ -156,8 +181,26 @@ export class LibraryDetailPage {
       this.id();
       this.page();
       this.limit();
+      this.q();
       untracked(() => this.load());
     });
+    // Only overwrite the field when the search changes from outside (reload, a link,
+    // back/forward), so a trailing space being typed is not removed
+    effect(() => {
+      const term = this.q();
+      untracked(() => {
+        if (this.query().trim() !== term) {
+          this.query.set(term);
+        }
+      });
+    });
+    this.searchInput
+      .pipe(
+        map((value) => value.trim()),
+        debounceTime(SEARCH_DEBOUNCE_MS),
+        takeUntilDestroyed(),
+      )
+      .subscribe((term) => this.updateSearchInUrl(term));
     effect(() => {
       this.id();
       untracked(() => this.loadLatestImport());
@@ -195,7 +238,11 @@ export class LibraryDetailPage {
     this.loadSubscription = forkJoin({
       // Changing page does not change the library: it is only requested once
       library: library ? of(library) : this.librariesService.get(id),
-      page: this.userBooksService.listByLibrary(id, { skip: this.pageIndex() * limit, limit }),
+      page: this.userBooksService.listByLibrary(id, {
+        skip: this.pageIndex() * limit,
+        limit,
+        search: this.q(),
+      }),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -219,6 +266,18 @@ export class LibraryDetailPage {
           this.state.set(notFound ? 'not-found' : 'error');
         },
       });
+  }
+
+  protected onSearchInput(value: string): void {
+    this.query.set(value);
+    this.searchInput.next(value);
+  }
+
+  protected clearSearch(): void {
+    this.query.set('');
+    // Replace any keystroke still waiting in the debounce, then clear the URL right away
+    this.searchInput.next('');
+    this.updateSearchInUrl('');
   }
 
   protected changePage(event: PageEvent): void {
@@ -328,6 +387,21 @@ export class LibraryDetailPage {
 
   private notify(message: string): void {
     this.snackBar.open(message, undefined, { duration: 4000 });
+  }
+
+  private updateSearchInUrl(term: string): void {
+    // Typing a trailing space does not change the search, so it must not lose the current page
+    if (term === this.q()) {
+      return;
+    }
+    this.router.navigate([], {
+      relativeTo: this.route,
+      // A new search has different results: start again from the first page
+      queryParams: { q: term || null, page: null },
+      queryParamsHandling: 'merge',
+      // One history entry per page visit, not one per search typed
+      replaceUrl: true,
+    });
   }
 
   private updateUrl(page: number, limit: number, replaceUrl = false): void {

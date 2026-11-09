@@ -54,6 +54,26 @@ describe('UserBooksService', () => {
     expect(result).toEqual({ items: [{ id: 'ub-1', bookTitle: 'Rossiya' }], total: 25 });
   });
 
+  it('sends the trimmed search, also within a library', () => {
+    service.list({ skip: 0, limit: 12, search: '  rossiya ' }).subscribe();
+    service.listByLibrary('lib-1', { skip: 0, limit: 12, search: 'shishin' }).subscribe();
+
+    const [all, inLibrary] = backend.match((r) => r.url === url);
+    expect(all.request.params.get('search')).toBe('rossiya');
+    expect(inLibrary.request.params.get('search')).toBe('shishin');
+    expect(inLibrary.request.params.get('libraryId')).toBe('lib-1');
+    all.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
+    inLibrary.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
+  });
+
+  it('leaves out an empty search', () => {
+    service.list({ skip: 0, limit: 12, search: '   ' }).subscribe();
+
+    const req = backend.expectOne((r) => r.url === url);
+    expect(req.request.params.has('search')).toBe(false);
+    req.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
+  });
+
   it('updates the rating and notes and returns the flat model', () => {
     let result: unknown;
     service.update('ub-1', { rating: 5, notes: null }).subscribe((book) => (result = book));

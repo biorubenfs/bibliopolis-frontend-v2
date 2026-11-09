@@ -5,6 +5,7 @@ import { Router, provideRouter, withComponentInputBinding } from '@angular/route
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
+import { SEARCH_DEBOUNCE_MS } from '../../../core/lists/searchable-list';
 import { BookDetailDialog } from '../../libraries/book-detail-dialog/book-detail-dialog';
 import { UserBook } from '../user-book.model';
 import { UserBooksService } from '../user-books.service';
@@ -63,7 +64,7 @@ describe('MyBooksPage', () => {
       ),
     });
 
-    expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12 });
+    expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12, search: '' });
     expect(element.querySelector('h1')?.textContent).toContain('Mis libros');
     expect(element.querySelector('.count')?.textContent).toContain('2 libros');
     expect(element.querySelectorAll('app-user-book-card').length).toBe(2);
@@ -86,7 +87,7 @@ describe('MyBooksPage', () => {
 
     const { element } = await setup({ url: '/books?page=3&limit=24', list });
 
-    expect(list).toHaveBeenCalledWith({ skip: 48, limit: 24 });
+    expect(list).toHaveBeenCalledWith({ skip: 48, limit: 24, search: '' });
     expect(element.querySelector('mat-paginator')).not.toBeNull();
   });
 
@@ -96,7 +97,7 @@ describe('MyBooksPage', () => {
     const { router } = await setup({ url: '/books?page=9', list });
 
     expect(router.url).toBe('/books?page=2');
-    expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12 });
+    expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '' });
   });
 
   it('offers retrying after an error', async () => {
@@ -146,5 +147,85 @@ describe('MyBooksPage', () => {
 
     expect(openSnackBar).not.toHaveBeenCalled();
     expect(list).toHaveBeenCalledTimes(1);
+  });
+
+  describe('search', () => {
+    afterEach(() => vi.useRealTimers());
+
+    const all = [book('1', 'Rossiya'), book('2', 'Ulises')];
+    const byTitle = vi.fn((options: { search: string }) => {
+      const items = all.filter((item) =>
+        item.bookTitle.toLowerCase().includes(options.search.toLowerCase()),
+      );
+      return of({ items, total: items.length });
+    });
+
+    async function setupSearch(url = '/books', list = byTitle) {
+      vi.useFakeTimers();
+      list.mockClear();
+      const page = await setup({ url, list });
+      /** Lets timers, pending navigations and change detection run. */
+      const wait = async (ms = 0) => {
+        await vi.advanceTimersByTimeAsync(ms);
+        page.harness.fixture.detectChanges();
+      };
+      const input = () =>
+        page.element.querySelector<HTMLInputElement>('input[aria-label="Buscar libros"]');
+      const type = (value: string) => {
+        input()!.value = value;
+        input()!.dispatchEvent(new Event('input'));
+        page.harness.fixture.detectChanges();
+      };
+      await wait();
+      return { ...page, wait, input, type };
+    }
+
+    it('searches after the user stops typing and keeps the search in the URL', async () => {
+      const { element, list, router, type, wait } = await setupSearch();
+      expect(list).toHaveBeenCalledTimes(1);
+
+      type('ros');
+      await wait(SEARCH_DEBOUNCE_MS - 1);
+      expect(list).toHaveBeenCalledTimes(1);
+
+      await wait(1);
+      expect(router.url).toBe('/books?q=ros');
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: 'ros' });
+      expect(element.querySelectorAll('app-user-book-card').length).toBe(1);
+      expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
+    });
+
+    it('restores the search from the URL', async () => {
+      const { list, input } = await setupSearch('/books?q=ulises');
+
+      expect(list).toHaveBeenCalledTimes(1);
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: 'ulises' });
+      expect(input()?.value).toBe('ulises');
+    });
+
+    it('shows a no-results state that clears the search and the URL', async () => {
+      const { element, list, router, wait } = await setupSearch('/books?q=poes%C3%ADa');
+      expect(element.textContent).toContain('Ningún libro coincide con «poesía»');
+      expect(element.textContent).not.toContain('Aún no tienes libros');
+
+      const clear = Array.from(element.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Borrar búsqueda'),
+      )!;
+      clear.click();
+      await wait();
+
+      expect(router.url).toBe('/books');
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '' });
+      expect(element.querySelectorAll('app-user-book-card').length).toBe(2);
+    });
+
+    it('hides the search field when the user has no books', async () => {
+      const { input } = await setupSearch(
+        '/books',
+        vi.fn(() => of({ items: [], total: 0 })),
+      );
+
+      expect(input()).toBeNull();
+    });
   });
 });
