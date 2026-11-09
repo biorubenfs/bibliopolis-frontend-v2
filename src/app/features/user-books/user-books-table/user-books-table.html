@@ -36,6 +36,8 @@
         >
           {{ book.bookTitle }}
         </button>
+        <!-- On phones the authors column does not fit: the authors go under the title instead -->
+        <span class="inline-authors secondary">{{ authors(book) }}</span>
       </td>
     </ng-container>
 

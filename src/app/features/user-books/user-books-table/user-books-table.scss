@@ -102,6 +102,16 @@ td {
   color: var(--mat-sys-on-surface-variant);
 }
 
+// Only shown on phones, where it replaces the authors column
+.inline-authors {
+  display: none;
+  max-width: 240px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: var(--mat-sys-body-small);
+}
+
 .mat-column-rating,
 .mat-column-libraries,
 .mat-column-isbn,
@@ -153,5 +163,9 @@ td {
 @media (max-width: 479px) {
   .mat-column-authors {
     display: none;
+  }
+
+  .inline-authors {
+    display: block;
   }
 }
