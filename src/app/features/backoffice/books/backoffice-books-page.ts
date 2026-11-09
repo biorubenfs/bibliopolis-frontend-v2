@@ -9,7 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { SpanishPaginatorIntl } from '../../../core/i18n/paginator-intl';
-import { SearchableList } from '../shared/searchable-list';
+import { SearchableList } from '../../../core/lists/searchable-list';
 import { CatalogBook } from './catalog-book.model';
 import { CatalogBooksService } from './catalog-books.service';
 import { EditBookDialog, EditBookDialogData } from './edit-book-dialog/edit-book-dialog';

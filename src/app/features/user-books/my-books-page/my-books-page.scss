@@ -4,7 +4,21 @@
 }
 
 .page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
   margin-bottom: 24px;
+}
+
+.search {
+  // Pill shape: half of the field's 56px height
+  --mat-form-field-outlined-container-shape: 28px;
+
+  // Full width on phones; a fixed comfortable width next to the title on larger screens
+  flex: 1 1 100%;
+  max-width: 100%;
 }
 
 h1 {
@@ -65,5 +79,9 @@ mat-paginator {
 @media (min-width: 900px) {
   :host {
     padding: 32px 48px 40px;
+  }
+
+  .search {
+    flex: 0 1 360px;
   }
 }

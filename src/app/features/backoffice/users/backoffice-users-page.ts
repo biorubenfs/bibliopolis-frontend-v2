@@ -10,7 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { SpanishPaginatorIntl } from '../../../core/i18n/paginator-intl';
-import { SearchableList } from '../shared/searchable-list';
+import { SearchableList } from '../../../core/lists/searchable-list';
 import { CreateUserDialog } from './create-user-dialog/create-user-dialog';
 import {
   GeneratedPasswordDialog,

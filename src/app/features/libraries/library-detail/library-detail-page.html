@@ -30,21 +30,50 @@
         <p class="count">{{ booksLabel() }}</p>
       }
     </div>
-    <div class="actions">
-      @if (canScan()) {
-        <button mat-stroked-button type="button" (click)="openScanDialog()">
-          <mat-icon>barcode_scanner</mat-icon>
-          Escanear libros
-        </button>
+    <div class="side">
+      @if (showSearch()) {
+        <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic" role="search">
+          <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+          <input
+            matInput
+            type="text"
+            placeholder="Buscar por título, autor o ISBN"
+            aria-label="Buscar libros en esta biblioteca"
+            autocomplete="off"
+            [attr.maxlength]="searchMaxLength"
+            [value]="query()"
+            (input)="onSearchInput($any($event.target).value)"
+            (keydown.escape)="clearSearch()"
+          />
+          @if (query()) {
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              aria-label="Borrar búsqueda"
+              (click)="clearSearch()"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </mat-form-field>
       }
-      <button mat-stroked-button type="button" (click)="openImportDialog(library)">
-        <mat-icon>upload_file</mat-icon>
-        Importar CSV
-      </button>
-      <button #addButton mat-flat-button type="button" (click)="openAddDialog()">
-        <mat-icon>add</mat-icon>
-        Añadir libro
-      </button>
+      <div class="actions">
+        @if (canScan()) {
+          <button mat-stroked-button type="button" (click)="openScanDialog()">
+            <mat-icon>barcode_scanner</mat-icon>
+            Escanear libros
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="openImportDialog(library)">
+          <mat-icon>upload_file</mat-icon>
+          Importar CSV
+        </button>
+        <button #addButton mat-flat-button type="button" (click)="openAddDialog()">
+          <mat-icon>add</mat-icon>
+          Añadir libro
+        </button>
+      </div>
     </div>
   </header>
 
@@ -90,7 +119,14 @@
     </div>
   }
   @default {
-    @if (books().length === 0) {
+    @if (books().length === 0 && q()) {
+      <div class="status empty">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h2>Ningún libro de esta biblioteca coincide con «{{ q() }}»</h2>
+        <p>Prueba con otra parte del título, otro autor o el ISBN.</p>
+        <button mat-stroked-button type="button" (click)="clearSearch()">Borrar búsqueda</button>
+      </div>
+    } @else if (books().length === 0) {
       <div class="status empty">
         <mat-icon aria-hidden="true">menu_book</mat-icon>
         <h2>Esta biblioteca aún no tiene libros</h2>

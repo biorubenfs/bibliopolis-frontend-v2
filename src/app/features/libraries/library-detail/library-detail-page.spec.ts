@@ -7,6 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
 import { ApiError } from '../../../core/http/api-error';
+import { SEARCH_DEBOUNCE_MS } from '../../../core/lists/searchable-list';
 import { ImportCsvDialog } from '../../imports/import-csv-dialog/import-csv-dialog';
 import { LibraryImport } from '../../imports/import.model';
 import { ImportsService } from '../../imports/imports.service';
@@ -206,7 +207,7 @@ describe('LibraryDetailPage', () => {
     });
 
     expect(get).toHaveBeenCalledWith('l1');
-    expect(listByLibrary).toHaveBeenCalledWith('l1', { skip: 0, limit: 12 });
+    expect(listByLibrary).toHaveBeenCalledWith('l1', { skip: 0, limit: 12, search: '' });
     expect(element.querySelector('h1')?.textContent).toContain('Novela');
     expect(element.textContent).toContain('Mis novelas');
     expect(element.querySelector('.count')?.textContent).toContain('2 libros');
@@ -464,7 +465,7 @@ describe('LibraryDetailPage', () => {
       await harness.fixture.whenStable();
 
       expect(router.url).toBe('/libraries/l1?page=2');
-      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 12, limit: 12 });
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 12, limit: 12, search: '' });
       expect(get).toHaveBeenCalledTimes(1);
       expect(element.querySelector('app-user-book-card')?.textContent).toContain('Libro 12');
     });
@@ -480,13 +481,13 @@ describe('LibraryDetailPage', () => {
       await harness.fixture.whenStable();
 
       expect(router.url).toBe('/libraries/l1?page=5');
-      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 48, limit: 12 });
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 48, limit: 12, search: '' });
 
       element.querySelector<HTMLButtonElement>('button[aria-label="Primera página"]')!.click();
       await harness.fixture.whenStable();
 
       expect(router.url).toBe('/libraries/l1');
-      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 0, limit: 12 });
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 0, limit: 12, search: '' });
     });
 
     it('restores the page and its size from the URL', async () => {
@@ -494,7 +495,7 @@ describe('LibraryDetailPage', () => {
       const { element } = await setup({ url: '/libraries/l1?page=2&limit=24', listByLibrary });
 
       expect(listByLibrary).toHaveBeenCalledTimes(1);
-      expect(listByLibrary).toHaveBeenCalledWith('l1', { skip: 24, limit: 24 });
+      expect(listByLibrary).toHaveBeenCalledWith('l1', { skip: 24, limit: 24, search: '' });
       expect(element.querySelector('.mat-mdc-paginator-range-label')?.textContent).toContain(
         '25 – 48 de 60',
       );
@@ -507,14 +508,14 @@ describe('LibraryDetailPage', () => {
       await harness.navigateByUrl('/libraries/l1');
       await harness.fixture.whenStable();
 
-      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 0, limit: 12 });
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 0, limit: 12, search: '' });
     });
 
     it('falls back to the defaults on invalid values', async () => {
       const listByLibrary = vi.fn(() => of({ items: [], total: 0 }));
       await setup({ url: '/libraries/l1?page=abc&limit=7', listByLibrary });
 
-      expect(listByLibrary).toHaveBeenCalledWith('l1', { skip: 0, limit: 12 });
+      expect(listByLibrary).toHaveBeenCalledWith('l1', { skip: 0, limit: 12, search: '' });
     });
 
     it('goes to the last page when the URL points past the end', async () => {
@@ -522,7 +523,7 @@ describe('LibraryDetailPage', () => {
       const { router, element } = await setup({ url: '/libraries/l1?page=9', listByLibrary });
 
       expect(router.url).toBe('/libraries/l1?page=2');
-      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 12, limit: 12 });
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 12, limit: 12, search: '' });
       expect(element.querySelector('app-user-book-card')?.textContent).toContain('Libro 12');
       expect(element.textContent).not.toContain('aún no tiene libros');
     });
@@ -562,6 +563,113 @@ describe('LibraryDetailPage', () => {
     await harness.fixture.whenStable();
 
     expect(get).toHaveBeenLastCalledWith('l2');
-    expect(listByLibrary).toHaveBeenLastCalledWith('l2', { skip: 0, limit: 12 });
+    expect(listByLibrary).toHaveBeenLastCalledWith('l2', { skip: 0, limit: 12, search: '' });
+  });
+
+  describe('search', () => {
+    afterEach(() => vi.useRealTimers());
+
+    const all = [book('1', 'Rossiya'), book('2', 'Ulises')];
+    const byTitle = () =>
+      vi.fn((_id: string, options: { search: string }) => {
+        const items = all.filter((item) =>
+          item.bookTitle.toLowerCase().includes(options.search.toLowerCase()),
+        );
+        return of({ items, total: items.length });
+      });
+
+    async function setupSearch(url = '/libraries/l1', listByLibrary = byTitle()) {
+      const page = await setup({ url, listByLibrary });
+      // After the first load: the paginator keeps the page from becoming stable with fake timers
+      vi.useFakeTimers();
+      /** Lets timers, pending navigations and change detection run. */
+      const wait = async (ms = 0) => {
+        await vi.advanceTimersByTimeAsync(ms);
+        page.harness.fixture.detectChanges();
+      };
+      const input = () =>
+        page.element.querySelector<HTMLInputElement>(
+          'input[aria-label="Buscar libros en esta biblioteca"]',
+        );
+      const type = (value: string) => {
+        input()!.value = value;
+        input()!.dispatchEvent(new Event('input'));
+        page.harness.fixture.detectChanges();
+      };
+      await wait();
+      return { ...page, wait, input, type };
+    }
+
+    it('searches in the library after the user stops typing and keeps the search in the URL', async () => {
+      const { element, get, listByLibrary, router, type, wait } = await setupSearch(
+        '/libraries/l1?page=2',
+        // 13 books without a search, so the second page exists
+        vi.fn((_id: string, options: { search: string }) =>
+          options.search
+            ? of({ items: [book('1', 'Rossiya')], total: 1 })
+            : of({ items: [book('13', 'Libro 13')], total: 13 }),
+        ),
+      );
+      listByLibrary.mockClear();
+
+      type('ros');
+      await wait(SEARCH_DEBOUNCE_MS - 1);
+      expect(listByLibrary).not.toHaveBeenCalled();
+
+      await wait(1);
+      // A new search starts again from the first page
+      expect(router.url).toBe('/libraries/l1?q=ros');
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 0, limit: 12, search: 'ros' });
+      expect(element.querySelectorAll('app-user-book-card').length).toBe(1);
+      expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
+      // The library does not change with the search: it is not requested again
+      expect(get).toHaveBeenCalledTimes(1);
+    });
+
+    it('restores the search from the URL', async () => {
+      const { listByLibrary, input } = await setupSearch('/libraries/l1?q=ulises');
+
+      expect(listByLibrary).toHaveBeenCalledTimes(1);
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', {
+        skip: 0,
+        limit: 12,
+        search: 'ulises',
+      });
+      expect(input()?.value).toBe('ulises');
+    });
+
+    it('shows a no-results state that clears the search and the URL', async () => {
+      const { element, listByLibrary, router, wait } = await setupSearch(
+        '/libraries/l1?q=poes%C3%ADa',
+      );
+      expect(element.textContent).toContain(
+        'Ningún libro de esta biblioteca coincide con «poesía»',
+      );
+      expect(element.textContent).not.toContain('aún no tiene libros');
+
+      const clear = Array.from(element.querySelectorAll('button')).find((b) =>
+        b.textContent?.includes('Borrar búsqueda'),
+      )!;
+      clear.click();
+      await wait();
+
+      expect(router.url).toBe('/libraries/l1');
+      expect(listByLibrary).toHaveBeenLastCalledWith('l1', { skip: 0, limit: 12, search: '' });
+      expect(element.querySelectorAll('app-user-book-card').length).toBe(2);
+
+      // The cleared search is not re-applied when the debounce time passes
+      const calls = listByLibrary.mock.calls.length;
+      await wait(SEARCH_DEBOUNCE_MS);
+      expect(listByLibrary).toHaveBeenCalledTimes(calls);
+    });
+
+    it('hides the search field when the library has no books', async () => {
+      const { input } = await setupSearch(
+        '/libraries/l1',
+        vi.fn(() => of({ items: [], total: 0 })),
+      );
+
+      expect(input()).toBeNull();
+    });
   });
 });

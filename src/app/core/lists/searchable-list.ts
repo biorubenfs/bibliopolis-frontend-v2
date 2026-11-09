@@ -4,20 +4,25 @@ import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, Subject, Subscription, debounceTime, distinctUntilChanged, map } from 'rxjs';
 
-import { Page } from '../../../core/http/api.models';
+import { Page } from '../http/api.models';
 import {
   DEFAULT_PAGE_SIZE,
   PAGE_SIZE_OPTIONS,
   toPageNumber,
   toPageSize,
-} from '../../../core/pagination/pagination';
+} from '../pagination/pagination';
 
 export type LoadState = 'loading' | 'loaded' | 'error';
 
 /** The backend rejects longer searches. */
 export const SEARCH_MAX_LENGTH = 100;
 /** Wait this long after the last keystroke before searching, to avoid one request per key. */
-const SEARCH_DEBOUNCE_MS = 300;
+export const SEARCH_DEBOUNCE_MS = 300;
+
+/** Anyone can edit the URL: the search is trimmed and cut to the length the backend accepts. */
+export function toSearchTerm(value: string | null | undefined): string {
+  return (value ?? '').trim().slice(0, SEARCH_MAX_LENGTH);
+}
 
 /**
  * A paginated list with a search box, kept in the URL (`?q=`, `?page=`, `?limit=`) like the other
@@ -59,7 +64,7 @@ export abstract class SearchableList<T extends { id: string }> implements OnInit
     this.route.queryParamMap
       .pipe(
         map((params) => ({
-          term: (params.get('q') ?? '').trim().slice(0, SEARCH_MAX_LENGTH),
+          term: toSearchTerm(params.get('q')),
           page: toPageNumber(params.get('page')),
           limit: toPageSize(params.get('limit')),
         })),

@@ -16,6 +16,25 @@
   margin-bottom: 24px;
 }
 
+// The search on top, like «Mis bibliotecas», and the actions at the bottom, next to the list they
+// act on. On phones it takes its own line under the heading
+.side {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  align-self: stretch;
+  max-width: 100%;
+}
+
+.search {
+  // Pill shape: half of the field's 56px height, like the search of «Mis libros»
+  --mat-form-field-outlined-container-shape: 28px;
+
+  width: 100%;
+}
+
 .actions {
   display: flex;
   flex: none;
@@ -142,5 +161,15 @@ mat-paginator {
 @media (min-width: 900px) {
   :host {
     padding: 32px 48px 40px;
+  }
+
+  .side {
+    flex: 0 1 auto;
+    align-items: flex-end;
+  }
+
+  .search {
+    width: 360px;
+    max-width: 100%;
   }
 }
