@@ -61,6 +61,13 @@ h1 {
   }
 }
 
+// Just above the list, aligned with its left edge
+.list-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
 .grid {
   display: grid;
   // min(): never wider than the screen on very narrow phones

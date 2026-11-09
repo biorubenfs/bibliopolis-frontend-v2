@@ -30,6 +30,8 @@ function book(id: string, title: string, libraries = ['l1']): UserBook {
 }
 
 describe('MyBooksPage', () => {
+  afterEach(() => localStorage.clear());
+
   async function setup(
     options: { url?: string; list?: ReturnType<typeof vi.fn>; dialogResult?: unknown } = {},
   ) {
@@ -71,6 +73,49 @@ describe('MyBooksPage', () => {
     expect(element.textContent).toContain('En 1 biblioteca');
     expect(element.textContent).toContain('En 2 bibliotecas');
     expect(element.querySelector('[aria-label^="Quitar"]')).toBeNull();
+  });
+
+  describe('table view', () => {
+    const books = () =>
+      of({ items: [book('1', 'Rossiya'), book('2', 'Ulises', ['l1', 'l2'])], total: 2 });
+
+    it('switches to a table and back, remembering the choice', async () => {
+      const { harness, element } = await setup({ list: vi.fn(books) });
+
+      element.querySelector<HTMLButtonElement>('button[aria-label="Ver como tabla"]')!.click();
+      await harness.fixture.whenStable();
+
+      expect(element.querySelector('app-user-book-card')).toBeNull();
+      expect(element.querySelectorAll('app-user-books-table tbody tr').length).toBe(2);
+      expect(element.textContent).toContain('2 bibliotecas');
+      expect(element.querySelector('[aria-label^="Quitar"]')).toBeNull();
+      expect(localStorage.getItem('bibliopolis.booksView')).toBe('table');
+
+      element.querySelector<HTMLButtonElement>('button[aria-label="Ver como tarjetas"]')!.click();
+      await harness.fixture.whenStable();
+
+      expect(element.querySelector('app-user-books-table')).toBeNull();
+      expect(element.querySelectorAll('app-user-book-card').length).toBe(2);
+    });
+
+    it('starts with the stored view and opens the detail from a row', async () => {
+      localStorage.setItem('bibliopolis.booksView', 'table');
+      const { harness, element, openDialog } = await setup({ list: vi.fn(books) });
+
+      element.querySelector<HTMLButtonElement>('app-user-books-table button.open')!.click();
+      await harness.fixture.whenStable();
+
+      expect(openDialog).toHaveBeenCalledWith(
+        BookDetailDialog,
+        expect.objectContaining({ data: { book: book('1', 'Rossiya') } }),
+      );
+    });
+
+    it('is not offered while the user has no books', async () => {
+      const { element } = await setup();
+
+      expect(element.querySelector('app-books-view-toggle')).toBeNull();
+    });
   });
 
   it('points to the libraries when the user has no books', async () => {

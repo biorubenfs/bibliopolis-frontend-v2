@@ -1,0 +1,101 @@
+<div class="wrapper">
+  <table mat-table [dataSource]="books()" aria-label="Libros">
+    <ng-container matColumnDef="cover">
+      <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Portada</span></th>
+      <td mat-cell *matCellDef="let book">
+        <div class="cover">
+          @if (book.bookCoverUrl && !failedCovers().has(book.id)) {
+            <!-- Empty alt: the cover is decorative because the title is right next to it -->
+            <img
+              [src]="book.bookCoverUrl"
+              alt=""
+              width="32"
+              height="48"
+              loading="lazy"
+              (error)="onCoverError(book)"
+            />
+          } @else {
+            <mat-icon class="placeholder" aria-hidden="true">menu_book</mat-icon>
+          }
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="title">
+      <th mat-header-cell *matHeaderCellDef>Título</th>
+      <td mat-cell *matCellDef="let book">
+        <!-- A real button, so the row works with the keyboard and screen readers -->
+        <!-- Long titles are cut with an ellipsis; the tooltip then shows them in full -->
+        <button
+          type="button"
+          class="open"
+          aria-haspopup="dialog"
+          appTruncatedTooltip
+          [matTooltip]="book.bookTitle"
+          (click)="$event.stopPropagation(); openRequested.emit(book)"
+        >
+          {{ book.bookTitle }}
+        </button>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="authors">
+      <th mat-header-cell *matHeaderCellDef>Autores</th>
+      <td mat-cell *matCellDef="let book" class="secondary">{{ authors(book) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="rating">
+      <th mat-header-cell *matHeaderCellDef>Valoración</th>
+      <td mat-cell *matCellDef="let book">
+        @if (book.rating !== null) {
+          <span class="rating">
+            <mat-icon aria-hidden="true">star</mat-icon>
+            {{ book.rating }}/10
+          </span>
+        } @else {
+          <span class="secondary" aria-label="Sin valorar">—</span>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="libraries">
+      <th mat-header-cell *matHeaderCellDef>Bibliotecas</th>
+      <td mat-cell *matCellDef="let book" class="secondary">{{ libraryCount(book) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="isbn">
+      <th mat-header-cell *matHeaderCellDef>ISBN-13</th>
+      <td mat-cell *matCellDef="let book" class="secondary isbn">{{ book.bookIsbn13 }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="isbn10">
+      <th mat-header-cell *matHeaderCellDef>ISBN-10</th>
+      <td mat-cell *matCellDef="let book" class="secondary isbn">
+        @if (book.bookIsbn10) {
+          {{ book.bookIsbn10 }}
+        } @else {
+          <span aria-label="Sin ISBN-10">—</span>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Acciones</span></th>
+      <td mat-cell *matCellDef="let book">
+        <button
+          mat-icon-button
+          type="button"
+          matTooltip="Quitar de la biblioteca"
+          [attr.aria-label]="'Quitar ' + book.bookTitle + ' de la biblioteca'"
+          (click)="remove(book, $event)"
+        >
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+    <!-- The whole row opens the book with the mouse; the title button does it with the keyboard -->
+    <tr mat-row *matRowDef="let book; columns: columns()" (click)="openRequested.emit(book)"></tr>
+  </table>
+</div>

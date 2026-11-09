@@ -16,9 +16,12 @@ import {
   BookDetailDialogData,
   BookDetailDialogResult,
 } from '../../libraries/book-detail-dialog/book-detail-dialog';
+import { BooksViewPreference } from '../books-view';
+import { BooksViewToggle } from '../books-view-toggle/books-view-toggle';
 import { UserBookCard } from '../user-book-card/user-book-card';
 import { UserBook } from '../user-book.model';
 import { UserBooksService } from '../user-books.service';
+import { UserBooksTable } from '../user-books-table/user-books-table';
 
 const DETAIL_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100vw - 32px)' };
 
@@ -29,6 +32,7 @@ const DETAIL_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100vw - 32px)' };
 @Component({
   selector: 'app-my-books-page',
   imports: [
+    BooksViewToggle,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -37,6 +41,7 @@ const DETAIL_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100vw - 32px)' };
     MatProgressSpinnerModule,
     RouterLink,
     UserBookCard,
+    UserBooksTable,
   ],
   templateUrl: './my-books-page.html',
   styleUrl: './my-books-page.scss',
@@ -47,6 +52,12 @@ export class MyBooksPage extends SearchableList<UserBook> {
   private readonly userBooksService = inject(UserBooksService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+
+  protected readonly view = inject(BooksViewPreference).view;
+  /** Only with books to show; it stays while a new page loads, so the list does not jump. */
+  protected readonly showViewToggle = computed(
+    () => this.state() !== 'error' && this.total() > 0 && this.items().length > 0,
+  );
 
   protected readonly countLabel = computed(() => {
     const count = this.total();

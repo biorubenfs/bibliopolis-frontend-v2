@@ -7,28 +7,28 @@
   margin: 0 0 8px -12px;
 }
 
+// Phones and tablets: one column, with the view switch last, right above the list.
+// Desktop (see the media query): the heading and the search on top, and below them the view switch
+// on the left and the actions on the right, both next to the list they act on
 .page-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'heading'
+    'search'
+    'actions'
+    'toggle';
   gap: 16px;
   margin-bottom: 24px;
 }
 
-// The search on top, like «Mis bibliotecas», and the actions at the bottom, next to the list they
-// act on. On phones it takes its own line under the heading
-.side {
-  display: flex;
-  flex: 1 1 100%;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 16px;
-  align-self: stretch;
-  max-width: 100%;
+.heading {
+  grid-area: heading;
+  min-width: 0;
 }
 
 .search {
+  grid-area: search;
   // Pill shape: half of the field's 56px height, like the search of «Mis libros»
   --mat-form-field-outlined-container-shape: 28px;
 
@@ -37,11 +37,16 @@
 
 .actions {
   display: flex;
-  flex: none;
   flex-wrap: wrap;
+  grid-area: actions;
   gap: 8px;
   // Two buttons never overflow a narrow phone
   max-width: 100%;
+}
+
+.view-toggle {
+  grid-area: toggle;
+  justify-self: start;
 }
 
 .import-notice {
@@ -63,12 +68,6 @@
     color: inherit;
     font-weight: 500;
   }
-}
-
-.heading {
-  // Long names wrap inside this block, and the button only drops below on narrow screens
-  flex: 1 1 280px;
-  min-width: 0;
 }
 
 .title-row {
@@ -108,12 +107,6 @@ h1 {
   list-style: none;
 }
 
-.count {
-  margin: 4px 0 0;
-  font: var(--mat-sys-body-medium);
-  color: var(--mat-sys-on-surface-variant);
-}
-
 .status {
   display: flex;
   flex-direction: column;
@@ -143,6 +136,13 @@ h1 {
   }
 }
 
+// Just above the list, aligned with its right edge
+.list-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
 .grid {
   display: grid;
   // min(): never wider than the screen on very narrow phones
@@ -163,13 +163,24 @@ mat-paginator {
     padding: 32px 48px 40px;
   }
 
-  .side {
-    flex: 0 1 auto;
-    align-items: flex-end;
+  .page-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'heading search'
+      'toggle actions';
   }
 
   .search {
+    align-self: start;
     width: 360px;
-    max-width: 100%;
+  }
+
+  .actions {
+    align-self: end;
+    justify-content: flex-end;
+  }
+
+  .view-toggle {
+    align-self: end;
   }
 }
