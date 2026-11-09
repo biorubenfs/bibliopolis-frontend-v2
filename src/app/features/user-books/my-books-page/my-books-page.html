@@ -35,6 +35,13 @@
   }
 </header>
 
+<!-- Above the list it changes, on its left, away from the header so the search keeps its place -->
+@if (showViewToggle()) {
+  <div class="list-toolbar">
+    <app-books-view-toggle />
+  </div>
+}
+
 @switch (state()) {
   @case ('loading') {
     <div class="status">
@@ -63,6 +70,13 @@
         <p>Los libros se añaden desde tus bibliotecas.</p>
         <a mat-stroked-button routerLink="/libraries">Ir a Mis bibliotecas</a>
       </div>
+    } @else if (view() === 'table') {
+      <app-user-books-table
+        [books]="items()"
+        [removable]="false"
+        [showLibraryCount]="true"
+        (openRequested)="openDetailDialog($event)"
+      />
     } @else {
       <ul class="grid">
         @for (book of items(); track book.id) {

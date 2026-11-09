@@ -47,9 +47,12 @@ import { ImportsService } from '../../imports/imports.service';
 import { TagBadge } from '../../tags/tag-badge/tag-badge';
 import { Tag } from '../../tags/tag.model';
 import { TagsService } from '../../tags/tags.service';
+import { BooksViewPreference } from '../../user-books/books-view';
+import { BooksViewToggle } from '../../user-books/books-view-toggle/books-view-toggle';
 import { UserBookCard } from '../../user-books/user-book-card/user-book-card';
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
+import { UserBooksTable } from '../../user-books/user-books-table/user-books-table';
 import { AddBookDialog, AddBookDialogData } from '../add-book-dialog/add-book-dialog';
 import {
   BookDetailDialog,
@@ -81,6 +84,7 @@ const TOUCH_DEVICE_QUERY = '(hover: none) and (pointer: coarse)';
 @Component({
   selector: 'app-library-detail-page',
   imports: [
+    BooksViewToggle,
     FavoriteButton,
     MatButtonModule,
     MatFormFieldModule,
@@ -91,6 +95,7 @@ const TOUCH_DEVICE_QUERY = '(hover: none) and (pointer: coarse)';
     RouterLink,
     TagBadge,
     UserBookCard,
+    UserBooksTable,
   ],
   templateUrl: './library-detail-page.html',
   styleUrl: './library-detail-page.scss',
@@ -138,6 +143,11 @@ export class LibraryDetailPage {
   protected readonly total = signal(0);
   protected readonly state = signal<LoadState>('loading');
   protected readonly savingFavorite = signal(false);
+  protected readonly view = inject(BooksViewPreference).view;
+  /** Only with books to show; it stays while a new page loads, so the list does not jump. */
+  protected readonly showViewToggle = computed(
+    () => this.state() !== 'error' && this.total() > 0 && this.books().length > 0,
+  );
 
   /** Tags the user can use, to show the names and colours of the library tags. */
   private readonly allTags = signal<Tag[]>([]);

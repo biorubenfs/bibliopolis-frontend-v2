@@ -60,6 +60,8 @@ const thirteenBooks = () =>
   );
 
 describe('LibraryDetailPage', () => {
+  afterEach(() => localStorage.clear());
+
   async function setup(
     options: {
       url?: string;
@@ -210,12 +212,53 @@ describe('LibraryDetailPage', () => {
     expect(listByLibrary).toHaveBeenCalledWith('l1', { skip: 0, limit: 12, search: '' });
     expect(element.querySelector('h1')?.textContent).toContain('Novela');
     expect(element.textContent).toContain('Mis novelas');
-    expect(element.querySelector('.count')?.textContent).toContain('2 libros');
+    expect(element.querySelector('.description')?.textContent?.trim()).toMatch(
+      /^Mis novelas\s+–\s+2 libros$/,
+    );
     const cards = element.querySelectorAll('app-user-book-card');
     expect(cards.length).toBe(2);
     expect(cards[0].textContent).toContain('Rossiya');
     expect(element.querySelector('mat-paginator')).toBeNull();
     expect(element.querySelector('a.back')?.getAttribute('href')).toBe('/libraries');
+  });
+
+  describe('table view', () => {
+    const books = () => of({ items: [book('1', 'Rossiya'), book('2', 'Ulises')], total: 2 });
+
+    it('switches to a table, remembering the choice', async () => {
+      const { harness, element } = await setup({ listByLibrary: vi.fn(books) });
+
+      expect(element.querySelector('.page-header app-books-view-toggle')).not.toBeNull();
+
+      element.querySelector<HTMLButtonElement>('button[aria-label="Ver como tabla"]')!.click();
+      await harness.fixture.whenStable();
+
+      expect(element.querySelector('app-user-book-card')).toBeNull();
+      expect(element.querySelectorAll('app-user-books-table tbody tr').length).toBe(2);
+      expect(localStorage.getItem('bibliopolis.booksView')).toBe('table');
+    });
+
+    it('opens the detail and removes books from the table', async () => {
+      localStorage.setItem('bibliopolis.booksView', 'table');
+      const { harness, element, openDialog } = await setup({ listByLibrary: vi.fn(books) });
+      const rossiya = book('1', 'Rossiya');
+
+      element.querySelector<HTMLButtonElement>('app-user-books-table button.open')!.click();
+      await harness.fixture.whenStable();
+      expect(openDialog).toHaveBeenLastCalledWith(
+        BookDetailDialog,
+        expect.objectContaining({ data: { libraryId: 'l1', book: rossiya } }),
+      );
+
+      element
+        .querySelector<HTMLButtonElement>('app-user-books-table [aria-label^="Quitar"]')!
+        .click();
+      await harness.fixture.whenStable();
+      expect(openDialog).toHaveBeenLastCalledWith(
+        RemoveBookDialog,
+        expect.objectContaining({ data: { libraryId: 'l1', book: rossiya } }),
+      );
+    });
   });
 
   describe('scanning books', () => {
@@ -317,6 +360,15 @@ describe('LibraryDetailPage', () => {
         expect.anything(),
       );
     });
+  });
+
+  it('shows the book count alone when the library has no description', async () => {
+    const { element } = await setup({
+      get: vi.fn(() => of({ ...library, description: '' })),
+      listByLibrary: vi.fn(() => of({ items: [book('1', 'Rossiya')], total: 1 })),
+    });
+
+    expect(element.querySelector('.description')?.textContent?.trim()).toBe('1 libro');
   });
 
   it('shows an empty state when the library has no books', async () => {

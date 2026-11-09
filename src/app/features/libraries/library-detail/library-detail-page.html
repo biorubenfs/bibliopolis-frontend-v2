@@ -16,8 +16,17 @@
           (toggled)="toggleFavorite(library)"
         />
       </div>
-      @if (library.description) {
-        <p class="description">{{ library.description }}</p>
+      <!-- The book count shares the line of the description, to keep the header short -->
+      @if (library.description || total() > 0) {
+        <p class="description">
+          {{ library.description }}
+          @if (library.description && total() > 0) {
+            –
+          }
+          @if (total() > 0) {
+            <span class="count">{{ booksLabel() }}</span>
+          }
+        </p>
       }
       @if (libraryTags().length > 0) {
         <ul class="tags" aria-label="Etiquetas">
@@ -26,55 +35,54 @@
           }
         </ul>
       }
-      @if (total() > 0) {
-        <p class="count">{{ booksLabel() }}</p>
-      }
     </div>
-    <div class="side">
-      @if (showSearch()) {
-        <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic" role="search">
-          <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-          <input
-            matInput
-            type="text"
-            placeholder="Buscar por título, autor o ISBN"
-            aria-label="Buscar libros en esta biblioteca"
-            autocomplete="off"
-            [attr.maxlength]="searchMaxLength"
-            [value]="query()"
-            (input)="onSearchInput($any($event.target).value)"
-            (keydown.escape)="clearSearch()"
-          />
-          @if (query()) {
-            <button
-              mat-icon-button
-              matSuffix
-              type="button"
-              aria-label="Borrar búsqueda"
-              (click)="clearSearch()"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
-          }
-        </mat-form-field>
-      }
-      <div class="actions">
-        @if (canScan()) {
-          <button mat-stroked-button type="button" (click)="openScanDialog()">
-            <mat-icon>barcode_scanner</mat-icon>
-            Escanear libros
+    @if (showSearch()) {
+      <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic" role="search">
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input
+          matInput
+          type="text"
+          placeholder="Buscar por título, autor o ISBN"
+          aria-label="Buscar libros en esta biblioteca"
+          autocomplete="off"
+          [attr.maxlength]="searchMaxLength"
+          [value]="query()"
+          (input)="onSearchInput($any($event.target).value)"
+          (keydown.escape)="clearSearch()"
+        />
+        @if (query()) {
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            aria-label="Borrar búsqueda"
+            (click)="clearSearch()"
+          >
+            <mat-icon>close</mat-icon>
           </button>
         }
-        <button mat-stroked-button type="button" (click)="openImportDialog(library)">
-          <mat-icon>upload_file</mat-icon>
-          Importar CSV
+      </mat-form-field>
+    }
+    <div class="actions">
+      @if (canScan()) {
+        <button mat-stroked-button type="button" (click)="openScanDialog()">
+          <mat-icon>barcode_scanner</mat-icon>
+          Escanear libros
         </button>
-        <button #addButton mat-flat-button type="button" (click)="openAddDialog()">
-          <mat-icon>add</mat-icon>
-          Añadir libro
-        </button>
-      </div>
+      }
+      <button mat-stroked-button type="button" (click)="openImportDialog(library)">
+        <mat-icon>upload_file</mat-icon>
+        Importar CSV
+      </button>
+      <button #addButton mat-flat-button type="button" (click)="openAddDialog()">
+        <mat-icon>add</mat-icon>
+        Añadir libro
+      </button>
     </div>
+    <!-- At the level of the actions, on the left side of the list it changes -->
+    @if (showViewToggle()) {
+      <app-books-view-toggle class="view-toggle" />
+    }
   </header>
 
   @if (latestImport(); as latest) {
@@ -132,6 +140,12 @@
         <h2>Esta biblioteca aún no tiene libros</h2>
         <p>Usa «Añadir libro» para incorporar el primero.</p>
       </div>
+    } @else if (view() === 'table') {
+      <app-user-books-table
+        [books]="books()"
+        (openRequested)="openDetailDialog($event)"
+        (removeRequested)="openRemoveDialog($event)"
+      />
     } @else {
       <ul class="grid">
         @for (book of books(); track book.id) {
