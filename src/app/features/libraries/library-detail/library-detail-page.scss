@@ -16,8 +16,8 @@
   margin-bottom: 24px;
 }
 
-// Actions on top and the search at the bottom, level with the book count as in «Mis libros».
-// On phones it takes its own line under the heading
+// The search on top, like «Mis bibliotecas», and the actions at the bottom, next to the list they
+// act on. On phones it takes its own line under the heading
 .side {
   display: flex;
   flex: 1 1 100%;

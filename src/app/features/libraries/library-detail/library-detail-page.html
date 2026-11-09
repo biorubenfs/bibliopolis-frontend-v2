@@ -31,22 +31,6 @@
       }
     </div>
     <div class="side">
-      <div class="actions">
-        @if (canScan()) {
-          <button mat-stroked-button type="button" (click)="openScanDialog()">
-            <mat-icon>barcode_scanner</mat-icon>
-            Escanear libros
-          </button>
-        }
-        <button mat-stroked-button type="button" (click)="openImportDialog(library)">
-          <mat-icon>upload_file</mat-icon>
-          Importar CSV
-        </button>
-        <button #addButton mat-flat-button type="button" (click)="openAddDialog()">
-          <mat-icon>add</mat-icon>
-          Añadir libro
-        </button>
-      </div>
       @if (showSearch()) {
         <mat-form-field class="search" appearance="outline" subscriptSizing="dynamic" role="search">
           <mat-icon matPrefix aria-hidden="true">search</mat-icon>
@@ -74,6 +58,22 @@
           }
         </mat-form-field>
       }
+      <div class="actions">
+        @if (canScan()) {
+          <button mat-stroked-button type="button" (click)="openScanDialog()">
+            <mat-icon>barcode_scanner</mat-icon>
+            Escanear libros
+          </button>
+        }
+        <button mat-stroked-button type="button" (click)="openImportDialog(library)">
+          <mat-icon>upload_file</mat-icon>
+          Importar CSV
+        </button>
+        <button #addButton mat-flat-button type="button" (click)="openAddDialog()">
+          <mat-icon>add</mat-icon>
+          Añadir libro
+        </button>
+      </div>
     </div>
   </header>
 
