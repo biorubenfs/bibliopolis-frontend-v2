@@ -1,0 +1,62 @@
+<!-- Fixed line instead of a floating tooltip: it covers nothing at any width, and on a phone it
+     works by tapping a column. Screen readers get the same figures from the name of each column -->
+<p class="readout" aria-hidden="true">
+  @if (active(); as column) {
+    Valoración {{ column.rating }} ·
+    <strong>{{ column.count }} {{ column.count === 1 ? 'libro' : 'libros' }}</strong>
+  } @else {
+    <span class="hint">Pasa el ratón o toca una columna para ver sus libros</span>
+  }
+</p>
+
+<div class="chart">
+  <span class="y-title" aria-hidden="true">Libros</span>
+
+  <!-- Axis and gridlines are decorative: each column says its rating and count -->
+  <div class="y-axis" aria-hidden="true">
+    @for (line of gridlines(); track line.value) {
+      <span class="tick" [style.bottom.%]="line.bottom">{{ line.value }}</span>
+    }
+  </div>
+
+  <div class="plot">
+    <div class="grid" aria-hidden="true">
+      @for (line of gridlines(); track line.value) {
+        <span
+          class="gridline"
+          [class.baseline]="line.value === 0"
+          [style.bottom.%]="line.bottom"
+        ></span>
+      }
+    </div>
+
+    <ul class="columns" aria-label="Libros por valoración">
+      @for (column of columns(); track column.rating) {
+        <li class="column">
+          <!-- The whole column is the target, not only the bar: a short bar is hard to hit -->
+          <div
+            class="target"
+            tabindex="0"
+            role="img"
+            [attr.aria-label]="column.label"
+            [class.active]="active()?.rating === column.rating"
+            (mouseenter)="show(column)"
+            (mouseleave)="hide(column)"
+            (focus)="show(column)"
+            (blur)="hide(column)"
+            (click)="show(column)"
+          >
+            <span class="bar" [style.height.%]="column.height"></span>
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <div class="x-axis" aria-hidden="true">
+    @for (column of columns(); track column.rating) {
+      <span>{{ column.rating }}</span>
+    }
+  </div>
+  <span class="x-title" aria-hidden="true">Valoración</span>
+</div>

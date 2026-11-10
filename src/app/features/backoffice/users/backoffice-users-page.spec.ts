@@ -64,6 +64,21 @@ describe('BackofficeUsersPage', () => {
     expect(titles).toEqual(['Ana', 'Admin Administrador']);
   });
 
+  it('does not link the names: the stats open from their button', async () => {
+    const { element } = await setup();
+
+    expect(element.querySelectorAll('.row-title a')).toHaveLength(0);
+  });
+
+  it('offers the stats of regular users next to the reset button', async () => {
+    const { element } = await setup();
+
+    const statsLinks = element.querySelectorAll<HTMLAnchorElement>('.row-actions a');
+    expect(statsLinks).toHaveLength(1);
+    expect(statsLinks[0].getAttribute('aria-label')).toBe('Ver las estadísticas de Ana');
+    expect(statsLinks[0].getAttribute('href')).toBe('/backoffice/users/u2');
+  });
+
   it('only offers resetting the password of regular users', async () => {
     const { element, openDialog } = await setup();
 

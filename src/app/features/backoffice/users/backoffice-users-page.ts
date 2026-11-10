@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 
 import { SpanishPaginatorIntl } from '../../../core/i18n/paginator-intl';
 import { SearchableList } from '../../../core/lists/searchable-list';
@@ -24,7 +25,7 @@ import {
 
 const DIALOG_SIZE = { width: '480px', maxWidth: 'calc(100vw - 32px)' };
 
-/** Lists the users, creates regular users and resets their passwords. */
+/** Lists the users, creates regular users, resets their passwords and links to their figures. */
 @Component({
   selector: 'app-backoffice-users-page',
   imports: [
@@ -36,6 +37,7 @@ const DIALOG_SIZE = { width: '480px', maxWidth: 'calc(100vw - 32px)' };
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    RouterLink,
   ],
   templateUrl: './backoffice-users-page.html',
   styleUrls: ['../shared/backoffice-page.scss', './backoffice-users-page.scss'],

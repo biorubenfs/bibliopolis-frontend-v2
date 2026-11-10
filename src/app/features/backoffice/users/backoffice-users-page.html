@@ -81,7 +81,17 @@
               <p class="row-detail">Alta: {{ user.createdAt | date: 'dd/MM/yyyy' }}</p>
             </div>
             @if (user.role === 'regular') {
+              <!-- An admin has no libraries, so no stats either -->
               <div class="row-actions">
+                <a
+                  mat-icon-button
+                  matTooltip="Ver estadísticas"
+                  [routerLink]="['/backoffice/users', user.id]"
+                  [state]="{ fromUserList: true }"
+                  [attr.aria-label]="'Ver las estadísticas de ' + user.name"
+                >
+                  <mat-icon aria-hidden="true">bar_chart</mat-icon>
+                </a>
                 <button
                   mat-icon-button
                   type="button"

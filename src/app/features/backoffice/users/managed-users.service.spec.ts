@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../../environments/environment';
+import { ApiError } from '../../../core/http/api-error';
 import { ManagedUsersService } from './managed-users.service';
 
 describe('ManagedUsersService', () => {
@@ -61,5 +62,42 @@ describe('ManagedUsersService', () => {
     req.flush({ results: { type: 'users', id: 'u1', attributes: {} }, meta: { password: 'new' } });
 
     expect(password).toBe('new');
+  });
+
+  it('gets a user, flattened', () => {
+    let user: unknown;
+    service.get('u1').subscribe((u) => (user = u));
+
+    backend
+      .expectOne(`${environment.apiUrl}/users/u1`)
+      .flush({ results: { type: 'users', id: 'u1', attributes: { name: 'Ana' } } });
+
+    expect(user).toEqual({ id: 'u1', name: 'Ana' });
+  });
+
+  it('gets the stats of a user without the envelope', () => {
+    let stats: unknown;
+    service.getStats('u1').subscribe((s) => (stats = s));
+
+    const attributes = { libraries: { count: 1 } };
+    backend
+      .expectOne(`${environment.apiUrl}/users/u1/stats`)
+      .flush({ results: { type: 'user-stats', attributes } });
+
+    expect(stats).toEqual(attributes);
+  });
+
+  it('turns a 404 of the stats into an ApiError', () => {
+    let status = 0;
+    service.getStats('admin').subscribe({ error: (e: ApiError) => (status = e.statusCode) });
+
+    backend
+      .expectOne(`${environment.apiUrl}/users/admin/stats`)
+      .flush(
+        { statusCode: 404, errorCode: 'NOT FOUND ERROR', message: 'user not found' },
+        { status: 404, statusText: 'Not Found' },
+      );
+
+    expect(status).toBe(404);
   });
 });

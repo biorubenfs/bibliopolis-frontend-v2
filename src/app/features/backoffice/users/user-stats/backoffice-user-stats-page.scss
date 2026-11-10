@@ -1,0 +1,171 @@
+:host {
+  display: block;
+  padding: 24px 16px;
+}
+
+.back {
+  margin: 0 0 8px -12px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+h1 {
+  margin: 0 0 4px;
+  font: 500 2rem / 1.25 var(--app-font-display);
+  color: var(--mat-sys-on-surface);
+  overflow-wrap: anywhere;
+}
+
+.detail {
+  margin: 0;
+  font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface-variant);
+  overflow-wrap: anywhere;
+}
+
+// As many columns as fit: the five figures in one row on wide screens, two per row on phones
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 0 0 32px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--mat-sys-surface-container-low);
+
+  dt {
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  dd {
+    margin: 0;
+    font: 500 2rem / 1.2 var(--app-font-display);
+    color: var(--mat-sys-on-surface);
+  }
+}
+
+.ratings h2 {
+  margin: 0 0 12px;
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-on-surface);
+}
+
+// The chart is simple: it keeps a fixed, compact width and the block fits its content instead of
+// stretching across the page. On phones everything goes one under the other
+.ratings-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.rating-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+// The track is the unrated share; the filled part, the rated one
+.rated-bar {
+  display: flex;
+  height: 8px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--mat-sys-surface-container-highest);
+
+  .rated {
+    background: var(--mat-sys-primary);
+  }
+}
+
+.chart-panel {
+  max-width: 432px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--mat-sys-surface-container-low);
+
+  h3 {
+    margin: 0 0 8px;
+    font: var(--mat-sys-title-medium);
+    color: var(--mat-sys-on-surface);
+  }
+}
+
+.summary {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 16px;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 48px;
+    color: var(--mat-sys-secondary);
+  }
+
+  h1 {
+    font: var(--mat-sys-title-large);
+  }
+
+  p {
+    margin: 0;
+    font: var(--mat-sys-body-large);
+  }
+
+  &.empty {
+    padding: 32px 16px;
+  }
+}
+
+// Two columns on phones: the fifth figure takes the whole last row instead of being left alone
+@media (max-width: 599px) {
+  .cards .card:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 900px) {
+  :host {
+    padding: 32px 48px 40px;
+  }
+
+  // The two rating figures stacked beside the chart, sharing its height
+  .ratings-body {
+    grid-template-columns: 240px 432px;
+  }
+
+  .rating-cards {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: 1fr;
+  }
+}

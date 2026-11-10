@@ -35,6 +35,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'users/:id',
+        title: 'Estadísticas del usuario · Backoffice · Bibliopolis',
+        loadComponent: () =>
+          import('./features/backoffice/users/user-stats/backoffice-user-stats-page').then(
+            (m) => m.BackofficeUserStatsPage,
+          ),
+      },
+      {
         path: 'profile',
         title: 'Perfil · Bibliopolis',
         loadComponent: () => import('./features/profile/profile-page').then((m) => m.ProfilePage),

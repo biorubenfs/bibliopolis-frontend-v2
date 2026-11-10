@@ -4,8 +4,15 @@ import { Observable, catchError, map, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { ApiError } from '../../../core/http/api-error';
-import { ApiCollectionResponse, ApiResource, Page, flatten } from '../../../core/http/api.models';
+import {
+  ApiCollectionResponse,
+  ApiItemResponse,
+  ApiResource,
+  Page,
+  flatten,
+} from '../../../core/http/api.models';
 import { User } from '../../../core/users/user.model';
+import { UserStats } from './user-stats/user-stats.model';
 
 /** The user list leaves out the avatar. */
 export type ManagedUser = Omit<User, 'avatar'>;
@@ -45,6 +52,24 @@ export class ManagedUsersService {
           items: response.results.map(flatten),
           total: response.paginationInfo.total,
         })),
+        catchError(toApiError),
+      );
+  }
+
+  /** Without the avatar, as in the list. Fails with a 404 if the user does not exist. */
+  get(id: string): Observable<ManagedUser> {
+    return this.http.get<ApiItemResponse<Omit<ManagedUser, 'id'>>>(`${this.baseUrl}/${id}`).pipe(
+      map((response) => flatten(response.results)),
+      catchError(toApiError),
+    );
+  }
+
+  /** Only for regular users: fails with a 404 if the user does not exist or is an admin. */
+  getStats(id: string): Observable<UserStats> {
+    return this.http
+      .get<{ results: { type: string; attributes: UserStats } }>(`${this.baseUrl}/${id}/stats`)
+      .pipe(
+        map((response) => response.results.attributes),
         catchError(toApiError),
       );
   }

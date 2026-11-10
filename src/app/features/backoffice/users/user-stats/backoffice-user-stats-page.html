@@ -1,0 +1,91 @@
+<!-- Coming from the list, going back restores its search and page. Opened from a link or a
+     reload, there is nothing to go back to, so a link opens the list -->
+@if (cameFromList) {
+  <button mat-button type="button" class="back" (click)="goBack()">
+    <mat-icon>arrow_back</mat-icon>
+    Usuarios
+  </button>
+} @else {
+  <a mat-button class="back" routerLink="/backoffice/users">
+    <mat-icon>arrow_back</mat-icon>
+    Usuarios
+  </a>
+}
+
+@switch (state()) {
+  @case ('loading') {
+    <div class="status">
+      <mat-spinner diameter="40" aria-label="Cargando estadísticas" />
+    </div>
+  }
+  @case ('not-found') {
+    <div class="status" role="alert">
+      <mat-icon aria-hidden="true">search_off</mat-icon>
+      <h1>No hemos encontrado este usuario</h1>
+      <p>Puede que se haya eliminado o que sea un administrador, que no tiene bibliotecas.</p>
+    </div>
+  }
+  @case ('error') {
+    <div class="status" role="alert">
+      <mat-icon aria-hidden="true">cloud_off</mat-icon>
+      <p>No se han podido cargar las estadísticas.</p>
+      <button mat-stroked-button type="button" (click)="load()">Reintentar</button>
+    </div>
+  }
+  @default {
+    @if (user(); as user) {
+      <header class="page-header">
+        <h1>{{ user.name }}</h1>
+        <p class="detail">{{ user.email }}</p>
+        <p class="detail">Alta: {{ user.createdAt | date: 'dd/MM/yyyy' }}</p>
+      </header>
+    }
+
+    <dl class="cards">
+      @for (card of cards(); track card.label) {
+        <div class="card">
+          <dt>{{ card.label }}</dt>
+          <dd>{{ card.value }}</dd>
+        </div>
+      }
+    </dl>
+
+    @if (isEmpty()) {
+      <div class="status empty">
+        <mat-icon aria-hidden="true">auto_stories</mat-icon>
+        <p>Este usuario todavía no tiene bibliotecas ni libros.</p>
+      </div>
+    } @else {
+      <section class="ratings" aria-labelledby="ratings-title">
+        <h2 id="ratings-title">Valoraciones</h2>
+        <div class="ratings-body">
+          <dl class="rating-cards">
+            <div class="card">
+              <dt>Valoración media</dt>
+              <dd>{{ averageRating() }}</dd>
+            </div>
+            <div class="card">
+              <dt>{{ ratedLabel() }}</dt>
+              <dd>
+                {{ stats()!.books.rated }}
+                <!-- Decorative: the label gives the same share as text -->
+                <span class="rated-bar" aria-hidden="true">
+                  <span class="rated" [style.width.%]="ratedWidth()"></span>
+                </span>
+              </dd>
+            </div>
+          </dl>
+
+          <div class="chart-panel">
+            <h3>Distribución</h3>
+            @if (stats()!.books.rated > 0) {
+              <app-rating-chart [distribution]="stats()!.ratings.distribution" />
+            } @else {
+              <p class="summary">Todavía no ha valorado ningún libro.</p>
+            }
+          </div>
+        </div>
+      </section>
+    }
+  }
+}
