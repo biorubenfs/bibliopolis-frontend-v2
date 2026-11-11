@@ -64,6 +64,11 @@ h1 {
 }
 
 .filters {
+  // Tonal pill chips, without outline, like the search field above them
+  --mat-chip-container-shape-radius: 999px;
+  --mat-chip-outline-width: 0;
+  --mat-chip-elevated-container-color: var(--mat-sys-surface-container-high);
+
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -81,8 +86,8 @@ h1 {
   margin-left: auto;
 }
 
-// Same look as the Material 3 filter chip next to it: 32px high, 8px corners, outlined when off
-// and tonal when some tag is selected
+// Same look as the filter chip next to it: 32px high pill, tonal when off and highlighted when
+// some tag is selected
 .tag-filter {
   // The select text uses the chip label font and colours
   --mat-select-trigger-text-font: var(--mat-sys-label-large-font);
@@ -100,15 +105,14 @@ h1 {
   width: 160px;
   height: 32px;
   box-sizing: border-box;
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 8px;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-container-high);
   color: var(--mat-sys-on-surface-variant);
 
   &.active {
     --mat-select-enabled-trigger-text-color: var(--mat-sys-on-secondary-container);
     --mat-select-enabled-arrow-color: var(--mat-sys-on-secondary-container);
 
-    border-color: transparent;
     background: var(--mat-sys-secondary-container);
     color: var(--mat-sys-on-secondary-container);
   }

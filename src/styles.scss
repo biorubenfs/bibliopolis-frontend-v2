@@ -7,6 +7,11 @@ html {
   --app-font-display: 'Lora', Georgia, serif;
   --app-font-title: 600 1.75rem / 1.25 var(--app-font-sans);
   --app-font-title-tracking: -0.01em;
+  // Cards float on the surface with a soft shadow instead of a border
+  --app-card-radius: 20px;
+  --app-card-background: var(--mat-sys-surface-container-lowest);
+  --app-card-shadow: 0 1px 2px rgb(31 47 38 / 5%), 0 6px 18px rgb(31 47 38 / 6%);
+  --app-card-shadow-hover: 0 2px 4px rgb(31 47 38 / 6%), 0 12px 28px rgb(31 47 38 / 10%);
   // Rounded corners for every outlined field, including the paginator's page size select
   --mat-form-field-outlined-container-shape: 12px;
 
@@ -32,6 +37,12 @@ html {
       on-secondary-container: #1f2f26,
       surface: #f7f6f2,
       on-surface: #1f2f26,
+      // Warm neutrals for the tonal surfaces (fields, chips, rows), in step with the surface
+      surface-container-lowest: #ffffff,
+      surface-container-low: #f1f0eb,
+      surface-container: #ebeae4,
+      surface-container-high: #e5e4dd,
+      surface-container-highest: #dfded7,
       surface-tint: #3a5a40,
     )
   );
@@ -52,4 +63,16 @@ body {
 // Only here can it reach the dialog container, which lives outside the component
 .scan-books-panel {
   --mat-dialog-container-shape: 0;
+}
+
+// Search fields: filled pill without outline; the outline only shows on focus. Needs to be global to
+// reach the field's inner wrapper
+.app-tonal-field {
+  --mat-form-field-outlined-outline-color: transparent;
+  --mat-form-field-outlined-hover-outline-color: var(--mat-sys-outline-variant);
+
+  .mat-mdc-text-field-wrapper {
+    border-radius: var(--mat-form-field-outlined-container-shape);
+    background-color: var(--mat-sys-surface-container-high);
+  }
 }

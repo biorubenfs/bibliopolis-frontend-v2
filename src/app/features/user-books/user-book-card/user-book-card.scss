@@ -11,14 +11,14 @@
   height: 100%;
   box-sizing: border-box;
   padding: 16px;
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 16px;
-  background: var(--mat-sys-surface-container-lowest);
+  border-radius: var(--app-card-radius);
+  background: var(--app-card-background);
+  box-shadow: var(--app-card-shadow);
   color: var(--mat-sys-on-surface);
-  transition: border-color 150ms;
+  transition: box-shadow 150ms;
 
   &:hover {
-    border-color: var(--mat-sys-secondary);
+    box-shadow: var(--app-card-shadow-hover);
   }
 }
 
@@ -95,7 +95,7 @@ p {
   &:focus-visible::after {
     outline: 2px solid var(--mat-sys-primary);
     outline-offset: 2px;
-    border-radius: 16px;
+    border-radius: var(--app-card-radius);
   }
 }
 

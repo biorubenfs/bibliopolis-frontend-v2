@@ -24,9 +24,9 @@ h1 {
 // Same look as the library and book cards
 .card {
   padding: 24px;
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 16px;
-  background: var(--mat-sys-surface-container-lowest);
+  border-radius: var(--app-card-radius);
+  background: var(--app-card-background);
+  box-shadow: var(--app-card-shadow);
 
   h2 {
     margin: 0 0 20px;
