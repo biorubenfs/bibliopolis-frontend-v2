@@ -20,7 +20,8 @@ import { MatIconModule } from '@angular/material/icon';
 
     h1 {
       margin: 0 0 24px;
-      font: 500 2rem / 1.25 var(--app-font-display);
+      font: var(--app-font-title);
+      letter-spacing: var(--app-font-title-tracking);
       color: var(--mat-sys-on-surface);
     }
 

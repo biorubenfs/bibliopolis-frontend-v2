@@ -14,6 +14,7 @@ import {
 import { map } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { ThemeService } from '../../core/theme/theme.service';
 
 interface NavItem {
   label: string;
@@ -52,6 +53,7 @@ const DESKTOP_QUERY = '(min-width: 900px)';
 export class Shell {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  protected readonly theme = inject(ThemeService);
 
   /** The same layout serves the reader screens and the backoffice, set by the route data. */
   protected readonly isBackoffice = inject(ActivatedRoute).snapshot.data['area'] === 'backoffice';

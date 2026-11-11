@@ -15,7 +15,8 @@
 
 h1 {
   margin: 0;
-  font: 500 2rem / 1.25 var(--app-font-display);
+  font: var(--app-font-title);
+  letter-spacing: var(--app-font-title-tracking);
   color: var(--mat-sys-on-surface);
 }
 
@@ -26,8 +27,8 @@ h1 {
 }
 
 .search {
-  // Pill shape: half of the field's 56px height
-  --mat-form-field-outlined-container-shape: 28px;
+  // Pill shape: half of the field's 48px height
+  --mat-form-field-outlined-container-shape: 24px;
 
   // Full width on phones; a fixed comfortable width next to the title on larger screens, pushed to
   // the right edge as in the libraries page

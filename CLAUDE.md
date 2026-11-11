@@ -76,6 +76,17 @@ Node 22 (gestionado con nvm). Angular 22 exige Node ≥ 22.22.3, por eso el proy
 - Debe pasar todas las comprobaciones de AXE.
 - Debe cumplir WCAG AA: gestión del foco, contraste de color, atributos ARIA, controles con `<label>`, botones de solo icono con `aria-label`.
 
+## Guía visual
+
+Material 3 (`mat.theme` en `src/styles.scss`) con la paleta verde de la marca y los dos esquemas de color (`color-scheme: light dark`): los tokens `--mat-sys-*` se definen con `light-dark()` y el navegador elige. `ThemeService` (`core/theme/`) fija el esquema elegido por el usuario en `<html style="color-scheme">` y lo guarda en `localStorage`; el botón de cambio está en la barra lateral, sobre «Cerrar sesión».
+
+- **Colores siempre por tokens** (`var(--mat-sys-…)` o los `--app-*` de `styles.scss`); nunca literales hexadecimales en los SCSS, salvo la barra lateral (`shell.scss`, con `light-dark()`) y los visores de cámara. Un literal rompe el modo oscuro.
+- **Tipografía**: Inter en toda la interfaz; los títulos de página usan `font: var(--app-font-title)` con `letter-spacing: var(--app-font-title-tracking)`. Lora (`--app-font-display`) solo para la marca (wordmark del login y de la barra superior, inicial del avatar).
+- **Densidad -1** global: campos de 48 px, botones de 36 px. Los buscadores en píldora usan radio 24 px y la clase global `app-tonal-field` (relleno tonal sin borde).
+- **Tarjetas** (bibliotecas, libros, perfil): sin borde, `border-radius: var(--app-card-radius)`, `background: var(--app-card-background)` y `box-shadow: var(--app-card-shadow)` (`--app-card-shadow-hover` al pasar el ratón).
+- **Chips de filtro** tonales en píldora (tokens `--mat-chip-*` en `libraries-page.scss`); el filtro de etiquetas imita ese aspecto.
+- La barra lateral es oscura, pegada a los bordes y sin esquinas redondeadas (colores con `light-dark()` en `shell.scss`); el usuario descartó la variante de panel flotante.
+
 ## Contrato con el backend
 
 Referencia completa: `../bibliopolis-backend/docs/index.md` (autenticación, formato de respuestas, paginación, tabla de códigos de error) y una página por recurso en `../bibliopolis-backend/docs/api/` (`auth`, `users`, `books`, `libraries`, `user-books`, `external`, `imports`). Consultarla antes de implementar una llamada; no inventar campos ni endpoints.

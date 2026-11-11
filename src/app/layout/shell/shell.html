@@ -49,10 +49,21 @@
         }
       </ul>
 
-      <button type="button" class="nav-item logout" (click)="logout()">
-        <mat-icon aria-hidden="true">logout</mat-icon>
-        <span>Cerrar sesión</span>
-      </button>
+      <div class="sidebar-footer">
+        <button type="button" class="nav-item theme-toggle" (click)="theme.toggle()">
+          @if (theme.theme() === 'dark') {
+            <mat-icon aria-hidden="true">light_mode</mat-icon>
+            <span>Modo claro</span>
+          } @else {
+            <mat-icon aria-hidden="true">dark_mode</mat-icon>
+            <span>Modo oscuro</span>
+          }
+        </button>
+        <button type="button" class="nav-item logout" (click)="logout()">
+          <mat-icon aria-hidden="true">logout</mat-icon>
+          <span>Cerrar sesión</span>
+        </button>
+      </div>
     </nav>
   </mat-sidenav>
 
