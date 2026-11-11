@@ -2,16 +2,20 @@
 
 html {
   color-scheme: light;
-  // Serif display font for brand and page titles; the rest of the UI uses Roboto
+  // Inter for the whole UI and the page titles; Lora only for the brand (wordmark and avatar initial)
+  --app-font-sans: 'Inter', system-ui, sans-serif;
   --app-font-display: 'Lora', Georgia, serif;
+  --app-font-title: 600 1.75rem / 1.25 var(--app-font-sans);
+  --app-font-title-tracking: -0.01em;
   // Rounded corners for every outlined field, including the paginator's page size select
   --mat-form-field-outlined-container-shape: 12px;
 
+  // Density -1: 48px fields and 36px buttons, so forms and toolbars stop dominating the pages
   @include mat.theme(
     (
       color: mat.$green-palette,
-      typography: Roboto,
-      density: 0,
+      typography: Inter,
+      density: -1,
     )
   );
 
