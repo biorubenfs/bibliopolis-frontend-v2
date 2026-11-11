@@ -1,7 +1,7 @@
 :host {
-  // Dark green sidebar from the brand palette
-  --sidebar-background: #344e41;
-  --sidebar-text: #dad7cd;
+  // Dark green sidebar from the brand palette, deeper in the dark scheme
+  --sidebar-background: light-dark(#344e41, #1b241e);
+  --sidebar-text: light-dark(#dad7cd, #cdd3c6);
   --sidebar-hover: rgb(255 255 255 / 8%);
   --sidebar-active-background: #a3b18a;
   --sidebar-active-text: #1f2f26;
@@ -118,6 +118,12 @@
   font: var(--mat-sys-label-medium);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .nav-list {

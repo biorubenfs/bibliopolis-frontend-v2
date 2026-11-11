@@ -1,7 +1,8 @@
 @use '@angular/material' as mat;
 
 html {
-  color-scheme: light;
+  // Both schemes: the system decides unless the user pins one (ThemeService)
+  color-scheme: light dark;
   // Inter for the whole UI and the page titles; Lora only for the brand (wordmark and avatar initial)
   --app-font-sans: 'Inter', system-ui, sans-serif;
   --app-font-display: 'Lora', Georgia, serif;
@@ -9,9 +10,18 @@ html {
   --app-font-title-tracking: -0.01em;
   // Cards float on the surface with a soft shadow instead of a border
   --app-card-radius: 20px;
-  --app-card-background: var(--mat-sys-surface-container-lowest);
-  --app-card-shadow: 0 1px 2px rgb(31 47 38 / 5%), 0 6px 18px rgb(31 47 38 / 6%);
-  --app-card-shadow-hover: 0 2px 4px rgb(31 47 38 / 6%), 0 12px 28px rgb(31 47 38 / 10%);
+  --app-card-background: light-dark(
+    var(--mat-sys-surface-container-lowest),
+    var(--mat-sys-surface-container)
+  );
+  // light-dark() only takes colours, so the shadow colours are tokens of their own
+  --app-shadow-near: light-dark(rgb(31 47 38 / 5%), rgb(0 0 0 / 40%));
+  --app-shadow-far: light-dark(rgb(31 47 38 / 6%), rgb(0 0 0 / 30%));
+  --app-shadow-near-hover: light-dark(rgb(31 47 38 / 6%), rgb(0 0 0 / 45%));
+  --app-shadow-far-hover: light-dark(rgb(31 47 38 / 10%), rgb(0 0 0 / 40%));
+  --app-card-shadow: 0 1px 2px var(--app-shadow-near), 0 6px 18px var(--app-shadow-far);
+  --app-card-shadow-hover:
+    0 2px 4px var(--app-shadow-near-hover), 0 12px 28px var(--app-shadow-far-hover);
   // Rounded corners for every outlined field, including the paginator's page size select
   --mat-form-field-outlined-container-shape: 12px;
 
@@ -27,23 +37,23 @@ html {
   // Bibliopolis brand palette: #A3B18A #DAD7CD #588157 #3A5A40 #344E41
   @include mat.theme-overrides(
     (
-      primary: #3a5a40,
-      on-primary: #ffffff,
-      primary-container: #dad7cd,
-      on-primary-container: #344e41,
-      secondary: #588157,
-      on-secondary: #ffffff,
-      secondary-container: #a3b18a,
-      on-secondary-container: #1f2f26,
-      surface: #f7f6f2,
-      on-surface: #1f2f26,
+      primary: light-dark(#3a5a40, #a3b18a),
+      on-primary: light-dark(#ffffff, #1f2f26),
+      primary-container: light-dark(#dad7cd, #3a5a40),
+      on-primary-container: light-dark(#344e41, #dad7cd),
+      secondary: light-dark(#588157, #9fb594),
+      on-secondary: light-dark(#ffffff, #1a2e20),
+      secondary-container: light-dark(#a3b18a, #3f5c45),
+      on-secondary-container: light-dark(#1f2f26, #dde6d4),
+      surface: light-dark(#f7f6f2, #121a15),
+      on-surface: light-dark(#1f2f26, #e3e6df),
       // Warm neutrals for the tonal surfaces (fields, chips, rows), in step with the surface
-      surface-container-lowest: #ffffff,
-      surface-container-low: #f1f0eb,
-      surface-container: #ebeae4,
-      surface-container-high: #e5e4dd,
-      surface-container-highest: #dfded7,
-      surface-tint: #3a5a40,
+      surface-container-lowest: light-dark(#ffffff, #0c120e),
+      surface-container-low: light-dark(#f1f0eb, #181f1a),
+      surface-container: light-dark(#ebeae4, #1c251f),
+      surface-container-high: light-dark(#e5e4dd, #27312a),
+      surface-container-highest: light-dark(#dfded7, #313c34),
+      surface-tint: light-dark(#3a5a40, #a3b18a),
     )
   );
 }
