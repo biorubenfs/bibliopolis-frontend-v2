@@ -6,9 +6,7 @@
   --sidebar-active-background: #a3b18a;
   --sidebar-active-text: #1f2f26;
 
-  // The drawer itself shows the page surface: the dark panel is the nav inside it, which floats
-  // with a margin on desktop and fills the drawer on phones
-  --mat-sidenav-container-background-color: var(--mat-sys-surface);
+  --mat-sidenav-container-background-color: var(--sidebar-background);
   --mat-sidenav-container-text-color: var(--sidebar-text);
   --mat-sidenav-container-shape: 0;
   --mat-sidenav-container-width: 248px;
@@ -30,21 +28,6 @@
   min-height: 100%;
   padding: 16px 12px;
   box-sizing: border-box;
-  background: var(--sidebar-background);
-  color: var(--sidebar-text);
-}
-
-@media (min-width: 900px) {
-  :host {
-    // Panel width plus its left margin
-    --mat-sidenav-container-width: 260px;
-  }
-
-  .sidebar-content {
-    min-height: calc(100% - 24px);
-    margin: 12px 0 12px 12px;
-    border-radius: 24px;
-  }
 }
 
 // Shared focus ring, visible on the dark background

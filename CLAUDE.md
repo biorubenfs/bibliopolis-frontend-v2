@@ -85,7 +85,7 @@ Material 3 (`mat.theme` en `src/styles.scss`) con la paleta verde de la marca y 
 - **Densidad -1** global: campos de 48 px, botones de 36 px. Los buscadores en píldora usan radio 24 px y la clase global `app-tonal-field` (relleno tonal sin borde).
 - **Tarjetas** (bibliotecas, libros, perfil): sin borde, `border-radius: var(--app-card-radius)`, `background: var(--app-card-background)` y `box-shadow: var(--app-card-shadow)` (`--app-card-shadow-hover` al pasar el ratón).
 - **Chips de filtro** tonales en píldora (tokens `--mat-chip-*` en `libraries-page.scss`); el filtro de etiquetas imita ese aspecto.
-- La barra lateral es un panel oscuro flotante en escritorio (margen y radio en `shell.scss`) y ocupa todo el cajón en móvil.
+- La barra lateral es oscura, pegada a los bordes y sin esquinas redondeadas (colores con `light-dark()` en `shell.scss`); el usuario descartó la variante de panel flotante.
 
 ## Contrato con el backend
 
