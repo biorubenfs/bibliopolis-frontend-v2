@@ -11,14 +11,14 @@
   height: 100%;
   box-sizing: border-box;
   padding: 16px;
-  border: 1px solid #dad7cd;
+  border: 1px solid var(--mat-sys-outline-variant);
   border-radius: 16px;
-  background: #ffffff;
+  background: var(--mat-sys-surface-container-lowest);
   color: var(--mat-sys-on-surface);
   transition: border-color 150ms;
 
   &:hover {
-    border-color: #588157;
+    border-color: var(--mat-sys-secondary);
   }
 }
 
@@ -31,8 +31,8 @@
   aspect-ratio: 2 / 3;
   overflow: hidden;
   border-radius: 8px;
-  background: #dad7cd;
-  color: #3a5a40;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
 
   img {
     display: block;
@@ -114,7 +114,7 @@ p {
     width: 18px;
     height: 18px;
     font-size: 18px;
-    color: #588157;
+    color: var(--mat-sys-secondary);
   }
 }
 
@@ -130,7 +130,7 @@ p {
     width: 18px;
     height: 18px;
     font-size: 18px;
-    color: #588157;
+    color: var(--mat-sys-secondary);
   }
 }
 

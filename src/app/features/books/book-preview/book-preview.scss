@@ -13,8 +13,8 @@
   aspect-ratio: 2 / 3;
   overflow: hidden;
   border-radius: 8px;
-  background: #dad7cd;
-  color: #3a5a40;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
 
   img {
     display: block;
