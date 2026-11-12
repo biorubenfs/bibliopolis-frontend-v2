@@ -15,6 +15,7 @@ import { map } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { ThemeService } from '../../core/theme/theme.service';
+import { APP_VERSION } from '../../core/version';
 
 interface NavItem {
   label: string;
@@ -54,6 +55,7 @@ export class Shell {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly theme = inject(ThemeService);
+  protected readonly version = APP_VERSION;
 
   /** The same layout serves the reader screens and the backoffice, set by the route data. */
   protected readonly isBackoffice = inject(ActivatedRoute).snapshot.data['area'] === 'backoffice';
