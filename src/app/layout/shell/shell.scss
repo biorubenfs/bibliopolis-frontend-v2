@@ -5,6 +5,7 @@
   --sidebar-hover: rgb(255 255 255 / 8%);
   --sidebar-active-background: #a3b18a;
   --sidebar-active-text: #1f2f26;
+  --sidebar-padding-x: 12px;
 
   --mat-sidenav-container-background-color: var(--sidebar-background);
   --mat-sidenav-container-text-color: var(--sidebar-text);
@@ -26,7 +27,7 @@
   flex-direction: column;
   gap: 24px;
   min-height: 100%;
-  padding: 16px 12px;
+  padding: 16px var(--sidebar-padding-x);
   box-sizing: border-box;
 }
 
@@ -35,7 +36,7 @@
 .nav-item {
   &:focus-visible {
     outline: 2px solid #ffffff;
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 }
 
@@ -43,9 +44,11 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%;
-  padding: 8px;
-  border-radius: 16px;
+  // Same full-bleed highlight as the nav items (see .nav-item)
+  width: calc(100% + 2 * var(--sidebar-padding-x));
+  margin: 0 calc(-1 * var(--sidebar-padding-x));
+  padding: 8px calc(8px + var(--sidebar-padding-x));
+  border-radius: 0;
   box-sizing: border-box;
   color: inherit;
   text-decoration: none;
@@ -123,11 +126,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%;
+  // Full-bleed highlight: stretch past the sidebar's horizontal padding so the
+  // hover/active background runs from the screen edge to the sidebar edge
+  width: calc(100% + 2 * var(--sidebar-padding-x));
   height: 48px;
-  padding: 0 16px;
+  margin: 0 calc(-1 * var(--sidebar-padding-x));
+  padding: 0 calc(16px + var(--sidebar-padding-x));
   border: 0;
-  border-radius: 24px;
+  border-radius: 0;
   box-sizing: border-box;
   background: transparent;
   color: inherit;
