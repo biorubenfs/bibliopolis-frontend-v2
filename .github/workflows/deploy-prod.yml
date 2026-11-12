@@ -1,0 +1,63 @@
+name: Deploy production
+
+# Se lanza a mano eligiendo un tag `vX.Y.Z` en «Use workflow from». Compila ese tag con la configuración
+# `production` y lo despliega en el entorno de producción del VPS. Sirve para hacer rollback o para
+# redesplegar la versión actual.
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://bibliopolis.es
+
+    steps:
+      - name: Only from a version tag
+        if: github.ref_type != 'tag' || !startsWith(github.ref_name, 'v')
+        run: |
+          echo "::error::Elige un tag vX.Y.Z en «Use workflow from» (ref actual: ${{ github.ref_name }})"
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run build --configuration production
+
+      - name: Write version.json
+        run: |
+          cat > dist/bibliopolis-frontend-v2/browser/version.json << EOF
+          {
+            "version": "$(node -p "require('./package.json').version")",
+            "ref": "${{ github.ref_name }}",
+            "sha": "${{ github.sha }}",
+            "builtAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            dist/bibliopolis-frontend-v2/browser/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_PATH }}
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/id_rsa

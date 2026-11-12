@@ -32,7 +32,12 @@ Node 22 (gestionado con nvm). Angular 22 exige Node ≥ 22.22.3, por eso el proy
 
 ## Despliegue
 
-`.github/workflows/deploy.yml` compila con pnpm y copia `dist/bibliopolis-frontend-v2/browser/` al VPS con rsync. Un push a `main` despliega en el entorno `dev` de GitHub (`--configuration dev`) y un push a `production`, en el entorno `production`. También se puede lanzar a mano eligiendo el entorno. Los secretos `VPS_*` se configuran en GitHub.
+- **Versionado**: SemVer con el tag de git como fuente de verdad (`vX.Y.Z`, sincronizado con `version` del `package.json`). `patch` = corrección sin cambio funcional; `minor` = funcionalidad nueva; `major` = rediseño o cambio que exige una versión nueva del backend. La versión es independiente de la del backend. `src/app/core/version.ts` la importa del `package.json` (`resolveJsonModule`) y el shell la muestra al pie de la barra lateral; cada despliegue deja además un `version.json` (versión, ref, sha, fecha) junto al `index.html`.
+- **Flujo**: las ramas `feature/*` salen de `main` y se prueban en dev antes de fusionarse; un push a `main` **no despliega nada**. Cuando se decide publicar, se lanza una release desde `main`. Si una release depende de cambios en ambos repos, primero el backend y después el frontend.
+- **Deploy dev** (`.github/workflows/deploy-dev.yml`): `workflow_dispatch` desde cualquier rama. Compila con `--configuration dev` y copia `dist/bibliopolis-frontend-v2/browser/` al VPS con rsync.
+- **Release** (`.github/workflows/release.yml`): `workflow_dispatch` solo desde `main`, con el input `bump` (`patch`/`minor`/`major`). Ejecuta `npm version` (commit `chore: release vX.Y.Z` + tag), compila con `--configuration production`, hace push del commit y el tag, despliega en producción y crea la GitHub Release con notas autogeneradas.
+- **Deploy production** (`.github/workflows/deploy-prod.yml`): `workflow_dispatch` eligiendo un tag `vX.Y.Z` en «Use workflow from». Compila ese tag y lo despliega en producción. Es la forma de hacer rollback o de redesplegar la versión actual.
+- **Secretos**: GitHub Environments `dev` y `production`, cada uno con `VPS_SSH_KEY`, `VPS_HOST`, `VPS_USER` y `VPS_PATH`.
 
 ## Convenciones de Angular y TypeScript
 
