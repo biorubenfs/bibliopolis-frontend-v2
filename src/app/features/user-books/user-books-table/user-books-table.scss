@@ -13,6 +13,8 @@
 
 table {
   width: 100%;
+  // The widths come from the header, not from the rows: the columns stay put from page to page
+  table-layout: fixed;
   --mat-table-background-color: transparent;
   // A bit lower than Material's 52px, so more books fit on screen. Rows with a cover grow to fit it
   --mat-table-row-item-container-height: 44px;
@@ -40,7 +42,14 @@ tr.mat-mdc-row {
 td {
   padding-top: 6px;
   padding-bottom: 6px;
-  overflow-wrap: anywhere;
+}
+
+// A text that does not fit its column ends in an ellipsis; the tooltip then shows it in full
+.truncate {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .mat-column-cover {
@@ -73,12 +82,7 @@ td {
 }
 
 .open {
-  // A narrow column leaves room for the rest: long titles end in an ellipsis
-  display: block;
-  max-width: 240px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  max-width: 100%;
   padding: 0;
   border: 0;
   background: none;
@@ -105,11 +109,29 @@ td {
 // Only shown on phones, where it replaces the authors column
 .inline-authors {
   display: none;
-  max-width: 240px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   font: var(--mat-sys-body-small);
+}
+
+// Fixed widths for the columns whose content has a known length; the title takes what is left.
+// Material's cells are border-box with 16px of padding on each side, so the widths include them
+.mat-column-authors {
+  width: 24%;
+}
+
+.mat-column-rating {
+  width: 120px;
+}
+
+.mat-column-libraries {
+  width: 128px;
+}
+
+.mat-column-isbn {
+  width: 168px;
+}
+
+.mat-column-isbn10 {
+  width: 128px;
 }
 
 .mat-column-rating,
@@ -138,7 +160,8 @@ td {
 }
 
 .mat-column-actions {
-  width: 40px;
+  // The 44px icon button plus the cell padding (16px left, 24px right on the last column)
+  width: 84px;
   text-align: right;
 }
 
