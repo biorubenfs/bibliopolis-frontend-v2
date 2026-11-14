@@ -20,14 +20,10 @@
         formControlName="description"
         rows="3"
         [maxlength]="descriptionMaxLength"
-        required
       ></textarea>
       <mat-hint align="end">
         {{ form.controls.description.value.length }} / {{ descriptionMaxLength }}
       </mat-hint>
-      @if (form.controls.description.hasError('required')) {
-        <mat-error>Introduce una descripción.</mat-error>
-      }
     </mat-form-field>
 
     <mat-form-field appearance="outline">

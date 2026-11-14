@@ -3,7 +3,8 @@ import { BookCover, ExternalBook } from '../books/external-book.model';
 export interface Library {
   id: string;
   name: string;
-  description: string;
+  /** null when the library has no description. */
+  description: string | null;
   userId: string;
   /** IDs of the user books in this library. */
   books: string[];
@@ -17,7 +18,8 @@ export interface Library {
 
 export interface CreateLibrary {
   name: string;
-  description: string;
+  /** null removes the description; the backend also stores a blank one as null. */
+  description: string | null;
   /** Replaces all the tags of the library when updating. */
   tagIds?: string[];
 }

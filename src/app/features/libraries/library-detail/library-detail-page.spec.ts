@@ -364,7 +364,7 @@ describe('LibraryDetailPage', () => {
 
   it('shows the book count alone when the library has no description', async () => {
     const { element } = await setup({
-      get: vi.fn(() => of({ ...library, description: '' })),
+      get: vi.fn(() => of({ ...library, description: null })),
       listByLibrary: vi.fn(() => of({ items: [book('1', 'Rossiya')], total: 1 })),
     });
 

@@ -201,4 +201,33 @@ describe('LibraryFormDialog', () => {
 
     expect(update).toHaveBeenCalledWith('l1', { name: 'Novela', description: 'Mis novelas' });
   });
+
+  it('creates a library without a description, sent as null', async () => {
+    const { fill, submit, create, close } = await setup();
+
+    await fill('Poesía', '   ');
+    await submit();
+
+    expect(create).toHaveBeenCalledWith({ name: 'Poesía', description: null, tagIds: [] });
+    expect(close).toHaveBeenCalled();
+  });
+
+  it('removes the description of the library being edited', async () => {
+    const { fill, submit, update } = await setup({ library });
+
+    await fill('Novela', '');
+    await submit();
+
+    expect(update).toHaveBeenCalledWith('l1', expect.objectContaining({ description: null }));
+  });
+
+  it('shows an empty description when editing a library without one', async () => {
+    const { element } = await setup({ library: { ...library, description: null } });
+
+    const textarea = element.querySelector<HTMLTextAreaElement>(
+      'textarea[formcontrolname="description"]',
+    )!;
+    expect(textarea.value).toBe('');
+    expect(element.textContent).toContain('0 / 100');
+  });
 });
