@@ -28,7 +28,7 @@
         <!-- Long titles are cut with an ellipsis; the tooltip then shows them in full -->
         <button
           type="button"
-          class="open"
+          class="open truncate"
           aria-haspopup="dialog"
           appTruncatedTooltip
           [matTooltip]="book.bookTitle"
@@ -37,13 +37,17 @@
           {{ book.bookTitle }}
         </button>
         <!-- On phones the authors column does not fit: the authors go under the title instead -->
-        <span class="inline-authors secondary">{{ authors(book) }}</span>
+        <span class="inline-authors truncate secondary">{{ authors(book) }}</span>
       </td>
     </ng-container>
 
     <ng-container matColumnDef="authors">
       <th mat-header-cell *matHeaderCellDef>Autores</th>
-      <td mat-cell *matCellDef="let book" class="secondary">{{ authors(book) }}</td>
+      <td mat-cell *matCellDef="let book" class="secondary">
+        <span class="truncate" appTruncatedTooltip [matTooltip]="authors(book)">{{
+          authors(book)
+        }}</span>
+      </td>
     </ng-container>
 
     <ng-container matColumnDef="rating">

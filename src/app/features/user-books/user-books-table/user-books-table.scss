@@ -4,6 +4,8 @@
 
 // Same frame as the cards: no border, elevated by the shadow
 .wrapper {
+  // The columns are hidden by the width of this frame, not of the window: the sidebar takes its share
+  container-type: inline-size;
   // Last resort on very narrow screens: the table scrolls inside its frame, never the whole page
   overflow-x: auto;
   border-radius: var(--app-card-radius);
@@ -13,6 +15,10 @@
 
 table {
   width: 100%;
+  // Title and rating always fit; below this the frame scrolls instead of squeezing the title
+  min-width: 320px;
+  // The widths come from the header, not from the rows: the columns stay put from page to page
+  table-layout: fixed;
   --mat-table-background-color: transparent;
   // A bit lower than Material's 52px, so more books fit on screen. Rows with a cover grow to fit it
   --mat-table-row-item-container-height: 44px;
@@ -40,7 +46,14 @@ tr.mat-mdc-row {
 td {
   padding-top: 6px;
   padding-bottom: 6px;
-  overflow-wrap: anywhere;
+}
+
+// A text that does not fit its column ends in an ellipsis; the tooltip then shows it in full
+.truncate {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .mat-column-cover {
@@ -73,12 +86,7 @@ td {
 }
 
 .open {
-  // A narrow column leaves room for the rest: long titles end in an ellipsis
-  display: block;
-  max-width: 240px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  max-width: 100%;
   padding: 0;
   border: 0;
   background: none;
@@ -102,14 +110,32 @@ td {
   color: var(--mat-sys-on-surface-variant);
 }
 
-// Only shown on phones, where it replaces the authors column
+// Only shown on narrow frames, where it replaces the authors column
 .inline-authors {
   display: none;
-  max-width: 240px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   font: var(--mat-sys-body-small);
+}
+
+// Fixed widths for the columns whose content has a known length; the title takes what is left.
+// Material's cells are border-box with 16px of padding on each side, so the widths include them
+.mat-column-authors {
+  width: 24%;
+}
+
+.mat-column-rating {
+  width: 120px;
+}
+
+.mat-column-libraries {
+  width: 128px;
+}
+
+.mat-column-isbn {
+  width: 168px;
+}
+
+.mat-column-isbn10 {
+  width: 128px;
 }
 
 .mat-column-rating,
@@ -138,8 +164,22 @@ td {
 }
 
 .mat-column-actions {
-  width: 40px;
+  // The 32px icon button plus the cell padding (16px left, 24px right on the last column)
+  width: 72px;
   text-align: right;
+
+  // Smaller than Material's 44px button, so the row keeps the same height as without the column
+  button {
+    --mat-icon-button-state-layer-size: 32px;
+    --mat-icon-button-icon-size: 18px;
+    --mat-icon-button-touch-target-size: 44px;
+
+    mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+    }
+  }
 }
 
 .visually-hidden {
@@ -151,16 +191,29 @@ td {
   white-space: nowrap;
 }
 
-// On phones only the essentials fit without scrolling sideways
-@media (max-width: 719px) {
-  .mat-column-isbn,
-  .mat-column-isbn10,
+// As the frame narrows the columns go in order of importance, least important first, so the title
+// never collapses. Each cut is the sum of the columns that remain, with 200px for the title and
+// 150px for the authors: 200 + 150 + 120 (rating) + 128 (libraries) + 168 (ISBN-13) + 128 (ISBN-10)
+@container (width < 900px) {
+  .mat-column-isbn10 {
+    display: none;
+  }
+}
+
+@container (width < 770px) {
+  .mat-column-isbn {
+    display: none;
+  }
+}
+
+@container (width < 600px) {
   .mat-column-libraries {
     display: none;
   }
 }
 
-@media (max-width: 479px) {
+// Phones: the authors go under the title, which then has the room; the rating stays
+@container (width < 480px) {
   .mat-column-authors {
     display: none;
   }
