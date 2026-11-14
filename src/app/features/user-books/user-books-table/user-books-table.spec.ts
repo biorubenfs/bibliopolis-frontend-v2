@@ -88,29 +88,38 @@ describe('UserBooksTable', () => {
     expect(rows[1].querySelector('[aria-label="Sin ISBN-10"]')).not.toBeNull();
   });
 
-  describe('title tooltip', () => {
-    // jsdom has no layout: the widths are faked to simulate a title that does or does not fit
-    function hoverTitle(scrollWidth: number, clientWidth: number) {
+  describe('tooltips of the cut texts', () => {
+    // jsdom has no layout: the widths are faked to simulate a text that does or does not fit
+    function hover(selector: string, scrollWidth: number, clientWidth: number) {
       const { fixture, rows } = render();
-      const title = rows[0].querySelector<HTMLButtonElement>('button.open')!;
-      Object.defineProperty(title, 'scrollWidth', { value: scrollWidth });
-      Object.defineProperty(title, 'clientWidth', { value: clientWidth });
-      title.dispatchEvent(new Event('mouseenter'));
+      const text = rows[0].querySelector<HTMLElement>(selector)!;
+      Object.defineProperty(text, 'scrollWidth', { value: scrollWidth });
+      Object.defineProperty(text, 'clientWidth', { value: clientWidth });
+      text.dispatchEvent(new Event('mouseenter'));
       fixture.detectChanges();
-      return fixture.debugElement
-        .query((de) => de.nativeElement === title)
-        .injector.get(MatTooltip);
+      return fixture.debugElement.query((de) => de.nativeElement === text).injector.get(MatTooltip);
     }
 
     it('shows the full title when it is cut', () => {
-      const tooltip = hoverTitle(400, 240);
+      const tooltip = hover('button.open', 400, 240);
 
       expect(tooltip.message).toBe('Rossiya');
       expect(tooltip.disabled).toBe(false);
     });
 
     it('stays hidden when the title fits', () => {
-      expect(hoverTitle(120, 240).disabled).toBe(true);
+      expect(hover('button.open', 120, 240).disabled).toBe(true);
+    });
+
+    it('shows the full authors when they are cut', () => {
+      const tooltip = hover('.mat-column-authors .truncate', 400, 200);
+
+      expect(tooltip.message).toBe('Alex Shishin, Otra Autora');
+      expect(tooltip.disabled).toBe(false);
+    });
+
+    it('stays hidden when the authors fit', () => {
+      expect(hover('.mat-column-authors .truncate', 120, 200).disabled).toBe(true);
     });
   });
 
