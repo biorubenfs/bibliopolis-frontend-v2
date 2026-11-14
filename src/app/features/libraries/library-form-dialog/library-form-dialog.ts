@@ -90,7 +90,7 @@ export class LibraryFormDialog {
     ],
     description: [
       this.library?.description ?? '',
-      [Validators.required, Validators.maxLength(LIBRARY_DESCRIPTION_MAX_LENGTH)],
+      [Validators.maxLength(LIBRARY_DESCRIPTION_MAX_LENGTH)],
     ],
   });
 
@@ -214,7 +214,8 @@ export class LibraryFormDialog {
     this.errorMessage.set(null);
     const values = {
       name: this.form.controls.name.value.trim(),
-      description: this.form.controls.description.value.trim(),
+      // Optional: an empty description is sent as null
+      description: this.form.controls.description.value.trim() || null,
       // Only the tags shown: a tag deleted meanwhile is dropped instead of failing. Without the
       // tags loaded the field is left out, so an edit keeps the current ones.
       ...(this.tagsLoaded() ? { tagIds: this.selectedTags().map((tag) => tag.id) } : {}),
