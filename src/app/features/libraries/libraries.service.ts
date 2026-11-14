@@ -21,18 +21,22 @@ export class LibrariesService {
   private readonly baseUrl = `${environment.apiUrl}/libraries`;
 
   /**
-   * Lists the user's libraries, favorites first. `search` filters by name or description (partial,
-   * case-insensitive), `favorites` keeps only the favorites and `tagIds` the libraries that have
-   * all of those tags.
+   * Lists the user's libraries, favorites first. `ids` keeps only those libraries (at most 100),
+   * `search` filters by name or description (partial, case-insensitive), `favorites` keeps only
+   * the favorites and `tagIds` the libraries that have all of those tags.
    */
   list(options: {
     skip: number;
     limit: number;
+    ids?: readonly string[];
     search?: string;
     favorites?: boolean;
     tagIds?: readonly string[];
   }): Observable<Page<Library>> {
     let params = new HttpParams().set('skip', options.skip).set('limit', options.limit);
+    if (options.ids?.length) {
+      params = params.set('ids', options.ids.join(','));
+    }
     const search = options.search?.trim();
     if (search) {
       params = params.set('search', search);

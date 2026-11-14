@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
+import { BookLibraries } from '../../user-books/book-libraries/book-libraries';
 import { RatingInput } from '../../user-books/rating-input/rating-input';
 import { USER_BOOK_NOTES_MAX_LENGTH, UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
@@ -29,8 +30,9 @@ export type BookDetailDialogResult = UserBook | 'removed';
 const REMOVE_DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
 
 /**
- * Shows a book and lets the user edit its rating and notes, which are only persisted when saving.
- * When opened from a library, it also lets the user remove the book from that library.
+ * Shows a book, with the libraries that contain it, and lets the user edit its rating and notes,
+ * which are only persisted when saving. When opened from a library, it also lets the user remove
+ * the book from that library.
  */
 @Component({
   selector: 'app-book-detail-dialog',
@@ -42,6 +44,7 @@ const REMOVE_DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    BookLibraries,
     RatingInput,
   ],
   templateUrl: './book-detail-dialog.html',
@@ -96,6 +99,11 @@ export class BookDetailDialog {
           this.errorMessage.set('No se han podido guardar los cambios. Inténtalo de nuevo.');
         },
       });
+  }
+
+  /** Following a link to a library leaves the dialog behind, so it closes without changes. */
+  protected closeOnNavigation(): void {
+    this.dialogRef.close();
   }
 
   protected openRemoveDialog(libraryId: string): void {
