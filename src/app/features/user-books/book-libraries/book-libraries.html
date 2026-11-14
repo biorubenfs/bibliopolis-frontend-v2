@@ -1,0 +1,49 @@
+<p id="book-libraries-label" class="label">Bibliotecas</p>
+
+@switch (status()) {
+  @case ('loading') {
+    <p class="message" aria-live="polite">Cargando bibliotecas…</p>
+  }
+  @case ('error') {
+    <p class="message">No se han podido cargar las bibliotecas.</p>
+  }
+  @case ('loaded') {
+    @if (libraries().length > 0) {
+      <ul class="chips" aria-labelledby="book-libraries-label">
+        @for (library of visibleLibraries(); track library.id) {
+          <li>
+            @if (isCurrent(library)) {
+              <span class="chip current">
+                <mat-icon aria-hidden="true">check</mat-icon>
+                <span class="name">{{ library.name }}</span>
+                <span class="visually-hidden">(biblioteca actual)</span>
+              </span>
+            } @else {
+              <a class="chip" [routerLink]="['/libraries', library.id]" (click)="navigated.emit()">
+                <span class="name">{{ library.name }}</span>
+              </a>
+            }
+          </li>
+        }
+        @if (hiddenCount() > 0) {
+          <li>
+            <button
+              type="button"
+              class="chip more"
+              [attr.aria-expanded]="expanded()"
+              (click)="toggleExpanded()"
+            >
+              @if (expanded()) {
+                Mostrar menos
+              } @else {
+                +{{ hiddenCount() }} más
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="message">No está en ninguna biblioteca.</p>
+    }
+  }
+}

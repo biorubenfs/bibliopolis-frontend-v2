@@ -82,6 +82,17 @@ describe('LibrariesService', () => {
     off.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
   });
 
+  it('sends the ids filter as a comma-separated list, and omits it when empty', () => {
+    service.list({ skip: 0, limit: 100, ids: ['lib-1', 'lib-2'] }).subscribe();
+    service.list({ skip: 0, limit: 100, ids: [] }).subscribe();
+
+    const [withIds, without] = backend.match((r) => r.url === `${environment.apiUrl}/libraries`);
+    expect(withIds.request.params.get('ids')).toBe('lib-1,lib-2');
+    expect(without.request.params.has('ids')).toBe(false);
+    withIds.flush({ results: [], paginationInfo: { skip: 0, limit: 100, total: 0 } });
+    without.flush({ results: [], paginationInfo: { skip: 0, limit: 100, total: 0 } });
+  });
+
   it('sends the trimmed search term', () => {
     service.list({ skip: 0, limit: 12, search: '  novela ' }).subscribe();
 

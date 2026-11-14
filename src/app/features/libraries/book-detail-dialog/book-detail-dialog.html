@@ -30,6 +30,13 @@
       </div>
     </div>
 
+    <app-book-libraries
+      class="libraries"
+      [libraryIds]="book.libraries"
+      [currentLibraryId]="libraryId"
+      (navigated)="closeOnNavigation()"
+    />
+
     <app-rating-input class="rating" formControlName="rating" aria-labelledby="book-rating-label">
       <span id="book-rating-label" class="rating-label">Valoración</span>
     </app-rating-input>

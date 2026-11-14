@@ -1,0 +1,86 @@
+:host {
+  display: block;
+}
+
+.label {
+  margin: 0 0 8px;
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.message {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Small tonal pills, the size of the tag badges on the library cards
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font: var(--mat-sys-label-medium);
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface);
+  text-decoration: none;
+  // Long names wrap instead of being cut, so the whole name is always visible
+  overflow-wrap: anywhere;
+
+  mat-icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    margin-left: -4px;
+  }
+}
+
+a.chip,
+button.chip {
+  transition: background-color 150ms;
+
+  &:hover {
+    background: var(--mat-sys-surface-container-highest);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}
+
+.current {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+}
+
+// Read by screen readers only
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// Same pill as the libraries, but reads as an action
+.more {
+  border: 0;
+  font: var(--mat-sys-label-medium);
+  cursor: pointer;
+  color: var(--mat-sys-primary);
+}

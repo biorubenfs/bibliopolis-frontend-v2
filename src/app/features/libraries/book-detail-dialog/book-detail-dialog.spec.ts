@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
+import { LibrariesService } from '../libraries.service';
 import { RemoveBookDialog } from '../remove-book-dialog/remove-book-dialog';
 import { BookDetailDialog } from './book-detail-dialog';
 
@@ -42,12 +44,20 @@ describe('BookDetailDialog', () => {
     const data = { libraryId, book: { ...book, ...options.overrides } };
     // MatDialogModule brings its own MatDialog, which a plain provider would not replace
     TestBed.overrideProvider(MatDialog, { useValue: { open } });
+    const libraries = [
+      { id: 'l1', name: 'Novela' },
+      { id: 'l2', name: 'Préstamos' },
+    ];
+    const list = vi.fn(() => of({ items: libraries, total: libraries.length }));
     TestBed.configureTestingModule({
       imports: [BookDetailDialog],
       providers: [
+        // A matching route keeps a clicked link from failing to navigate after the test ends
+        provideRouter([{ path: 'libraries/:id', children: [] }]),
         { provide: MAT_DIALOG_DATA, useValue: data },
         { provide: MatDialogRef, useValue: { close } },
         { provide: UserBooksService, useValue: { update } },
+        { provide: LibrariesService, useValue: { list } },
       ],
     });
     const fixture = TestBed.createComponent(BookDetailDialog);
@@ -78,6 +88,7 @@ describe('BookDetailDialog', () => {
       open,
       close,
       update,
+      list,
       clickButton,
       typeNotes,
       chooseRating,
@@ -97,6 +108,32 @@ describe('BookDetailDialog', () => {
     expect(element.textContent).toContain('ISBN-13: 9780595385294');
     expect(element.textContent).toContain('ISBN-10: 059538529X');
     expect(element.querySelector('img')?.getAttribute('src')).toBe(book.bookCoverUrl);
+  });
+
+  it('shows the libraries of the book, marking the one it is viewed from', async () => {
+    const { fixture, element, list, close } = await setup({
+      overrides: { libraries: ['l1', 'l2'] },
+    });
+
+    expect(list).toHaveBeenCalledWith({ skip: 0, limit: 100, ids: ['l1', 'l2'] });
+    const chips = Array.from(element.querySelectorAll<HTMLElement>('app-book-libraries .chip'));
+    expect(chips.map((chip) => chip.querySelector('.name')?.textContent)).toEqual([
+      'Novela',
+      'Préstamos',
+    ]);
+    expect(chips[0].tagName).toBe('SPAN');
+    expect(chips[1].getAttribute('href')).toBe('/libraries/l2');
+
+    chips[1].click();
+    await fixture.whenStable();
+    expect(close).toHaveBeenCalledWith();
+  });
+
+  it('links every library when opened outside any of them', async () => {
+    const { element } = await setup({ libraryId: null, overrides: { libraries: ['l1', 'l2'] } });
+
+    const links = element.querySelectorAll('app-book-libraries a.chip');
+    expect(links.length).toBe(2);
   });
 
   it('copes with a book without the optional data', async () => {
