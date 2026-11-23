@@ -15,6 +15,10 @@ describe('isbn', () => {
       ['a wrong prefix digit', '945-1-71850-040-2', false],
       ['invalid characters', '978171%500402', false],
       ['a wrong length', '978171850040', false],
+      ['a valid ISBN-13 with prefix 979-8', '9798866451746', true],
+      ['a valid ISBN-13 with prefix 979-10', '9791034902309', true],
+      ['an EAN-13 that is not a book, even with a right control digit', '4006381333931', false],
+      ['an ISMN (sheet music), which uses 979-0', '9790260000438', false],
     ])('with %s', (_case, isbn, expected) => {
       expect(isValidIsbn13(isbn)).toBe(expected);
     });
@@ -46,6 +50,10 @@ describe('isbn', () => {
 
     it('rejects something that is not an ISBN-10', () => {
       expect(() => isbn10ToIsbn13('123')).toThrow('ISBN-10 invalid');
+    });
+
+    it('rejects a wrong control digit, which would give the ISBN-13 of another book', () => {
+      expect(() => isbn10ToIsbn13('8415509780')).toThrow('ISBN-10 invalid');
     });
   });
 });

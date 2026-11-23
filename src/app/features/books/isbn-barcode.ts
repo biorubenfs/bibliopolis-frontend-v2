@@ -1,10 +1,8 @@
 import { isValidIsbn10, isValidIsbn13, isbn10ToIsbn13, sanitizeIsbn } from './isbn';
 
 /**
- * The ISBN-13 of a scanned value, or null if it is not an ISBN.
- *
- * The prefix is checked here because `isValidIsbn13` accepts any correct EAN-13, such as the one on
- * a packet of biscuits. It stays out of that function so it keeps matching the backend's.
+ * The ISBN-13 of a scanned value, or null if it is not an ISBN. `isValidIsbn13` also rejects the
+ * EAN-13 of other products, such as the one on a packet of biscuits, and sheet music (979-0).
  */
 export function scannedValueToIsbn13(value: string): string | null {
   const clean = sanitizeIsbn(value);
@@ -12,7 +10,7 @@ export function scannedValueToIsbn13(value: string): string | null {
     return isValidIsbn10(clean) ? isbn10ToIsbn13(clean) : null;
   }
   if (clean.length === 13) {
-    return isValidIsbn13(clean) && /^97[89]/.test(clean) ? clean : null;
+    return isValidIsbn13(clean) ? clean : null;
   }
   return null;
 }
