@@ -163,9 +163,11 @@ export class NewBookDialog {
             this.openManualEntry(true);
           } else {
             this.errorMessage.set(
-              statusCode === 503
-                ? 'Las fuentes de libros no responden ahora. Inténtalo más tarde o da de alta el libro a mano.'
-                : 'No se ha podido buscar el libro. Inténtalo de nuevo.',
+              statusCode === 400
+                ? 'Ese ISBN no es válido. Revísalo e inténtalo de nuevo.'
+                : statusCode === 503
+                  ? 'Las fuentes de libros no responden ahora. Inténtalo más tarde o da de alta el libro a mano.'
+                  : 'No se ha podido buscar el libro. Inténtalo de nuevo.',
             );
           }
         },

@@ -7,6 +7,7 @@ describe('scannedValueToIsbn13', () => {
     ['an ISBN-13 with hyphens', '978-0-595-38529-4', '9780595385294'],
     ['an ISBN-10, converted', '059538529X', '9780595385294'],
     ['an EAN-13 of another product', '8410000000009', null],
+    ['an ISMN (sheet music), which uses 979-0', '9790260000438', null],
     ['an ISBN-13 with a wrong control digit', '9780595385295', null],
     ['an ISBN-10 with a wrong control digit', '0595385291', null],
     ['a value of another length', '12345678', null],

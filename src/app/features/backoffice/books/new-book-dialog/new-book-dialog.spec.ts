@@ -172,6 +172,26 @@ describe('NewBookDialog', () => {
     expect(element.textContent).toContain('Ese ISBN no es válido');
   });
 
+  it.each([
+    ['an EAN-13 that is not a book', '4006381333931'],
+    ['an ISMN (sheet music)', '9790260000438'],
+  ])('does not search %s', async (_case, isbn) => {
+    const { element, search, findInCatalog } = await setup();
+
+    await search(isbn);
+
+    expect(findInCatalog).not.toHaveBeenCalled();
+    expect(element.textContent).toContain('Ese ISBN no es válido');
+  });
+
+  it('says that the ISBN is not valid when the backend rejects it', async () => {
+    const { element, search } = await setup({ findInSources: vi.fn(httpError(400)) });
+
+    await search();
+
+    expect(element.querySelector('[role="alert"]')?.textContent).toContain('Ese ISBN no es válido');
+  });
+
   it('searches the scanned ISBN', async () => {
     const { element, findInCatalog, openDialog } = await setup({ scanned: ISBN });
 
