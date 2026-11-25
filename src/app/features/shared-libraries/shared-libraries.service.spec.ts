@@ -38,6 +38,15 @@ describe('SharedLibrariesService', () => {
     expect(result).toEqual({ items: [{ id: 'l1', ...library }], total: 13 });
   });
 
+  it('searches the libraries only if there is a search', () => {
+    service.list({ skip: 0, limit: 12, search: ' ana ' }).subscribe();
+    service.list({ skip: 0, limit: 12, search: ' ' }).subscribe();
+
+    const [searched, all] = backend.match((r) => r.url === url);
+    expect(searched.request.params.get('search')).toBe('ana');
+    expect(all.request.params.has('search')).toBe(false);
+  });
+
   it('gets a library', () => {
     let result: unknown;
     service.get('l1').subscribe((value) => (result = value));

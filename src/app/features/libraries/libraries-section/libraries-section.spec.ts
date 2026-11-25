@@ -87,9 +87,9 @@ describe('LibrariesSection', () => {
     const own = await setup('/libraries?q=nov');
 
     expect(own.listOwn).not.toHaveBeenCalled();
-    expect(own.listShared).toHaveBeenCalledTimes(1);
+    expect(own.listShared).toHaveBeenCalledExactlyOnceWith({ skip: 0, limit: 1, search: 'nov' });
     expect(own.numbers()).toEqual([null, '3']);
-    expect(own.labels()[1]).toContain(', 3 bibliotecas');
+    expect(own.labels()[1]).toContain(', 3 resultados');
   });
 
   it('counts the own libraries with the search, without the filters', async () => {

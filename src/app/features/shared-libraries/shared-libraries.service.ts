@@ -16,9 +16,16 @@ export class SharedLibrariesService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/shared-libraries`;
 
-  /** Lists the libraries, the most recently shared first. */
-  list(options: { skip: number; limit: number }): Observable<Page<SharedLibrary>> {
-    const params = new HttpParams().set('skip', options.skip).set('limit', options.limit);
+  /**
+   * Lists the libraries, the most recently shared first. `search` matches part of the name, the
+   * description or the name of the owner; empty means no search.
+   */
+  list(options: { skip: number; limit: number; search?: string }): Observable<Page<SharedLibrary>> {
+    let params = new HttpParams().set('skip', options.skip).set('limit', options.limit);
+    const search = options.search?.trim();
+    if (search) {
+      params = params.set('search', search);
+    }
     return this.http
       .get<ApiCollectionResponse<SharedLibraryAttributes>>(this.baseUrl, { params })
       .pipe(map(toPage), catchError(toApiError));

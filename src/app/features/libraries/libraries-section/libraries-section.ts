@@ -87,11 +87,11 @@ export class LibrariesSection {
 
   /** The open tab gets its number from its page, which also applies its filters. */
   private countOther(tab: LibrariesTab, search: string): Observable<void> {
-    const options = { skip: 0, limit: 1 };
+    const options = { skip: 0, limit: 1, search };
     const [list, count]: [Observable<Page<unknown>>, WritableSignal<number | null>] =
       tab === 'own'
         ? [this.sharedLibraries.list(options), this.counts.shared]
-        : [this.librariesService.list({ ...options, search }), this.counts.own];
+        : [this.librariesService.list(options), this.counts.own];
     return list.pipe(
       map(({ total }) => total),
       // The number is only a hint: without it the tab still works
@@ -105,6 +105,9 @@ export class LibrariesSection {
   }
 
   private countLabel(count: number): string {
+    if (this.search()) {
+      return `${count} ${count === 1 ? 'resultado' : 'resultados'}`;
+    }
     return `${count} ${count === 1 ? 'biblioteca' : 'bibliotecas'}`;
   }
 }

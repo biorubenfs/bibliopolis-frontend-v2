@@ -1,7 +1,16 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -17,12 +26,14 @@ import { SharedLibraryCard } from './shared-library-card/shared-library-card';
 
 const DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
 
-/** «Compartidas conmigo»: the libraries of other users. The API offers no search for them. */
+/** «Compartidas conmigo»: the libraries of other users. */
 @Component({
   selector: 'app-shared-libraries-page',
   imports: [
     MatButtonModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     SharedLibraryCard,
@@ -40,8 +51,11 @@ export class SharedLibrariesPage extends SearchableList<SharedLibrary> {
 
   private readonly content = viewChild.required<ElementRef<HTMLElement>>('content');
 
-  protected fetch({ skip, limit }: { skip: number; limit: number }) {
-    return this.sharedLibraries.list({ skip, limit }).pipe(
+  /** Without libraries there is nothing to search in; with no results it stays, to change it. */
+  protected readonly showSearch = computed(() => this.search() !== '' || this.total() > 0);
+
+  protected fetch(options: { skip: number; limit: number; search: string }) {
+    return this.sharedLibraries.list(options).pipe(
       tap({
         next: ({ total }) => this.counts.shared.set(total),
         error: () => this.counts.shared.set(null),

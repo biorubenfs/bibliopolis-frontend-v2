@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
@@ -52,7 +52,7 @@ describe('SharedLibrariesPage', () => {
   it('shows the libraries with their owners', async () => {
     const { element, list } = await setup();
 
-    expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12 });
+    expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12, search: '' });
     expect(TestBed.inject(LibraryCounts).shared()).toBe(2);
     const owners = Array.from(element.querySelectorAll('.owner'), (item) => item.textContent);
     expect(owners).toEqual(['De Ana', 'De Luis']);
@@ -64,6 +64,7 @@ describe('SharedLibrariesPage', () => {
     expect(element.textContent).toContain('Nadie ha compartido una biblioteca contigo');
     expect(TestBed.inject(LibraryCounts).shared()).toBe(0);
     expect(element.querySelector('mat-paginator')).toBeNull();
+    expect(element.querySelector('input')).toBeNull();
   });
 
   it('requests the page in the URL', async () => {
@@ -72,7 +73,7 @@ describe('SharedLibrariesPage', () => {
       list: vi.fn(() => of({ items: [library('1', 'Novela', 'Ana')], total: 13 })),
     });
 
-    expect(list).toHaveBeenCalledWith({ skip: 12, limit: 12 });
+    expect(list).toHaveBeenCalledWith({ skip: 12, limit: 12, search: '' });
     expect(element.querySelector('mat-paginator')).not.toBeNull();
   });
 
@@ -90,6 +91,56 @@ describe('SharedLibrariesPage', () => {
 
     expect(element.querySelectorAll('app-shared-library-card')).toHaveLength(1);
     expect(counts.shared()).toBe(1);
+  });
+
+  describe('search', () => {
+    it('restores it from the URL and sets the number of results on the tab', async () => {
+      const { element, list } = await setup({
+        url: '/libraries/shared?q=ana&page=2',
+        list: vi.fn(() => of({ items: [library('1', 'Novela', 'Ana')], total: 13 })),
+      });
+
+      expect(list).toHaveBeenCalledExactlyOnceWith({ skip: 12, limit: 12, search: 'ana' });
+      expect(element.querySelector('input')?.value).toBe('ana');
+      expect(TestBed.inject(LibraryCounts).shared()).toBe(13);
+    });
+
+    it('searches after the user stops typing, from the first page', async () => {
+      const { harness, element, list } = await setup({
+        url: '/libraries/shared?page=2',
+        list: vi.fn(() => of({ items: [library('1', 'Novela', 'Ana')], total: 13 })),
+      });
+      const input = element.querySelector('input')!;
+
+      input.value = 'ana';
+      input.dispatchEvent(new Event('input'));
+      await vi.waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+      await harness.fixture.whenStable();
+
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: 'ana' });
+      expect(TestBed.inject(Router).url).toBe('/libraries/shared?q=ana');
+    });
+
+    it('offers to clear it when nothing matches', async () => {
+      const { harness, element, list } = await setup({
+        url: '/libraries/shared?q=nada',
+        list: vi.fn(({ search }: { search: string }) =>
+          of(
+            search ? { items: [], total: 0 } : { items: [library('1', 'Novela', 'Ana')], total: 1 },
+          ),
+        ),
+      });
+      expect(element.textContent).toContain('coincide con «nada»');
+      expect(element.textContent).not.toContain('Nadie ha compartido');
+      expect(element.querySelector('input')).not.toBeNull();
+
+      element.querySelector<HTMLButtonElement>('.status button')!.click();
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toBe('/libraries/shared');
+      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '' });
+      expect(element.querySelectorAll('app-shared-library-card')).toHaveLength(1);
+    });
   });
 
   describe('leaving', () => {

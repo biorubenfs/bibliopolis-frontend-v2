@@ -7,6 +7,15 @@ section:focus {
   outline: none;
 }
 
+.search {
+  // Pill shape: half of the field's 48px height
+  --mat-form-field-outlined-container-shape: 24px;
+
+  // Full width on phones, as in the other tab
+  width: 100%;
+  margin-bottom: 24px;
+}
+
 .status {
   display: flex;
   flex-direction: column;
@@ -48,4 +57,10 @@ section:focus {
 mat-paginator {
   margin-top: 16px;
   background: transparent;
+}
+
+@media (min-width: 900px) {
+  .search {
+    max-width: 360px;
+  }
 }
