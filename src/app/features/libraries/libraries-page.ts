@@ -116,7 +116,6 @@ export class LibrariesPage {
 
   protected readonly libraries = signal<Library[]>([]);
   protected readonly total = signal(0);
-  protected readonly sharedCount = this.counts.shared.asReadonly();
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   protected readonly state = signal<LoadState>('loading');
@@ -144,6 +143,10 @@ export class LibrariesPage {
     if (favorites && !search && !tags) return 'favorites';
     return 'mixed';
   });
+  /** Libraries shared with the user; with a search, only the ones that match it. */
+  protected readonly sharedCount = this.counts.shared.asReadonly();
+  /** Only with a search: the filters do not apply to the shared libraries. */
+  protected readonly sharedMatches = computed(() => (this.search() ? this.sharedCount() : null));
   /** True when a search or a filter is applied. */
   protected readonly filtered = computed(() => this.filterKind() !== 'none');
 

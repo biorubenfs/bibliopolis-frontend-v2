@@ -140,6 +140,13 @@
   border-radius: 50%;
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
 .grid {
   display: grid;
   // Room for the four buttons of the card and a count of four digits. min(): never wider than the

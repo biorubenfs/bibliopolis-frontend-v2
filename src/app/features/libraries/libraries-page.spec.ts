@@ -253,6 +253,33 @@ describe('LibrariesPage', () => {
       expect(list).toHaveBeenCalledTimes(2);
     });
 
+    it.each([
+      ['', '/?q=viajes'],
+      [' and filters', '/?q=viajes&favorites=true'],
+    ])('offers the shared libraries that match a search%s without results', async (_, url) => {
+      const { element, wait } = await setup(() => [], url);
+      const link = () => element.querySelector('.status a');
+      expect(link()).toBeNull();
+
+      TestBed.inject(LibraryCounts).shared.set(2);
+      await wait();
+      expect(link()?.textContent?.trim()).toBe('Ver 2 en compartidas conmigo');
+      expect(link()?.getAttribute('href')).toBe('/libraries/shared?q=viajes');
+
+      TestBed.inject(LibraryCounts).shared.set(0);
+      await wait();
+      expect(link()).toBeNull();
+    });
+
+    it('does not offer the shared libraries for the filters alone', async () => {
+      const { element, wait } = await setup(() => [], '/?favorites=true&tags=t1');
+      TestBed.inject(LibraryCounts).shared.set(2);
+      await wait();
+
+      expect(element.textContent).toContain('Ninguna biblioteca coincide con los filtros');
+      expect(element.querySelector('.status a')).toBeNull();
+    });
+
     it('hides the search field when the user has no libraries', async () => {
       const { input } = await setup(() => []);
 

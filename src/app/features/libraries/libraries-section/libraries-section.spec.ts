@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router, provideRouter } from '@angular/router';
+import { Router, RouterLink, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { NEVER, Observable, Subject, of, throwError } from 'rxjs';
 
@@ -14,7 +14,7 @@ type Result = Observable<{ items: unknown[]; total: number }>;
 
 const total = (count: number): Result => of({ items: [], total: count });
 
-@Component({ template: 'own' })
+@Component({ template: 'own <a routerLink="/libraries/shared">other</a>', imports: [RouterLink] })
 class OwnPage {
   readonly counts = inject(LibraryCounts);
 }
@@ -137,6 +137,18 @@ describe('LibrariesSection', () => {
 
     expect(document.activeElement).toBe(shared);
     expect(tabs()[1]).toBe(shared);
+  });
+
+  it('moves the focus to the open tab when it was on a link of the replaced page', async () => {
+    const { root, tabs, settle } = await setup('/libraries');
+    expect(document.activeElement).toBe(document.body);
+    const link = root.querySelector<HTMLAnchorElement>('[role="tabpanel"] a')!;
+
+    link.focus();
+    link.click();
+    await settle();
+
+    expect(document.activeElement).toBe(tabs()[1]);
   });
 
   it('counts again when the search changes, but not with the page', async () => {

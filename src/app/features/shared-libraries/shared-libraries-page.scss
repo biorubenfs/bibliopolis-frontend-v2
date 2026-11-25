@@ -44,6 +44,13 @@ section:focus {
   }
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
 .grid {
   display: grid;
   // min(): never wider than the screen on very narrow phones

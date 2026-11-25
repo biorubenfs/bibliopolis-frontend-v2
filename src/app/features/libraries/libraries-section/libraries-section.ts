@@ -1,7 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DOCUMENT,
+  ElementRef,
+  Injector,
   WritableSignal,
+  afterNextRender,
   computed,
   inject,
   signal,
@@ -48,6 +52,9 @@ export class LibrariesSection {
   private readonly librariesService = inject(LibrariesService);
   private readonly sharedLibraries = inject(SharedLibrariesService);
   private readonly counts = inject(LibraryCounts);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
+  private readonly document = inject(DOCUMENT);
 
   protected readonly tab = signal<LibrariesTab>('own');
   /** Kept when changing tabs, unlike the page and the filters, which belong to one of them. */
@@ -66,7 +73,10 @@ export class LibrariesSection {
         startWith(null),
         map(() => this.readUrl()),
         distinctUntilChanged((a, b) => a.tab === b.tab && a.search === b.search),
-        switchMap(({ tab, search }) => {
+        switchMap(({ tab, search }, index) => {
+          if (index > 0 && tab !== this.tab()) {
+            this.keepFocus();
+          }
           this.tab.set(tab);
           this.search.set(search);
           return this.countOther(tab, search);
@@ -97,6 +107,18 @@ export class LibrariesSection {
       // The number is only a hint: without it the tab still works
       catchError(() => of(null)),
       map((total) => count.set(total)),
+    );
+  }
+
+  /** A link of the replaced page goes with it: keep the keyboard focus nearby, on the open tab. */
+  private keepFocus(): void {
+    afterNextRender(
+      () => {
+        if (this.document.activeElement === this.document.body) {
+          this.host.nativeElement.querySelector<HTMLElement>('[aria-selected="true"]')?.focus();
+        }
+      },
+      { injector: this.injector },
     );
   }
 

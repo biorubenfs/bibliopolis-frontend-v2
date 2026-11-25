@@ -51,7 +51,16 @@
           <mat-icon aria-hidden="true">search_off</mat-icon>
           <h2>Ninguna biblioteca compartida contigo coincide con «{{ search() }}»</h2>
           <p>Prueba con otra palabra del nombre o de la descripción, o con otro propietario.</p>
-          <button mat-stroked-button type="button" (click)="clearSearch()">Borrar búsqueda</button>
+          <div class="actions">
+            <button mat-stroked-button type="button" (click)="clearSearch()">
+              Borrar búsqueda
+            </button>
+            @if (ownMatches(); as count) {
+              <a mat-button routerLink="/libraries" [queryParams]="{ q: search() }">
+                Ver {{ count }} en mis bibliotecas
+              </a>
+            }
+          </div>
         </div>
       } @else if (items().length === 0) {
         <div class="status empty">

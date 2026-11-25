@@ -14,6 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { RouterLink } from '@angular/router';
 import { tap } from 'rxjs';
 
 import { SpanishPaginatorIntl } from '../../core/i18n/paginator-intl';
@@ -36,6 +37,7 @@ const DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
     MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
+    RouterLink,
     SharedLibraryCard,
   ],
   templateUrl: './shared-libraries-page.html',
@@ -53,6 +55,9 @@ export class SharedLibrariesPage extends SearchableList<SharedLibrary> {
 
   /** Without libraries there is nothing to search in; with no results it stays, to change it. */
   protected readonly showSearch = computed(() => this.search() !== '' || this.total() > 0);
+
+  /** Own libraries that match the search. */
+  protected readonly ownMatches = this.counts.own.asReadonly();
 
   protected fetch(options: { skip: number; limit: number; search: string }) {
     return this.sharedLibraries.list(options).pipe(

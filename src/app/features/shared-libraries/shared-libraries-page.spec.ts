@@ -143,6 +143,21 @@ describe('SharedLibrariesPage', () => {
     });
   });
 
+  it('offers the own libraries that match a search without results', async () => {
+    const { harness, element } = await setup({
+      url: '/libraries/shared?q=viajes',
+      list: vi.fn(() => of({ items: [], total: 0 })),
+    });
+    const link = () => element.querySelector('.status a');
+    expect(link()).toBeNull();
+
+    TestBed.inject(LibraryCounts).own.set(1);
+    await harness.fixture.whenStable();
+
+    expect(link()?.textContent?.trim()).toBe('Ver 1 en mis bibliotecas');
+    expect(link()?.getAttribute('href')).toBe('/libraries?q=viajes');
+  });
+
   describe('leaving', () => {
     async function leave(dialogResult: unknown) {
       const result = await setup({ dialogResult });
