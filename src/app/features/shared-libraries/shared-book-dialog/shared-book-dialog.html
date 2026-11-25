@@ -1,0 +1,75 @@
+<h2 mat-dialog-title>{{ book.bookTitle }}</h2>
+
+<mat-dialog-content>
+  <div class="summary">
+    <div class="cover">
+      @if (book.bookCoverUrl && !coverFailed()) {
+        <!-- Empty alt: the cover is decorative because the title is right next to it -->
+        <img
+          [src]="book.bookCoverUrl"
+          alt=""
+          width="96"
+          height="144"
+          (error)="coverFailed.set(true)"
+        />
+      } @else {
+        <mat-icon class="placeholder" aria-hidden="true">menu_book</mat-icon>
+      }
+    </div>
+
+    <div class="info">
+      <p class="authors">{{ authors }}</p>
+
+      <div class="isbn">
+        <p>ISBN-13: {{ book.bookIsbn13 }}</p>
+        @if (book.bookIsbn10; as isbn10) {
+          <p>ISBN-10: {{ isbn10 }}</p>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (ratings.length > 0) {
+    <section>
+      <h3>Valoraciones</h3>
+      <dl class="ratings">
+        @for (rating of ratings; track $index) {
+          <div>
+            <dt>{{ rating.name }}</dt>
+            <dd>
+              @if (rating.value !== null) {
+                <app-rating-value [value]="rating.value" [name]="rating.name" [own]="rating.own" />
+              } @else {
+                <span class="missing">Sin valorar</span>
+              }
+            </dd>
+          </div>
+        }
+      </dl>
+    </section>
+  }
+
+  @if (book.own?.notes; as notes) {
+    <section>
+      <h3>Mis notas</h3>
+      <p class="notes">{{ notes }}</p>
+    </section>
+  }
+
+  @if (!book.own) {
+    <p class="hint">No está en ninguna de tus bibliotecas. Añádelo para valorarlo y tomar notas.</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Cerrar</button>
+  @if (book.own) {
+    <a mat-flat-button routerLink="/books" [queryParams]="{ q: book.bookIsbn13 }" (click)="close()">
+      Editar en Mis libros
+    </a>
+  } @else {
+    <button mat-flat-button type="button" aria-haspopup="dialog" (click)="openAddDialog()">
+      Añadir a mi biblioteca
+    </button>
+  }
+</mat-dialog-actions>

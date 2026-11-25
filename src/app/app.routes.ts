@@ -76,6 +76,22 @@ export const routes: Routes = [
           import('./features/user-books/my-books-page/my-books-page').then((m) => m.MyBooksPage),
       },
       {
+        path: 'shared-libraries',
+        title: 'Compartidas conmigo · Bibliopolis',
+        loadComponent: () =>
+          import('./features/shared-libraries/shared-libraries-page').then(
+            (m) => m.SharedLibrariesPage,
+          ),
+      },
+      {
+        path: 'shared-libraries/:id',
+        title: 'Biblioteca compartida · Bibliopolis',
+        loadComponent: () =>
+          import('./features/shared-libraries/shared-library-page/shared-library-page').then(
+            (m) => m.SharedLibraryPage,
+          ),
+      },
+      {
         path: 'explore',
         title: 'Explorar · Bibliopolis',
         data: { heading: 'Explorar' },

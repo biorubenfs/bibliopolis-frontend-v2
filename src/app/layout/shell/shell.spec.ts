@@ -43,7 +43,7 @@ describe('Shell', () => {
     const links = Array.from(element.querySelectorAll('.nav-list a span')).map((a) =>
       a.textContent?.trim(),
     );
-    expect(links).toEqual(['Mis bibliotecas', 'Mis libros', 'Explorar']);
+    expect(links).toEqual(['Mis bibliotecas', 'Mis libros', 'Compartidas conmigo', 'Explorar']);
   });
 
   it('links the avatar and the user name directly to the profile page', async () => {

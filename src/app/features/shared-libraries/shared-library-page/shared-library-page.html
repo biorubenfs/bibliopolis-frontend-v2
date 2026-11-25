@@ -1,0 +1,140 @@
+<a mat-button class="back" routerLink="/shared-libraries">
+  <mat-icon>arrow_back</mat-icon>
+  Compartidas conmigo
+</a>
+
+@if (library(); as library) {
+  <header class="page-header">
+    <div class="heading">
+      <h1>{{ library.name }}</h1>
+      <p class="owner">De {{ library.ownerName }}</p>
+      <!-- The book count shares the line of the description, to keep the header short -->
+      @if (library.description || total() > 0) {
+        <p class="description">
+          {{ library.description }}
+          @if (library.description && total() > 0) {
+            –
+          }
+          @if (total() > 0) {
+            <span class="count">{{ booksLabel() }}</span>
+          }
+        </p>
+      }
+    </div>
+
+    @if (showSearch()) {
+      <mat-form-field
+        class="search app-tonal-field"
+        appearance="outline"
+        subscriptSizing="dynamic"
+        role="search"
+      >
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input
+          matInput
+          type="text"
+          placeholder="Buscar por título, autor o ISBN"
+          aria-label="Buscar libros en esta biblioteca"
+          autocomplete="off"
+          [attr.maxlength]="searchMaxLength"
+          [value]="query()"
+          (input)="onSearchInput($any($event.target).value)"
+          (keydown.escape)="clearSearch()"
+        />
+        @if (query()) {
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            aria-label="Borrar búsqueda"
+            (click)="clearSearch()"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    }
+  </header>
+}
+
+@if (showViewToggle()) {
+  <div class="list-toolbar">
+    <app-books-view-toggle />
+  </div>
+}
+
+@switch (state()) {
+  @case ('loading') {
+    <div class="status">
+      <mat-spinner diameter="40" aria-label="Cargando libros" />
+    </div>
+  }
+  @case ('error') {
+    @if (notFound()) {
+      <div class="status" role="alert">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h1>No hemos encontrado esta biblioteca</h1>
+        <p>
+          Puede que ya no se comparta contigo, que se haya eliminado o que el enlace no sea
+          correcto.
+        </p>
+      </div>
+    } @else {
+      <div class="status" role="alert">
+        <mat-icon aria-hidden="true">cloud_off</mat-icon>
+        <p>No se han podido cargar los libros de esta biblioteca.</p>
+        <button mat-stroked-button type="button" (click)="load()">Reintentar</button>
+      </div>
+    }
+  }
+  @default {
+    @if (library(); as library) {
+      @if (books().length === 0 && search()) {
+        <div class="status empty">
+          <mat-icon aria-hidden="true">search_off</mat-icon>
+          <h2>Ningún libro de esta biblioteca coincide con «{{ search() }}»</h2>
+          <p>Prueba con otra parte del título, otro autor o el ISBN.</p>
+          <button mat-stroked-button type="button" (click)="clearSearch()">Borrar búsqueda</button>
+        </div>
+      } @else if (books().length === 0) {
+        <div class="status empty">
+          <mat-icon aria-hidden="true">menu_book</mat-icon>
+          <h2>Esta biblioteca aún no tiene libros</h2>
+          <p>Cuando {{ library.ownerName }} añada alguno, lo verás aquí.</p>
+        </div>
+      } @else if (view() === 'table') {
+        <app-user-books-table
+          [books]="books()"
+          [raters]="raters()"
+          [removable]="false"
+          (openRequested)="openBookDialog(library, $event)"
+        />
+      } @else {
+        <ul class="grid">
+          @for (book of books(); track book.id) {
+            <li>
+              <app-user-book-card
+                [book]="book"
+                [removable]="false"
+                (openRequested)="openBookDialog(library, book)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    }
+  }
+}
+
+<!-- Outside the @switch so it stays in the DOM while a page loads and keeps the keyboard focus -->
+@if (showPaginator()) {
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="pageSizeOptions"
+    showFirstLastButtons
+    (page)="changePage($event)"
+    aria-label="Páginas de libros"
+  />
+}

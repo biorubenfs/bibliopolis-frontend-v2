@@ -1,0 +1,34 @@
+<article class="card">
+  <div class="header">
+    <div class="icon" aria-hidden="true">
+      <mat-icon>shelves</mat-icon>
+    </div>
+    <div class="heading">
+      <h2 class="title">
+        <a class="link" [routerLink]="['/shared-libraries', library().id]">{{ library().name }}</a>
+      </h2>
+      <p class="owner">De {{ library().ownerName }}</p>
+    </div>
+  </div>
+
+  <p class="description">{{ library().description }}</p>
+
+  <footer class="footer">
+    <span class="count">
+      <mat-icon aria-hidden="true">menu_book</mat-icon>
+      {{ booksLabel() }}
+    </span>
+
+    <button
+      mat-icon-button
+      type="button"
+      class="leave"
+      matTooltip="Salir"
+      aria-haspopup="dialog"
+      [attr.aria-label]="'Salir de ' + library().name + ', de ' + library().ownerName"
+      (click)="leaveRequested.emit()"
+    >
+      <mat-icon>logout</mat-icon>
+    </button>
+  </footer>
+</article>
