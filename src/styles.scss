@@ -86,3 +86,35 @@ body {
     background-color: var(--mat-sys-surface-container-high);
   }
 }
+
+// The menu of a select that looks like a filter chip (core/styles/_select-chip.scss): the text of the
+// chip and rounded corners. Global because it lives in an overlay
+.app-chip-select-panel {
+  --mat-option-label-text-size: var(--mat-sys-body-medium-size);
+  --mat-option-label-text-line-height: var(--mat-sys-body-medium-line-height);
+  --mat-option-label-text-tracking: var(--mat-sys-body-medium-tracking);
+
+  // Material squares the corners next to the field with a very specific selector
+  html .cdk-overlay-pane &.mat-mdc-select-panel.mdc-menu-surface {
+    margin: 6px 0;
+    padding: 6px;
+    border-radius: 16px;
+  }
+
+  .mat-mdc-option {
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 10px;
+  }
+
+  .mdc-list-item__primary-text {
+    flex: 1;
+  }
+
+  // Fingers need more room than the mouse
+  @media (pointer: coarse) {
+    .mat-mdc-option {
+      min-height: 44px;
+    }
+  }
+}

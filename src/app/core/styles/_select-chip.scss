@@ -1,0 +1,59 @@
+// A select without its form field that looks like the filter chips next to it: 32px high pill, tonal
+// when off and highlighted with the class `active`, when something is selected
+
+@mixin chip {
+  // The select text uses the chip label font and colours
+  --mat-select-trigger-text-font: var(--mat-sys-label-large-font);
+  --mat-select-trigger-text-size: var(--mat-sys-label-large-size);
+  --mat-select-trigger-text-weight: var(--mat-sys-label-large-weight);
+  --mat-select-trigger-text-line-height: var(--mat-sys-label-large-line-height);
+  --mat-select-trigger-text-tracking: var(--mat-sys-label-large-tracking);
+  --mat-select-enabled-trigger-text-color: var(--mat-sys-on-surface-variant);
+  --mat-select-placeholder-text-color: var(--mat-sys-on-surface-variant);
+  --mat-select-enabled-arrow-color: var(--mat-sys-on-surface-variant);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+
+  &.active {
+    --mat-select-enabled-trigger-text-color: var(--mat-sys-on-secondary-container);
+    --mat-select-enabled-arrow-color: var(--mat-sys-on-secondary-container);
+
+    background: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+  }
+
+  &.disabled {
+    opacity: 0.38;
+  }
+
+  &:has(mat-select:focus-visible) {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+
+  // Decorative: clicks go through to the select, which covers the whole chip
+  mat-icon {
+    position: absolute;
+    left: 8px;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    pointer-events: none;
+  }
+}
+
+// Covers the whole chip, so a click anywhere opens it; flex centres the text vertically
+@mixin select {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 8px 0 32px;
+  box-sizing: border-box;
+}
