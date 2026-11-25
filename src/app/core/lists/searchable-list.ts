@@ -37,6 +37,11 @@ export abstract class SearchableList<T extends { id: string }> implements OnInit
   protected readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
   protected readonly searchMaxLength = SEARCH_MAX_LENGTH;
 
+  /** Other query params of the subclass: the list also reloads when any of them changes. */
+  protected readonly filterParams: readonly string[] = [];
+  /** Their values in the URL; empty without that filter. */
+  protected readonly filters = signal<Readonly<Record<string, string>>>({});
+
   protected readonly items = signal<T[]>([]);
   protected readonly total = signal(0);
   protected readonly state = signal<LoadState>('loading');
@@ -67,19 +72,27 @@ export abstract class SearchableList<T extends { id: string }> implements OnInit
           term: toSearchTerm(params.get('q')),
           page: toPageNumber(params.get('page')),
           limit: toPageSize(params.get('limit')),
+          filters: Object.fromEntries(
+            this.filterParams.map((param) => [param, params.get(param) ?? '']),
+          ),
         })),
         distinctUntilChanged(
-          (a, b) => a.term === b.term && a.page === b.page && a.limit === b.limit,
+          (a, b) =>
+            a.term === b.term &&
+            a.page === b.page &&
+            a.limit === b.limit &&
+            this.filterParams.every((param) => a.filters[param] === b.filters[param]),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe(({ term, page, limit }) => {
+      .subscribe(({ term, page, limit, filters }) => {
         // Only overwrite the field when the change comes from outside, so a trailing space being
         // typed is not removed
         if (this.query().trim() !== term) {
           this.query.set(term);
         }
         this.search.set(term);
+        this.filters.set(filters);
         this.pageIndex.set(page - 1);
         this.pageSize.set(limit);
         this.load();
@@ -145,6 +158,33 @@ export abstract class SearchableList<T extends { id: string }> implements OnInit
     // Replace any keystroke still waiting in the debounce, then clear the URL right away
     this.searchInput.next('');
     this.updateSearchInUrl('');
+  }
+
+  /** Sets one of `filterParams`, or removes it with an empty value. */
+  protected updateFilter(param: string, value: string, replaceUrl = false): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      // A different filter has different results: start again from the first page
+      queryParams: { [param]: value || null, page: null },
+      queryParamsHandling: 'merge',
+      replaceUrl,
+    });
+  }
+
+  /** Clears the search and `filterParams`. */
+  protected clearFilters(): void {
+    this.query.set('');
+    // Replace any keystroke still waiting in the debounce
+    this.searchInput.next('');
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        ...Object.fromEntries(this.filterParams.map((param) => [param, null])),
+        q: null,
+        page: null,
+      },
+      queryParamsHandling: 'merge',
+    });
   }
 
   protected changePage(event: PageEvent): void {

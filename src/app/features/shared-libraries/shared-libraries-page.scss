@@ -1,3 +1,5 @@
+@use '../../core/styles/select-chip';
+
 :host {
   display: block;
 }
@@ -12,8 +14,52 @@ section:focus {
   --mat-form-field-outlined-container-shape: 24px;
 
   // Full width on phones, as in the other tab
-  width: 100%;
+  flex: 1 1 100%;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
   margin-bottom: 24px;
+}
+
+.owner-filter {
+  @include select-chip.chip;
+
+  // Room for a usual name; longer ones end in an ellipsis
+  width: 200px;
+  max-width: 100%;
+}
+
+.owner-select {
+  @include select-chip.select;
+}
+
+// Inside the options panel: the options come from this template, so they keep its styles
+.owner-option {
+  // Reference for the hidden text
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.owner-count {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// Read by screen readers only
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .status {
@@ -68,6 +114,6 @@ mat-paginator {
 
 @media (min-width: 900px) {
   .search {
-    max-width: 360px;
+    flex: 0 1 360px;
   }
 }

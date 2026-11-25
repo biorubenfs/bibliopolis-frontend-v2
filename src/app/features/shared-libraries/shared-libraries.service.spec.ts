@@ -47,6 +47,31 @@ describe('SharedLibrariesService', () => {
     expect(all.request.params.has('search')).toBe(false);
   });
 
+  it('keeps only the libraries of an owner', () => {
+    service.list({ skip: 0, limit: 12, ownerId: 'u1' }).subscribe();
+    service.list({ skip: 0, limit: 12, ownerId: '' }).subscribe();
+
+    const [filtered, all] = backend.match((r) => r.url === url);
+    expect(filtered.request.params.get('owner')).toBe('u1');
+    expect(all.request.params.has('owner')).toBe(false);
+  });
+
+  it('lists the owners', () => {
+    let result: unknown;
+    service.listOwners().subscribe((owners) => (result = owners));
+
+    const req = backend.expectOne((r) => r.url === `${url}/owners`);
+    expect(req.request.params.toString()).toBe('skip=0&limit=100');
+    req.flush({
+      results: [
+        { type: 'shared-library-owners', id: 'u1', attributes: { name: 'Ana', librariesCount: 2 } },
+      ],
+      paginationInfo: { skip: 0, limit: 100, total: 1 },
+    });
+
+    expect(result).toEqual([{ id: 'u1', name: 'Ana', librariesCount: 2 }]);
+  });
+
   it('gets a library', () => {
     let result: unknown;
     service.get('l1').subscribe((value) => (result = value));

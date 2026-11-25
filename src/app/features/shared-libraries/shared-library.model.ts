@@ -14,6 +14,14 @@ export interface SharedLibrary {
   sharedAt: string;
 }
 
+/** Someone who shares libraries with the user. Two of them may have the same name. */
+export interface SharedLibraryOwner {
+  id: string;
+  name: string;
+  /** How many libraries they share with the user. */
+  librariesCount: number;
+}
+
 /** A book of a shared library. */
 export interface SharedLibraryBook extends Pick<
   UserBook,

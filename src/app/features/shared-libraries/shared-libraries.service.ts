@@ -5,7 +5,10 @@ import { Observable, catchError, map, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiError } from '../../core/http/api-error';
 import { ApiCollectionResponse, ApiItemResponse, Page, flatten } from '../../core/http/api.models';
-import { SharedLibrary, SharedLibraryBook } from './shared-library.model';
+import { SharedLibrary, SharedLibraryBook, SharedLibraryOwner } from './shared-library.model';
+
+/** The maximum page size of the API: more people would not fit in a menu anyway. */
+const MAX_OWNERS = 100;
 
 type SharedLibraryAttributes = Omit<SharedLibrary, 'id'>;
 type SharedLibraryBookAttributes = Omit<SharedLibraryBook, 'id'>;
@@ -18,17 +21,39 @@ export class SharedLibrariesService {
 
   /**
    * Lists the libraries, the most recently shared first. `search` matches part of the name, the
-   * description or the name of the owner; empty means no search.
+   * description or the name of the owner, and `ownerId` keeps only the ones of that owner; empty
+   * means no search nor filter.
    */
-  list(options: { skip: number; limit: number; search?: string }): Observable<Page<SharedLibrary>> {
+  list(options: {
+    skip: number;
+    limit: number;
+    search?: string;
+    ownerId?: string;
+  }): Observable<Page<SharedLibrary>> {
     let params = new HttpParams().set('skip', options.skip).set('limit', options.limit);
     const search = options.search?.trim();
     if (search) {
       params = params.set('search', search);
     }
+    if (options.ownerId) {
+      params = params.set('owner', options.ownerId);
+    }
     return this.http
       .get<ApiCollectionResponse<SharedLibraryAttributes>>(this.baseUrl, { params })
       .pipe(map(toPage), catchError(toApiError));
+  }
+
+  /** Who shares libraries with the user, by name. */
+  listOwners(): Observable<SharedLibraryOwner[]> {
+    const params = new HttpParams().set('skip', 0).set('limit', MAX_OWNERS);
+    return this.http
+      .get<ApiCollectionResponse<Omit<SharedLibraryOwner, 'id'>>>(`${this.baseUrl}/owners`, {
+        params,
+      })
+      .pipe(
+        map((response) => toPage(response).items),
+        catchError(toApiError),
+      );
   }
 
   /** Fails with a 404 without access, as if the library did not exist. */
