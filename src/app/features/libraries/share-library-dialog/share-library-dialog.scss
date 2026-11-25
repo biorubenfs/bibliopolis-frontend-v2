@@ -103,9 +103,19 @@ h3 {
   background: var(--mat-sys-surface-container-low);
 }
 
+.saved {
+  margin: 0;
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-primary);
+}
+
 // Not hidden, or screen readers could miss the first message: only its gap is taken away
 .error:empty {
   margin-top: -12px;
+}
+
+.saved:empty {
+  margin-top: -8px;
 }
 
 .error:not(:empty) {

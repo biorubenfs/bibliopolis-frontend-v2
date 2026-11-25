@@ -87,7 +87,9 @@ export class ShareLibraryDialog {
   protected readonly savingRatings = signal(false);
   /** A failed change of the list or of the setting, shown below them. */
   protected readonly changeError = signal<string | null>(null);
-  /** The result of the last change, read by screen readers. */
+  /** The result of the last change of the setting, shown next to it: there is no button to save it. */
+  protected readonly ratingsMessage = signal('');
+  /** The result of the last change of the list, read by screen readers. */
   protected readonly statusMessage = signal('');
 
   constructor() {
@@ -173,10 +175,10 @@ export class ShareLibraryDialog {
         next: (library) => {
           this.savingRatings.set(false);
           this.shareRatings.set(library.shareRatings);
-          this.statusMessage.set(
+          this.ratingsMessage.set(
             library.shareRatings
-              ? 'Tus valoraciones se muestran.'
-              : 'Tus valoraciones ya no se muestran.',
+              ? 'Guardado: tus valoraciones se muestran.'
+              : 'Guardado: tus valoraciones ya no se muestran.',
           );
         },
         error: () => {
@@ -199,6 +201,7 @@ export class ShareLibraryDialog {
   private clearMessages(): void {
     this.inviteError.set(null);
     this.changeError.set(null);
+    this.ratingsMessage.set('');
     this.statusMessage.set('');
   }
 

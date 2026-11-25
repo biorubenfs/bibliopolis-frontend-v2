@@ -131,7 +131,7 @@ describe('ShareLibraryDialog', () => {
 
       expect(members.invite).toHaveBeenCalledWith('l1', 'luis@email.com');
       expect(names()).toEqual(['Luis', 'Ana']);
-      expect(element.querySelector('[role="status"]')?.textContent).toBe(
+      expect(element.querySelector('.visually-hidden[role="status"]')?.textContent).toBe(
         'Luis ya puede ver la biblioteca.',
       );
       expect(email().value).toBe('');
@@ -207,7 +207,7 @@ describe('ShareLibraryDialog', () => {
 
       expect(members.remove).toHaveBeenCalledWith('l1', 'u2');
       expect(names()).toEqual(['Luis']);
-      expect(element.querySelector('[role="status"]')?.textContent).toBe(
+      expect(element.querySelector('.visually-hidden[role="status"]')?.textContent).toBe(
         'Ana ya no puede ver la biblioteca.',
       );
       expect(document.activeElement).toBe(email());
@@ -247,13 +247,21 @@ describe('ShareLibraryDialog', () => {
 
       expect(update).toHaveBeenCalledWith('l1', { shareRatings: true });
       expect(toggle().getAttribute('aria-checked')).toBe('true');
-      expect(element.querySelector('[role="status"]')?.textContent).toBe(
-        'Tus valoraciones se muestran.',
+      expect(element.querySelector('.saved[role="status"]')?.textContent).toBe(
+        'Guardado: tus valoraciones se muestran.',
+      );
+
+      toggle().click();
+      await settle();
+
+      expect(update).toHaveBeenLastCalledWith('l1', { shareRatings: false });
+      expect(element.querySelector('.saved[role="status"]')?.textContent).toBe(
+        'Guardado: tus valoraciones ya no se muestran.',
       );
     });
 
     it('goes back to the saved setting after a failure', async () => {
-      const { toggle, settle, errors } = await setup({
+      const { element, toggle, settle, errors } = await setup({
         update: vi.fn(() => throwError(() => new ApiError(500, null, ''))),
       });
 
@@ -262,6 +270,7 @@ describe('ShareLibraryDialog', () => {
 
       expect(toggle().getAttribute('aria-checked')).toBe('false');
       expect(errors()).toContain('No se ha podido guardar el cambio');
+      expect(element.querySelector('.saved')?.textContent).toBe('');
     });
   });
 });
