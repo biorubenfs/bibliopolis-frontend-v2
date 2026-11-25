@@ -165,7 +165,9 @@ h1 {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  // Room for the four buttons of the card and a count of four digits. min(): never wider than the
+  // screen on very narrow phones
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 16px;
   margin: 0;
   padding: 0;

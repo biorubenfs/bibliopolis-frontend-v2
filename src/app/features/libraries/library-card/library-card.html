@@ -32,6 +32,16 @@
     </span>
 
     <div class="actions">
+      <button
+        mat-icon-button
+        type="button"
+        matTooltip="Compartir"
+        aria-haspopup="dialog"
+        [attr.aria-label]="'Compartir ' + library().name"
+        (click)="shareRequested.emit()"
+      >
+        <mat-icon>group_add</mat-icon>
+      </button>
       @if (exporting()) {
         <span class="exporting">
           <mat-spinner diameter="20" aria-label="Descargando" />

@@ -68,6 +68,11 @@ import {
   ScanBooksDialog,
   ScanBooksDialogData,
 } from '../scan-books-dialog/scan-books-dialog';
+import {
+  SHARE_DIALOG_SIZE,
+  ShareLibraryDialog,
+  ShareLibraryDialogData,
+} from '../share-library-dialog/share-library-dialog';
 
 type LoadState = 'loading' | 'loaded' | 'not-found' | 'error';
 
@@ -337,6 +342,14 @@ export class LibraryDetailPage {
     this.dialog.open<ImportCsvDialog, ImportCsvDialogData, LibraryImport>(ImportCsvDialog, {
       ...IMPORT_DIALOG_SIZE,
       data: { library },
+    });
+  }
+
+  /** The dialog saves each change by itself, and nothing on this page depends on them. */
+  protected openShareDialog(library: Library): void {
+    this.dialog.open<ShareLibraryDialog, ShareLibraryDialogData>(ShareLibraryDialog, {
+      ...SHARE_DIALOG_SIZE,
+      data: library,
     });
   }
 

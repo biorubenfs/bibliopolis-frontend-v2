@@ -11,6 +11,7 @@ describe('LibraryCard', () => {
     description: 'Mis novelas',
     books: ['b1'],
     isFavorite: false,
+    shareRatings: false,
     tagIds: [],
     userId: 'u1',
     createdAt: '',
@@ -44,13 +45,17 @@ describe('LibraryCard', () => {
     const element = fixture.nativeElement as HTMLElement;
     const edit = vi.fn();
     const remove = vi.fn();
+    const share = vi.fn();
+    fixture.componentInstance.shareRequested.subscribe(share);
     fixture.componentInstance.editRequested.subscribe(edit);
     fixture.componentInstance.deleteRequested.subscribe(remove);
 
+    (element.querySelector('[aria-label="Compartir Novela"]') as HTMLButtonElement).click();
     (element.querySelector('[aria-label="Editar Novela"]') as HTMLButtonElement).click();
     (element.querySelector('[aria-label="Eliminar Novela"]') as HTMLButtonElement).click();
 
     expect(element.querySelector('[aria-label="Descargar Novela"]')).not.toBeNull();
+    expect(share).toHaveBeenCalled();
     expect(edit).toHaveBeenCalled();
     expect(remove).toHaveBeenCalled();
   });

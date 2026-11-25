@@ -14,6 +14,7 @@ function library(id: string, name: string): Library {
     userId: 'u1',
     books: [],
     isFavorite: false,
+    shareRatings: false,
     tagIds: [],
     createdAt: '',
     updatedAt: '',

@@ -38,6 +38,7 @@ export class LibraryCard {
 
   readonly favoriteToggled = output<void>();
   readonly exportRequested = output<LibraryExportFormat>();
+  readonly shareRequested = output<void>();
   readonly editRequested = output<void>();
   readonly deleteRequested = output<void>();
 

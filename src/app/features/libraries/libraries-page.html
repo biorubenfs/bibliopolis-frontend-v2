@@ -181,6 +181,7 @@
               [savingFavorite]="savingFavoriteId() === library.id"
               (favoriteToggled)="toggleFavorite(library)"
               (exportRequested)="export(library, $event)"
+              (shareRequested)="openShareDialog(library)"
               (editRequested)="openEditDialog(library)"
               (deleteRequested)="openDeleteDialog(library)"
             />

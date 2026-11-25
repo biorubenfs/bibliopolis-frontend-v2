@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
@@ -9,6 +9,7 @@ import { TagsService } from '../tags/tags.service';
 import { LibrariesService } from './libraries.service';
 import { LibrariesPage, SEARCH_DEBOUNCE_MS } from './libraries-page';
 import { Library } from './library.model';
+import { ShareLibraryDialog } from './share-library-dialog/share-library-dialog';
 
 function library(
   id: string,
@@ -23,6 +24,7 @@ function library(
     description: `Descripción de ${name}`,
     books,
     isFavorite,
+    shareRatings: false,
     tagIds,
     userId: 'u1',
     createdAt: '',
@@ -68,6 +70,18 @@ describe('LibrariesPage', () => {
 
     expect(element.textContent).toContain('Aún no tienes bibliotecas');
     expect(element.querySelector('.status .create')?.textContent).toContain('Nueva biblioteca');
+  });
+
+  it('opens the dialog to share a library', async () => {
+    const item = library('1', 'Novela');
+    const element = await render([item]);
+    const open = vi
+      .spyOn(TestBed.inject(MatDialog), 'open')
+      .mockReturnValue({} as MatDialogRef<unknown>);
+
+    element.querySelector<HTMLButtonElement>('[aria-label="Compartir Novela"]')!.click();
+
+    expect(open).toHaveBeenCalledWith(ShareLibraryDialog, expect.objectContaining({ data: item }));
   });
 
   it('shows the create button in the filters row when there are libraries', async () => {

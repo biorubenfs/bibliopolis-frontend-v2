@@ -35,6 +35,11 @@ import {
   LibraryFormDialogData,
 } from './library-form-dialog/library-form-dialog';
 import { LIBRARY_SEARCH_MAX_LENGTH, Library, LibraryExportFormat } from './library.model';
+import {
+  SHARE_DIALOG_SIZE,
+  ShareLibraryDialog,
+  ShareLibraryDialogData,
+} from './share-library-dialog/share-library-dialog';
 
 type LoadState = 'loading' | 'loaded' | 'error';
 
@@ -414,6 +419,14 @@ export class LibrariesPage {
           this.notify('Cambios guardados');
         }
       });
+  }
+
+  /** The dialog saves each change by itself, and nothing on the cards depends on them. */
+  protected openShareDialog(library: Library): void {
+    this.dialog.open<ShareLibraryDialog, ShareLibraryDialogData>(ShareLibraryDialog, {
+      ...SHARE_DIALOG_SIZE,
+      data: library,
+    });
   }
 
   protected openDeleteDialog(library: Library): void {
