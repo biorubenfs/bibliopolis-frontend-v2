@@ -70,7 +70,7 @@ describe('SharedBookDialog', () => {
       ['Tú', 'Tu valoración: 7 de 10'],
     ]);
     expect(element.querySelector('.notes')?.textContent).toBe('Releer');
-    expect(button('Editar en Mis libros')?.getAttribute('href')).toBe('/books?q=9780595385294');
+    expect(button('Editar en mis libros')?.getAttribute('href')).toBe('/books?q=9780595385294');
     expect(button('Añadir a mi biblioteca')).toBeUndefined();
   });
 
@@ -99,7 +99,7 @@ describe('SharedBookDialog', () => {
     expect(ratings).toEqual([['Ana', 'Valoración de Ana: 9 de 10']]);
     expect(element.textContent).toContain('No está en ninguna de tus bibliotecas');
     expect(button('Añadir a mi biblioteca')).toBeDefined();
-    expect(button('Editar en Mis libros')).toBeUndefined();
+    expect(button('Editar en mis libros')).toBeUndefined();
   });
 
   it('only shows the own rating when the owner does not share theirs', async () => {
@@ -118,7 +118,7 @@ describe('SharedBookDialog', () => {
   it('closes when following the link', async () => {
     const { button, close } = await setup();
 
-    button('Editar en Mis libros')!.click();
+    button('Editar en mis libros')!.click();
 
     expect(close).toHaveBeenCalled();
   });

@@ -8,9 +8,11 @@ import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginato
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
+import { tap } from 'rxjs';
 
 import { SpanishPaginatorIntl } from '../../../core/i18n/paginator-intl';
 import { SearchableList } from '../../../core/lists/searchable-list';
+import { SectionCounts } from '../../../core/tabbed-section/section-counts';
 import {
   BookDetailDialog,
   BookDetailDialogData,
@@ -50,6 +52,7 @@ const DETAIL_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100vw - 32px)' };
 })
 export class MyBooksPage extends SearchableList<UserBook> {
   private readonly userBooksService = inject(UserBooksService);
+  private readonly counts = inject(SectionCounts);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
@@ -59,13 +62,8 @@ export class MyBooksPage extends SearchableList<UserBook> {
     () => this.state() !== 'error' && this.total() > 0 && this.items().length > 0,
   );
 
-  protected readonly countLabel = computed(() => {
-    const count = this.total();
-    if (this.search()) {
-      return `${count} ${count === 1 ? 'resultado' : 'resultados'}`;
-    }
-    return `${count} ${count === 1 ? 'libro' : 'libros'}`;
-  });
+  /** Books shared with the user; with a search, only the ones that match it. */
+  protected readonly sharedCount = this.counts.shared.asReadonly();
 
   /**
    * Hide the search while the user has no books at all. It stays visible with no results, so the
@@ -74,7 +72,12 @@ export class MyBooksPage extends SearchableList<UserBook> {
   protected readonly showSearch = computed(() => this.search() !== '' || this.total() > 0);
 
   protected fetch(options: { skip: number; limit: number; search: string }) {
-    return this.userBooksService.list(options);
+    return this.userBooksService.list(options).pipe(
+      tap({
+        next: ({ total }) => this.counts.own.set(total),
+        error: () => this.counts.own.set(null),
+      }),
+    );
   }
 
   protected openDetailDialog(book: UserBook): void {

@@ -20,7 +20,7 @@ export interface RemoveBookDialogData {
     <mat-dialog-content>
       <p>
         El libro solo dejará de estar en esta biblioteca. Su valoración y sus notas se conservan en
-        «Mis libros».
+        «Libros».
       </p>
       <div class="error" role="alert">
         @if (errorMessage(); as message) {

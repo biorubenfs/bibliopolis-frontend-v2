@@ -17,7 +17,7 @@ import { LibraryMembersService } from '../library-members.service';
     <mat-dialog-content>
       <p>
         Los libros no se borran: solo dejarán de estar en esta biblioteca y seguirán disponibles en
-        «Mis libros».
+        «Libros».
       </p>
       <!-- Always there, so screen readers announce the warning when it arrives -->
       <p class="members" role="status">

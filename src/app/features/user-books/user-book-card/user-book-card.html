@@ -44,7 +44,14 @@
     @if (showLibraryCount()) {
       <p class="libraries">
         <mat-icon aria-hidden="true">local_library</mat-icon>
-        {{ libraryCountLabel() }}
+        {{ librariesLabel() }}
+      </p>
+    }
+
+    @if (book().owned) {
+      <p class="owned">
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+        Lo tienes
       </p>
     }
 

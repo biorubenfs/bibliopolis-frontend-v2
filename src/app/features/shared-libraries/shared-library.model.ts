@@ -1,4 +1,4 @@
-import { PersonRating, UserBook } from '../user-books/user-book.model';
+import { OWN_NAME, PersonRating, UserBook } from '../user-books/user-book.model';
 
 /** A library of another user, in read-only (see docs/api/shared-libraries.md in the backend). */
 export interface SharedLibrary {
@@ -26,9 +26,6 @@ export interface SharedLibraryBook extends Pick<
   /** The opinion of the user, or null if the book is not in any of their own libraries. */
   own: Pick<UserBook, 'rating' | 'notes'> | null;
 }
-
-/** How the user is called next to their own rating. */
-const OWN_NAME = 'Tú';
 
 /**
  * Whose ratings are shown for the books of a library, with the value for one of them. Without the

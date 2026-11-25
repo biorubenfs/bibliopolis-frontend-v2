@@ -106,6 +106,15 @@ td {
   }
 }
 
+.owned {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  font-size: 16px;
+  vertical-align: text-bottom;
+  color: var(--mat-sys-secondary);
+}
+
 .secondary {
   color: var(--mat-sys-on-surface-variant);
 }

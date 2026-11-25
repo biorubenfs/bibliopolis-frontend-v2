@@ -6,7 +6,7 @@ export type BooksView = 'grid' | 'table';
 const STORAGE_KEY = 'bibliopolis.booksView';
 
 /**
- * The view the user prefers for the lists of books («Mis libros» and the books of a library). It is
+ * The view the user prefers for the lists of books («Libros» and the books of a library). It is
  * remembered in this browser only: it is a display preference, not data of the user.
  */
 @Injectable({ providedIn: 'root' })

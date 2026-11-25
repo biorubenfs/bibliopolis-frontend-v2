@@ -22,6 +22,8 @@ describe('routes', () => {
     ['/libraries/shared', 'Compartidas conmigo', {}],
     ['/libraries/shared/l1', 'Biblioteca compartida', { id: 'l1' }],
     ['/libraries/l1', 'Biblioteca', { id: 'l1' }],
+    ['/books', 'Libros', {}],
+    ['/books/shared', 'Libros compartidos', {}],
     ['/libraries/l1/imports/i1', 'Importación', { id: 'l1', importId: 'i1' }],
   ])('%s opens «%s»', async (url, title, params) => {
     TestBed.configureTestingModule({ providers: [provideRouter(stubbed(routes))] });

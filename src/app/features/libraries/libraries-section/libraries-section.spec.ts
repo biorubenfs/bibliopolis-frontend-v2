@@ -161,6 +161,22 @@ describe('LibrariesSection', () => {
     expect(listShared).toHaveBeenCalledTimes(2);
   });
 
+  it('counts the other tab again when the open page asks for it', async () => {
+    const results: Result[] = [total(3), total(4)];
+    const { harness, numbers, listShared, settle } = await setup('/libraries?q=nov', {
+      shared: () => results.shift() ?? NEVER,
+    });
+    expect(numbers()).toEqual([null, '3']);
+
+    harness.fixture.debugElement
+      .query(By.directive(OwnPage))
+      .componentInstance.counts.recountOther();
+    await settle();
+
+    expect(numbers()).toEqual([null, '4']);
+    expect(listShared).toHaveBeenLastCalledWith({ skip: 0, limit: 1, search: 'nov' });
+  });
+
   it('ignores an outdated count', async () => {
     const first = new Subject<{ items: unknown[]; total: number }>();
     const results: Result[] = [first, total(1)];

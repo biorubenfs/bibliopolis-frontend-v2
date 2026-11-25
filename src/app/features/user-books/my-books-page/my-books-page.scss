@@ -1,14 +1,14 @@
 :host {
   display: block;
-  padding: 16px 16px 24px;
 }
 
-.page-header {
+// The search and, at the other end, how the list is shown
+.toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px 24px;
+  gap: 12px 24px;
   margin-bottom: 24px;
 }
 
@@ -16,22 +16,9 @@
   // Pill shape: half of the field's 48px height
   --mat-form-field-outlined-container-shape: 24px;
 
-  // Full width on phones; a fixed comfortable width next to the title on larger screens
+  // Full width on phones; a fixed comfortable width on larger screens
   flex: 1 1 100%;
   max-width: 100%;
-}
-
-h1 {
-  margin: 0;
-  font: var(--app-font-title);
-  letter-spacing: var(--app-font-title-tracking);
-  color: var(--mat-sys-on-surface);
-}
-
-.count {
-  margin: 4px 0 0;
-  font: var(--mat-sys-body-medium);
-  color: var(--mat-sys-on-surface-variant);
 }
 
 .status {
@@ -62,11 +49,11 @@ h1 {
   }
 }
 
-// Just above the list, aligned with its left edge
-.list-toolbar {
+.actions {
   display: flex;
-  justify-content: flex-start;
-  margin-bottom: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
 }
 
 .grid {
@@ -85,10 +72,6 @@ mat-paginator {
 }
 
 @media (min-width: 900px) {
-  :host {
-    padding: 32px 48px 40px;
-  }
-
   .search {
     flex: 0 1 360px;
   }

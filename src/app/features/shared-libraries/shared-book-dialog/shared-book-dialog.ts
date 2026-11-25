@@ -30,7 +30,7 @@ export const SHARED_BOOK_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100vw -
 
 /**
  * Shows a book of a shared library. Nothing is edited here: the opinion of the user is edited in
- * «Mis libros», and a book they do not have can be added to one of their own libraries.
+ * «Libros», and a book they do not have can be added to one of their own libraries.
  */
 @Component({
   selector: 'app-shared-book-dialog',

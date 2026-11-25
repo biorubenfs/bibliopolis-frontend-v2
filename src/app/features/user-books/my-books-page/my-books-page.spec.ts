@@ -6,6 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
 import { SEARCH_DEBOUNCE_MS } from '../../../core/lists/searchable-list';
+import { SectionCounts } from '../../../core/tabbed-section/section-counts';
 import { BookDetailDialog } from '../../libraries/book-detail-dialog/book-detail-dialog';
 import { UserBook } from '../user-book.model';
 import { UserBooksService } from '../user-books.service';
@@ -42,6 +43,7 @@ describe('MyBooksPage', () => {
       providers: [
         // Real routing: the page receives ?page= and ?limit= through input binding
         provideRouter([{ path: 'books', component: MyBooksPage }], withComponentInputBinding()),
+        SectionCounts,
         { provide: UserBooksService, useValue: { list } },
         { provide: MatDialog, useValue: { open: openDialog } },
         { provide: MatSnackBar, useValue: { open: openSnackBar } },
@@ -67,8 +69,7 @@ describe('MyBooksPage', () => {
     });
 
     expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12, search: '' });
-    expect(element.querySelector('h1')?.textContent).toContain('Mis libros');
-    expect(element.querySelector('.count')?.textContent).toContain('2 libros');
+    expect(TestBed.inject(SectionCounts).own()).toBe(2);
     expect(element.querySelectorAll('app-user-book-card').length).toBe(2);
     expect(element.textContent).toContain('En 1 biblioteca');
     expect(element.textContent).toContain('En 2 bibliotecas');
@@ -116,6 +117,21 @@ describe('MyBooksPage', () => {
 
       expect(element.querySelector('app-books-view-toggle')).toBeNull();
     });
+  });
+
+  it('offers the shared books when the user has none, or none matches the search', async () => {
+    const { harness, element, router } = await setup();
+    const link = () => element.querySelector('.status a[href^="/books/shared"]');
+    expect(link()).toBeNull();
+
+    TestBed.inject(SectionCounts).shared.set(2);
+    await harness.fixture.whenStable();
+    expect(link()?.textContent?.trim()).toBe('Ver los compartidos conmigo');
+
+    await router.navigateByUrl('/books?q=ros');
+    await harness.fixture.whenStable();
+    expect(link()?.textContent?.trim()).toBe('Ver 2 en libros compartidos');
+    expect(link()?.getAttribute('href')).toBe('/books/shared?q=ros');
   });
 
   it('points to the libraries when the user has no books', async () => {
@@ -237,7 +253,7 @@ describe('MyBooksPage', () => {
       expect(router.url).toBe('/books?q=ros');
       expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: 'ros' });
       expect(element.querySelectorAll('app-user-book-card').length).toBe(1);
-      expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
+      expect(TestBed.inject(SectionCounts).own()).toBe(1);
     });
 
     it('restores the search from the URL', async () => {

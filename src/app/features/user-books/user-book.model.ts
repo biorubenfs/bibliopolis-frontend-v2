@@ -38,7 +38,14 @@ export interface ListedBook extends Pick<
   ratings?: readonly PersonRating[];
   /** IDs of the libraries of the user that contain the book, in their own lists. */
   libraries?: readonly string[];
+  /** Where the book is, shown on the cards instead of in how many libraries. */
+  librariesLabel?: string;
+  /** The user has the book too, in lists of books of other people. */
+  owned?: boolean;
 }
+
+/** How the user is called next to their own rating. */
+export const OWN_NAME = 'Tú';
 
 /** The backend requires both fields on every update. */
 export type UpdateUserBook = Pick<UserBook, 'rating' | 'notes'>;

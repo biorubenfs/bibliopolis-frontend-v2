@@ -37,7 +37,11 @@ export class UserBookCard {
     ),
   );
 
-  protected readonly libraryCountLabel = computed(() => {
+  protected readonly librariesLabel = computed(() => {
+    const label = this.book().librariesLabel;
+    if (label) {
+      return label;
+    }
     const count = this.book().libraries?.length ?? 0;
     return `En ${count} ${count === 1 ? 'biblioteca' : 'bibliotecas'}`;
   });

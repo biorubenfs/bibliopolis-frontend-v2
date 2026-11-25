@@ -91,7 +91,10 @@ export class TabbedSection implements OnInit {
           }
           this.tab.set(tab);
           this.search.set(search);
-          return this.countOther(tab, search);
+          return this.counts.recounts$.pipe(
+            startWith(null),
+            switchMap(() => this.countOther(tab, search)),
+          );
         }),
         takeUntilDestroyed(this.destroyRef),
       )

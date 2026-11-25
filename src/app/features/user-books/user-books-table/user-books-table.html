@@ -39,7 +39,13 @@
           [matTooltip]="book.bookTitle"
           (click)="$event.stopPropagation(); openRequested.emit(book)"
         >
+          @if (book.owned) {
+            <mat-icon class="owned" aria-hidden="true" title="Lo tienes">check_circle</mat-icon>
+          }
           {{ book.bookTitle }}
+          @if (book.owned) {
+            <span class="visually-hidden">, lo tienes</span>
+          }
         </button>
         <!-- On phones the authors column does not fit: the authors go under the title instead -->
         <span class="inline-authors truncate secondary">{{ authors(book) }}</span>

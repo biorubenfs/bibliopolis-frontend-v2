@@ -97,9 +97,27 @@ export const routes: Routes = [
       },
       {
         path: 'books',
-        title: 'Mis libros · Bibliopolis',
         loadComponent: () =>
-          import('./features/user-books/my-books-page/my-books-page').then((m) => m.MyBooksPage),
+          import('./features/user-books/books-section/books-section').then((m) => m.BooksSection),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            title: 'Libros · Bibliopolis',
+            loadComponent: () =>
+              import('./features/user-books/my-books-page/my-books-page').then(
+                (m) => m.MyBooksPage,
+              ),
+          },
+          {
+            path: 'shared',
+            title: 'Libros compartidos · Bibliopolis',
+            loadComponent: () =>
+              import('./features/shared-books/shared-books-page/shared-books-page').then(
+                (m) => m.SharedBooksPage,
+              ),
+          },
+        ],
       },
       {
         path: 'explore',

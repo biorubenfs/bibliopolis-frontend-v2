@@ -115,7 +115,8 @@ p {
   gap: 4px 16px;
 }
 
-.libraries {
+.libraries,
+.owned {
   display: flex;
   align-items: center;
   gap: 4px;
