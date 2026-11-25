@@ -3,17 +3,18 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { UserBook } from '../user-book.model';
+import { RatingValue } from '../rating-value/rating-value';
+import { ListedBook } from '../user-book.model';
 
 @Component({
   selector: 'app-user-book-card',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, RatingValue],
   templateUrl: './user-book-card.html',
   styleUrl: './user-book-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserBookCard {
-  readonly book = input.required<UserBook>();
+  readonly book = input.required<ListedBook>();
   /** Offers removing the book from the library being shown. */
   readonly removable = input(true);
   /** Shows how many libraries contain the book, for lists that span several of them. */
@@ -29,8 +30,15 @@ export class UserBookCard {
     () => this.book().bookAuthors.join(', ') || 'Autor desconocido',
   );
 
+  /** The ratings of several people; those who have not rated the book are left out. */
+  protected readonly personRatings = computed(() =>
+    (this.book().ratings ?? []).flatMap(({ name, own, value }) =>
+      value === null ? [] : [{ name, own, value }],
+    ),
+  );
+
   protected readonly libraryCountLabel = computed(() => {
-    const count = this.book().libraries.length;
+    const count = this.book().libraries?.length ?? 0;
     return `En ${count} ${count === 1 ? 'biblioteca' : 'bibliotecas'}`;
   });
 }

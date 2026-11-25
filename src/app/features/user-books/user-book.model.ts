@@ -17,6 +17,29 @@ export interface UserBook {
   updatedAt: string;
 }
 
+/** The rating that someone gave to a book, shown next to their name. */
+export interface PersonRating {
+  /** Name of the person, or «Tú» for the user. */
+  name: string;
+  /** It is the rating of the user. */
+  own: boolean;
+  /** From 1 to 10, or null if they have not rated the book. */
+  value: number | null;
+}
+
+/** What the cards and the table need from a book, be it of the user or of a shared library. */
+export interface ListedBook extends Pick<
+  UserBook,
+  'id' | 'bookTitle' | 'bookAuthors' | 'bookCoverUrl' | 'bookIsbn13' | 'bookIsbn10'
+> {
+  /** The rating of the user, in their own lists. */
+  rating?: number | null;
+  /** The ratings of several people, in the shared libraries. */
+  ratings?: readonly PersonRating[];
+  /** IDs of the libraries of the user that contain the book, in their own lists. */
+  libraries?: readonly string[];
+}
+
 /** The backend requires both fields on every update. */
 export type UpdateUserBook = Pick<UserBook, 'rating' | 'notes'>;
 

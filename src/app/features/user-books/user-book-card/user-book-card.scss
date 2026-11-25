@@ -106,16 +106,13 @@ p {
 
 .rating {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  font: var(--mat-sys-label-large);
+}
 
-  mat-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
-    color: var(--mat-sys-secondary);
-  }
+// Side by side if they fit; with a long name, one below the other
+.ratings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
 }
 
 .libraries {
