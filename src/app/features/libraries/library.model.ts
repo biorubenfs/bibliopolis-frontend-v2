@@ -8,7 +8,7 @@ export interface Library {
   userId: string;
   /** IDs of the user books in this library. */
   books: string[];
-  /** Favorites are listed first in «Mis bibliotecas». */
+  /** Favorites are listed first in «Bibliotecas». */
   isFavorite: boolean;
   /** The people the library is shared with see the ratings of the owner, but never the notes. */
   shareRatings: boolean;

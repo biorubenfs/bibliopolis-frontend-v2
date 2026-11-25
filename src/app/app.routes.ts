@@ -49,9 +49,35 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'libraries' },
       {
         path: 'libraries',
-        title: 'Mis bibliotecas · Bibliopolis',
         loadComponent: () =>
-          import('./features/libraries/libraries-page').then((m) => m.LibrariesPage),
+          import('./features/libraries/libraries-section/libraries-section').then(
+            (m) => m.LibrariesSection,
+          ),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            title: 'Bibliotecas · Bibliopolis',
+            loadComponent: () =>
+              import('./features/libraries/libraries-page').then((m) => m.LibrariesPage),
+          },
+          {
+            path: 'shared',
+            title: 'Compartidas conmigo · Bibliopolis',
+            loadComponent: () =>
+              import('./features/shared-libraries/shared-libraries-page').then(
+                (m) => m.SharedLibrariesPage,
+              ),
+          },
+        ],
+      },
+      {
+        path: 'libraries/shared/:id',
+        title: 'Biblioteca compartida · Bibliopolis',
+        loadComponent: () =>
+          import('./features/shared-libraries/shared-library-page/shared-library-page').then(
+            (m) => m.SharedLibraryPage,
+          ),
       },
       {
         path: 'libraries/:id',
@@ -74,22 +100,6 @@ export const routes: Routes = [
         title: 'Mis libros · Bibliopolis',
         loadComponent: () =>
           import('./features/user-books/my-books-page/my-books-page').then((m) => m.MyBooksPage),
-      },
-      {
-        path: 'shared-libraries',
-        title: 'Compartidas conmigo · Bibliopolis',
-        loadComponent: () =>
-          import('./features/shared-libraries/shared-libraries-page').then(
-            (m) => m.SharedLibrariesPage,
-          ),
-      },
-      {
-        path: 'shared-libraries/:id',
-        title: 'Biblioteca compartida · Bibliopolis',
-        loadComponent: () =>
-          import('./features/shared-libraries/shared-library-page/shared-library-page').then(
-            (m) => m.SharedLibraryPage,
-          ),
       },
       {
         path: 'explore',

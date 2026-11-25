@@ -1,54 +1,49 @@
-<header class="page-header">
-  <h1 #heading tabindex="-1">Compartidas conmigo</h1>
-  @if (total() > 0) {
-    <p class="count">{{ countLabel() }}</p>
-  }
-</header>
-
-@switch (state()) {
-  @case ('loading') {
-    <div class="status">
-      <mat-spinner diameter="40" aria-label="Cargando bibliotecas" />
-    </div>
-  }
-  @case ('error') {
-    <div class="status" role="alert">
-      <mat-icon aria-hidden="true">cloud_off</mat-icon>
-      <p>No se han podido cargar las bibliotecas compartidas contigo.</p>
-      <button mat-stroked-button type="button" (click)="load()">Reintentar</button>
-    </div>
-  }
-  @default {
-    @if (items().length === 0) {
-      <div class="status empty">
-        <mat-icon aria-hidden="true">group</mat-icon>
-        <h2>Nadie ha compartido una biblioteca contigo</h2>
-        <p>Cuando alguien te invite a ver una de las suyas, aparecerá aquí.</p>
+<section #content tabindex="-1" aria-label="Compartidas conmigo">
+  @switch (state()) {
+    @case ('loading') {
+      <div class="status">
+        <mat-spinner diameter="40" aria-label="Cargando bibliotecas" />
       </div>
-    } @else {
-      <ul class="grid">
-        @for (library of items(); track library.id) {
-          <li>
-            <app-shared-library-card
-              [library]="library"
-              (leaveRequested)="openLeaveDialog(library)"
-            />
-          </li>
-        }
-      </ul>
+    }
+    @case ('error') {
+      <div class="status" role="alert">
+        <mat-icon aria-hidden="true">cloud_off</mat-icon>
+        <p>No se han podido cargar las bibliotecas compartidas contigo.</p>
+        <button mat-stroked-button type="button" (click)="load()">Reintentar</button>
+      </div>
+    }
+    @default {
+      @if (items().length === 0) {
+        <div class="status empty">
+          <mat-icon aria-hidden="true">group</mat-icon>
+          <h2>Nadie ha compartido una biblioteca contigo</h2>
+          <p>Cuando alguien te invite a ver una de las suyas, aparecerá aquí.</p>
+        </div>
+      } @else {
+        <ul class="grid">
+          @for (library of items(); track library.id) {
+            <li>
+              <app-shared-library-card
+                [library]="library"
+                (leaveRequested)="openLeaveDialog(library)"
+              />
+            </li>
+          }
+        </ul>
+      }
     }
   }
-}
 
-<!-- Outside the @switch so it stays in the DOM while a page loads and keeps the keyboard focus -->
-@if (showPaginator()) {
-  <mat-paginator
-    [length]="total()"
-    [pageIndex]="pageIndex()"
-    [pageSize]="pageSize()"
-    [pageSizeOptions]="pageSizeOptions"
-    showFirstLastButtons
-    (page)="changePage($event)"
-    aria-label="Páginas de bibliotecas compartidas"
-  />
-}
+  <!-- Outside the @switch so it stays in the DOM while a page loads and keeps the keyboard focus -->
+  @if (showPaginator()) {
+    <mat-paginator
+      [length]="total()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      showFirstLastButtons
+      (page)="changePage($event)"
+      aria-label="Páginas de bibliotecas compartidas"
+    />
+  }
+</section>

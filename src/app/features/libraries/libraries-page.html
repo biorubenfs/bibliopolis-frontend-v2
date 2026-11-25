@@ -1,18 +1,5 @@
-<header class="page-header">
-  <div>
-    <h1>Mis bibliotecas</h1>
-    @if (total() > 0) {
-      <p class="count">
-        @if (filtered()) {
-          {{ total() }} {{ total() === 1 ? 'resultado' : 'resultados' }}
-        } @else {
-          {{ total() }} {{ total() === 1 ? 'biblioteca' : 'bibliotecas' }}
-        }
-      </p>
-    }
-  </div>
-
-  @if (showFilters()) {
+@if (showFilters()) {
+  <div class="filters">
     <mat-form-field
       class="search app-tonal-field"
       appearance="outline"
@@ -23,7 +10,7 @@
       <input
         matInput
         type="text"
-        placeholder="Buscar por nombre o descripción"
+        placeholder="Nombre o descripción"
         aria-label="Buscar bibliotecas"
         autocomplete="off"
         [attr.maxlength]="searchMaxLength"
@@ -43,11 +30,7 @@
         </button>
       }
     </mat-form-field>
-  }
-</header>
 
-@if (showFilters()) {
-  <div class="filters">
     <mat-chip-listbox aria-label="Filtro de favoritas" (change)="changeFavorites($event)">
       <mat-chip-option value="favorites" [selected]="favoritesOnly()">
         <mat-icon matChipAvatar aria-hidden="true">bookmark</mat-icon>
@@ -169,6 +152,9 @@
           <mat-icon>add</mat-icon>
           Nueva biblioteca
         </button>
+        @if (sharedCount()) {
+          <a mat-button routerLink="/libraries/shared">Ver las compartidas conmigo</a>
+        }
       </div>
     } @else {
       <ul class="grid">

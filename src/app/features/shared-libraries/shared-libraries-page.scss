@@ -1,28 +1,10 @@
 :host {
   display: block;
-  padding: 24px 16px;
 }
 
-.page-header {
-  margin-bottom: 24px;
-}
-
-h1 {
-  margin: 0;
-  font: var(--app-font-title);
-  letter-spacing: var(--app-font-title-tracking);
-  color: var(--mat-sys-on-surface);
-
-  // Only focused by the page itself, not a control
-  &:focus {
-    outline: none;
-  }
-}
-
-.count {
-  margin: 4px 0 0;
-  font: var(--mat-sys-body-large);
-  color: var(--mat-sys-on-surface-variant);
+// Only focused by the page itself, not a control
+section:focus {
+  outline: none;
 }
 
 .status {
@@ -66,10 +48,4 @@ h1 {
 mat-paginator {
   margin-top: 16px;
   background: transparent;
-}
-
-@media (min-width: 900px) {
-  :host {
-    padding: 40px 48px;
-  }
 }

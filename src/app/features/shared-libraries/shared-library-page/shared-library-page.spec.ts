@@ -61,7 +61,7 @@ describe('SharedLibraryPage', () => {
       providers: [
         // Real routing: the page receives :id through input binding
         provideRouter(
-          [{ path: 'shared-libraries/:id', component: SharedLibraryPage }],
+          [{ path: 'libraries/shared/:id', component: SharedLibraryPage }],
           withComponentInputBinding(),
         ),
         { provide: SharedLibrariesService, useValue: { get, listBooks } },
@@ -69,7 +69,7 @@ describe('SharedLibraryPage', () => {
         { provide: MatSnackBar, useValue: { open: openSnackBar } },
       ],
     });
-    const harness = await RouterTestingHarness.create(options.url ?? '/shared-libraries/l1');
+    const harness = await RouterTestingHarness.create(options.url ?? '/libraries/shared/l1');
     await harness.fixture.whenStable();
     const element = harness.routeNativeElement as HTMLElement;
     const ratings = (selector: string) =>
@@ -89,7 +89,7 @@ describe('SharedLibraryPage', () => {
     expect(element.querySelector('.description')?.textContent).toContain('Sus novelas');
     expect(element.querySelector('.count')?.textContent).toBe('2 libros');
     expect(element.querySelectorAll('app-user-book-card')).toHaveLength(2);
-    expect(element.querySelector('a.back')?.getAttribute('href')).toBe('/shared-libraries');
+    expect(element.querySelector('a.back')?.getAttribute('href')).toBe('/libraries/shared');
   });
 
   it('offers nothing that only the owner can do', async () => {
@@ -140,7 +140,7 @@ describe('SharedLibraryPage', () => {
 
   it('searches and pages with the URL', async () => {
     const { listBooks } = await setup({
-      url: '/shared-libraries/l1?q=ros&page=2',
+      url: '/libraries/shared/l1?q=ros&page=2',
       listBooks: vi.fn(() => of({ items: [book('b1')], total: 13 })),
     });
 
@@ -149,7 +149,7 @@ describe('SharedLibraryPage', () => {
 
   it('explains that there are no results or no books', async () => {
     const empty = vi.fn(() => of({ items: [], total: 0 }));
-    const searched = await setup({ url: '/shared-libraries/l1?q=nada', listBooks: empty });
+    const searched = await setup({ url: '/libraries/shared/l1?q=nada', listBooks: empty });
     expect(searched.element.textContent).toContain('coincide con «nada»');
 
     TestBed.resetTestingModule();
@@ -171,7 +171,7 @@ describe('SharedLibraryPage', () => {
     const { harness, element } = await setup({ get });
     expect(element.querySelector('h1')?.textContent).toBe('Novela');
 
-    await harness.navigateByUrl('/shared-libraries/l1?page=2');
+    await harness.navigateByUrl('/libraries/shared/l1?page=2');
     await harness.fixture.whenStable();
 
     expect(element.textContent).toContain('No hemos encontrado esta biblioteca');
@@ -200,7 +200,7 @@ describe('SharedLibraryPage', () => {
       get: vi.fn((id: string) => of({ ...library, id, name: `Biblioteca ${id}` })),
     });
 
-    await harness.navigateByUrl('/shared-libraries/l2');
+    await harness.navigateByUrl('/libraries/shared/l2');
     await harness.fixture.whenStable();
 
     expect(get).toHaveBeenLastCalledWith('l2');

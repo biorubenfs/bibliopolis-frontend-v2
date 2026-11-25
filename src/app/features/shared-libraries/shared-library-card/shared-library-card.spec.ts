@@ -30,7 +30,7 @@ describe('SharedLibraryCard', () => {
     const { element } = render();
 
     expect(element.querySelector('h2 a')?.textContent).toContain('Novela');
-    expect(element.querySelector('h2 a')?.getAttribute('href')).toBe('/shared-libraries/l1');
+    expect(element.querySelector('h2 a')?.getAttribute('href')).toBe('/libraries/shared/l1');
     expect(element.querySelector('.owner')?.textContent).toBe('De Ana');
     expect(element.textContent).toContain('Mis novelas');
     expect(element.querySelector('.count')?.textContent).toContain('1 libro');

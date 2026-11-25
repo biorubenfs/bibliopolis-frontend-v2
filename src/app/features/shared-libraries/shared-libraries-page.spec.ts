@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
+import { LibraryCounts } from '../libraries/libraries-section/library-counts';
 import { LeaveLibraryDialog } from './leave-library-dialog/leave-library-dialog';
 import { SharedLibrariesPage } from './shared-libraries-page';
 import { SharedLibrariesService } from './shared-libraries.service';
@@ -35,13 +36,14 @@ describe('SharedLibrariesPage', () => {
     const openSnackBar = vi.fn();
     TestBed.configureTestingModule({
       providers: [
-        provideRouter([{ path: 'shared-libraries', component: SharedLibrariesPage }]),
+        provideRouter([{ path: 'libraries/shared', component: SharedLibrariesPage }]),
+        LibraryCounts,
         { provide: SharedLibrariesService, useValue: { list } },
         { provide: MatDialog, useValue: { open: openDialog } },
         { provide: MatSnackBar, useValue: { open: openSnackBar } },
       ],
     });
-    const harness = await RouterTestingHarness.create(options.url ?? '/shared-libraries');
+    const harness = await RouterTestingHarness.create(options.url ?? '/libraries/shared');
     await harness.fixture.whenStable();
     const element = harness.routeNativeElement as HTMLElement;
     return { harness, element, list, openDialog, openSnackBar };
@@ -51,8 +53,7 @@ describe('SharedLibrariesPage', () => {
     const { element, list } = await setup();
 
     expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12 });
-    expect(element.querySelector('h1')?.textContent).toBe('Compartidas conmigo');
-    expect(element.querySelector('.count')?.textContent).toBe('2 bibliotecas');
+    expect(TestBed.inject(LibraryCounts).shared()).toBe(2);
     const owners = Array.from(element.querySelectorAll('.owner'), (item) => item.textContent);
     expect(owners).toEqual(['De Ana', 'De Luis']);
   });
@@ -61,13 +62,13 @@ describe('SharedLibrariesPage', () => {
     const { element } = await setup({ list: vi.fn(() => of({ items: [], total: 0 })) });
 
     expect(element.textContent).toContain('Nadie ha compartido una biblioteca contigo');
-    expect(element.querySelector('.count')).toBeNull();
+    expect(TestBed.inject(LibraryCounts).shared()).toBe(0);
     expect(element.querySelector('mat-paginator')).toBeNull();
   });
 
   it('requests the page in the URL', async () => {
     const { element, list } = await setup({
-      url: '/shared-libraries?page=2',
+      url: '/libraries/shared?page=2',
       list: vi.fn(() => of({ items: [library('1', 'Novela', 'Ana')], total: 13 })),
     });
 
@@ -81,11 +82,14 @@ describe('SharedLibrariesPage', () => {
       .mockReturnValueOnce(throwError(() => new Error()))
       .mockReturnValue(of({ items: [library('1', 'Novela', 'Ana')], total: 1 }));
     const { harness, element } = await setup({ list });
+    const counts = TestBed.inject(LibraryCounts);
+    expect(counts.shared()).toBeNull();
 
     element.querySelector<HTMLButtonElement>('[role="alert"] button')!.click();
     await harness.fixture.whenStable();
 
     expect(element.querySelectorAll('app-shared-library-card')).toHaveLength(1);
+    expect(counts.shared()).toBe(1);
   });
 
   describe('leaving', () => {
@@ -110,7 +114,7 @@ describe('SharedLibrariesPage', () => {
       );
       expect(list).toHaveBeenCalledTimes(2);
       expect(openSnackBar.mock.calls[0][0]).toBe('Has salido de «Novela»');
-      expect(document.activeElement).toBe(element.querySelector('h1'));
+      expect(document.activeElement).toBe(element.querySelector('section'));
     });
 
     it('does nothing if it is cancelled', async () => {

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipListboxChange, MatChipsModule } from '@angular/material/chips';
@@ -10,7 +17,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, Subscription, debounceTime, distinctUntilChanged, map } from 'rxjs';
 
 import { saveFile } from '../../core/files/save-file';
@@ -28,6 +35,7 @@ import {
 import { MAX_TAGS_PER_LIBRARY, TAG_COLOR_STYLES, Tag } from '../tags/tag.model';
 import { TagsService } from '../tags/tags.service';
 import { DeleteLibraryDialog } from './delete-library-dialog/delete-library-dialog';
+import { LibraryCounts } from './libraries-section/library-counts';
 import { LibrariesService } from './libraries.service';
 import { LibraryCard } from './library-card/library-card';
 import {
@@ -85,6 +93,7 @@ const LIMIT_QUERY_PARAM = 'limit';
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    RouterLink,
   ],
   templateUrl: './libraries-page.html',
   styleUrl: './libraries-page.scss',
@@ -94,6 +103,8 @@ const LIMIT_QUERY_PARAM = 'limit';
 export class LibrariesPage {
   private readonly librariesService = inject(LibrariesService);
   private readonly tagsService = inject(TagsService);
+  private readonly counts = inject(LibraryCounts);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
@@ -105,6 +116,7 @@ export class LibrariesPage {
 
   protected readonly libraries = signal<Library[]>([]);
   protected readonly total = signal(0);
+  protected readonly sharedCount = this.counts.shared.asReadonly();
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   protected readonly state = signal<LoadState>('loading');
@@ -237,9 +249,12 @@ export class LibrariesPage {
         favorites: this.favoritesOnly(),
         tagIds: this.selectedTagIds(),
       })
+      // The other tab may be open by then, and its number would be overwritten
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ items, total }) => {
           this.total.set(total);
+          this.counts.own.set(total);
           // Past the end, because the last library of the page was deleted or a shared link is
           // outdated: show the last page. Replacing the URL keeps the invalid one out of the
           // history, and the URL change reloads the list.
@@ -251,7 +266,10 @@ export class LibrariesPage {
           this.libraries.set(items);
           this.state.set('loaded');
         },
-        error: () => this.state.set('error'),
+        error: () => {
+          this.counts.own.set(null);
+          this.state.set('error');
+        },
       });
   }
 

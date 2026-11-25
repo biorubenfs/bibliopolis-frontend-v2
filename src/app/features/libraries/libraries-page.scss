@@ -1,37 +1,14 @@
 :host {
   display: block;
-  padding: 24px 16px;
-}
-
-.page-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px 24px;
-  margin-bottom: 24px;
 }
 
 .search {
   // Pill shape: half of the field's 48px height
   --mat-form-field-outlined-container-shape: 24px;
 
-  // Full width on phones; a fixed comfortable width next to the title on larger screens
+  // Full width on phones; next to the filters on larger screens
   flex: 1 1 100%;
   max-width: 100%;
-}
-
-h1 {
-  margin: 0;
-  font: var(--app-font-title);
-  letter-spacing: var(--app-font-title-tracking);
-  color: var(--mat-sys-on-surface);
-}
-
-.count {
-  margin: 4px 0 0;
-  font: var(--mat-sys-body-large);
-  color: var(--mat-sys-on-surface-variant);
 }
 
 .status {
@@ -64,7 +41,7 @@ h1 {
 }
 
 .filters {
-  // Tonal pill chips, without outline, like the search field above them
+  // Tonal pill chips, without outline, like the search field next to them
   --mat-chip-container-shape-radius: 999px;
   --mat-chip-outline-width: 0;
   --mat-chip-elevated-container-color: var(--mat-sys-surface-container-high);
@@ -73,7 +50,7 @@ h1 {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 16px;
-  margin: -8px 0 24px;
+  margin-bottom: 24px;
 
   // With selected tags below, the chips sit closer to the filters they belong to
   &:has(+ .active-tags) {
@@ -81,7 +58,7 @@ h1 {
   }
 }
 
-// Pushed to the right edge, under the search field; wraps onto its own line on narrow screens
+// Pushed to the right edge, wraps onto its own line on narrow screens
 .filters .create {
   margin-left: auto;
 }
@@ -180,11 +157,8 @@ mat-paginator {
 }
 
 @media (min-width: 900px) {
-  :host {
-    padding: 40px 48px;
-  }
-
   .search {
-    flex: 0 1 360px;
+    flex: 1 1 220px;
+    max-width: 360px;
   }
 }

@@ -24,9 +24,8 @@ interface NavItem {
 }
 
 const READER_NAV: NavItem[] = [
-  { label: 'Mis bibliotecas', icon: 'shelves', path: '/libraries' },
+  { label: 'Bibliotecas', icon: 'shelves', path: '/libraries' },
   { label: 'Mis libros', icon: 'menu_book', path: '/books' },
-  { label: 'Compartidas conmigo', icon: 'group', path: '/shared-libraries' },
   { label: 'Explorar', icon: 'explore', path: '/explore' },
 ];
 
