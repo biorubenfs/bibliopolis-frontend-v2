@@ -10,9 +10,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { ApiError } from '../../../core/http/api-error';
 import { LibrariesService } from '../../libraries/libraries.service';
 import { Library } from '../../libraries/library.model';
-import { SharedLibraryBook } from '../shared-library.model';
+import { UserBook } from '../../user-books/user-book.model';
 
 type LoadState = 'loading' | 'loaded' | 'error';
+
+export type AddToLibraryDialogData = Pick<
+  UserBook,
+  'bookTitle' | 'bookAuthors' | 'bookIsbn13' | 'bookIsbn10'
+>;
 
 /** The maximum page size of the API. */
 const MAX_LIBRARIES = 100;
@@ -41,7 +46,7 @@ export class AddToLibraryDialog {
   private readonly librariesService = inject(LibrariesService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialogRef = inject<MatDialogRef<AddToLibraryDialog, string>>(MatDialogRef);
-  protected readonly book = inject<SharedLibraryBook>(MAT_DIALOG_DATA);
+  protected readonly book = inject<AddToLibraryDialogData>(MAT_DIALOG_DATA);
 
   protected readonly state = signal<LoadState>('loading');
   protected readonly libraries = signal<Library[]>([]);

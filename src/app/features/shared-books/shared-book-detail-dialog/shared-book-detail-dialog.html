@@ -1,0 +1,130 @@
+<h2 mat-dialog-title>{{ book.bookTitle }}</h2>
+
+<mat-dialog-content>
+  <div class="summary">
+    <div class="cover">
+      @if (book.bookCoverUrl && !coverFailed()) {
+        <!-- Empty alt: the cover is decorative because the title is right next to it -->
+        <img
+          [src]="book.bookCoverUrl"
+          alt=""
+          width="96"
+          height="144"
+          (error)="coverFailed.set(true)"
+        />
+      } @else {
+        <mat-icon class="placeholder" aria-hidden="true">menu_book</mat-icon>
+      }
+    </div>
+
+    <div class="info">
+      <p class="authors">{{ authors }}</p>
+
+      <div class="isbn">
+        <p>ISBN-13: {{ book.bookIsbn13 }}</p>
+        @if (book.bookIsbn10; as isbn10) {
+          <p>ISBN-10: {{ isbn10 }}</p>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (own(); as own) {
+    <section>
+      <h3>Mi valoración</h3>
+      @if (own.rating; as rating) {
+        <app-rating-value [value]="rating" [own]="true" />
+      } @else {
+        <p class="missing">Sin valorar</p>
+      }
+    </section>
+    @if (own.notes) {
+      <section>
+        <h3>Mis notas</h3>
+        <p class="notes">{{ own.notes }}</p>
+      </section>
+    }
+  }
+
+  <section>
+    <h3 id="shared-book-people">En bibliotecas compartidas conmigo</h3>
+    @switch (state()) {
+      @case ('loading') {
+        <mat-spinner diameter="24" aria-label="Cargando quién lo comparte" />
+      }
+      @case ('error') {
+        <div class="problem" role="alert">
+          <p>No se ha podido cargar quién comparte este libro.</p>
+          <button mat-stroked-button type="button" (click)="load()">Reintentar</button>
+        </div>
+      }
+      @case ('notFound') {
+        <p class="missing" role="alert">
+          Este libro ya no está en ninguna biblioteca compartida contigo.
+        </p>
+      }
+      @default {
+        <ul class="people" aria-labelledby="shared-book-people">
+          @for (person of people(); track $index) {
+            <li>
+              <div class="person">
+                <span class="name">{{ person.ownerName }}</span>
+                @if (person.rating !== null) {
+                  <app-rating-value [value]="person.rating" [name]="person.ownerName" />
+                } @else if (person.sharesRatings) {
+                  <!-- Not shown for who hides their ratings: they may have rated it -->
+                  <span class="missing">Sin valorar</span>
+                }
+              </div>
+              <ul class="libraries" [attr.aria-label]="'Bibliotecas de ' + person.ownerName">
+                @for (library of person.libraries; track library.id) {
+                  <li>
+                    <a
+                      class="chip"
+                      [routerLink]="['/libraries/shared', library.id]"
+                      [queryParams]="{ q: book.bookIsbn13 }"
+                      (click)="close()"
+                    >
+                      {{ library.name }}
+                    </a>
+                  </li>
+                }
+              </ul>
+            </li>
+          }
+        </ul>
+        @if (hiddenCount() > 0) {
+          <button
+            mat-button
+            type="button"
+            [attr.aria-expanded]="expanded()"
+            (click)="toggleExpanded()"
+          >
+            @if (expanded()) {
+              Mostrar menos
+            } @else {
+              +{{ hiddenCount() }} más
+            }
+          </button>
+        }
+      }
+    }
+  </section>
+
+  @if (!own()) {
+    <p class="hint">No está en ninguna de tus bibliotecas. Añádelo para valorarlo y tomar notas.</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Cerrar</button>
+  @if (own()) {
+    <a mat-flat-button routerLink="/books" [queryParams]="{ q: book.bookIsbn13 }" (click)="close()">
+      Editar en mis libros
+    </a>
+  } @else {
+    <button mat-flat-button type="button" aria-haspopup="dialog" (click)="openAddDialog()">
+      Añadir a mi biblioteca
+    </button>
+  }
+</mat-dialog-actions>
