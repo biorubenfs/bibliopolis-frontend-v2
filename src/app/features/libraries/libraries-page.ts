@@ -28,6 +28,7 @@ import {
   toPageNumber,
   toPageSize,
 } from '../../core/pagination/pagination';
+import { SectionCounts } from '../../core/tabbed-section/section-counts';
 import {
   MANAGE_TAGS_DIALOG_SIZE,
   ManageTagsDialog,
@@ -35,7 +36,6 @@ import {
 import { MAX_TAGS_PER_LIBRARY, TAG_COLOR_STYLES, Tag } from '../tags/tag.model';
 import { TagsService } from '../tags/tags.service';
 import { DeleteLibraryDialog } from './delete-library-dialog/delete-library-dialog';
-import { LibraryCounts } from './libraries-section/library-counts';
 import { LibrariesService } from './libraries.service';
 import { LibraryCard } from './library-card/library-card';
 import {
@@ -103,7 +103,7 @@ const LIMIT_QUERY_PARAM = 'limit';
 export class LibrariesPage {
   private readonly librariesService = inject(LibrariesService);
   private readonly tagsService = inject(TagsService);
-  private readonly counts = inject(LibraryCounts);
+  private readonly counts = inject(SectionCounts);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);

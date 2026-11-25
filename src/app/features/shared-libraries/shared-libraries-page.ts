@@ -19,7 +19,7 @@ import { tap } from 'rxjs';
 
 import { SpanishPaginatorIntl } from '../../core/i18n/paginator-intl';
 import { SearchableList } from '../../core/lists/searchable-list';
-import { LibraryCounts } from '../libraries/libraries-section/library-counts';
+import { SectionCounts } from '../../core/tabbed-section/section-counts';
 import { LeaveLibraryDialog } from './leave-library-dialog/leave-library-dialog';
 import { SharedLibrariesService } from './shared-libraries.service';
 import { SharedLibrary } from './shared-library.model';
@@ -47,7 +47,7 @@ const DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
 })
 export class SharedLibrariesPage extends SearchableList<SharedLibrary> {
   private readonly sharedLibraries = inject(SharedLibrariesService);
-  private readonly counts = inject(LibraryCounts);
+  private readonly counts = inject(SectionCounts);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 

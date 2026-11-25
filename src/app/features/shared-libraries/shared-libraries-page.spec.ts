@@ -5,7 +5,7 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
-import { LibraryCounts } from '../libraries/libraries-section/library-counts';
+import { SectionCounts } from '../../core/tabbed-section/section-counts';
 import { LeaveLibraryDialog } from './leave-library-dialog/leave-library-dialog';
 import { SharedLibrariesPage } from './shared-libraries-page';
 import { SharedLibrariesService } from './shared-libraries.service';
@@ -37,7 +37,7 @@ describe('SharedLibrariesPage', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([{ path: 'libraries/shared', component: SharedLibrariesPage }]),
-        LibraryCounts,
+        SectionCounts,
         { provide: SharedLibrariesService, useValue: { list } },
         { provide: MatDialog, useValue: { open: openDialog } },
         { provide: MatSnackBar, useValue: { open: openSnackBar } },
@@ -53,7 +53,7 @@ describe('SharedLibrariesPage', () => {
     const { element, list } = await setup();
 
     expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12, search: '' });
-    expect(TestBed.inject(LibraryCounts).shared()).toBe(2);
+    expect(TestBed.inject(SectionCounts).shared()).toBe(2);
     const owners = Array.from(element.querySelectorAll('.owner'), (item) => item.textContent);
     expect(owners).toEqual(['De Ana', 'De Luis']);
   });
@@ -62,7 +62,7 @@ describe('SharedLibrariesPage', () => {
     const { element } = await setup({ list: vi.fn(() => of({ items: [], total: 0 })) });
 
     expect(element.textContent).toContain('Nadie ha compartido una biblioteca contigo');
-    expect(TestBed.inject(LibraryCounts).shared()).toBe(0);
+    expect(TestBed.inject(SectionCounts).shared()).toBe(0);
     expect(element.querySelector('mat-paginator')).toBeNull();
     expect(element.querySelector('input')).toBeNull();
   });
@@ -83,7 +83,7 @@ describe('SharedLibrariesPage', () => {
       .mockReturnValueOnce(throwError(() => new Error()))
       .mockReturnValue(of({ items: [library('1', 'Novela', 'Ana')], total: 1 }));
     const { harness, element } = await setup({ list });
-    const counts = TestBed.inject(LibraryCounts);
+    const counts = TestBed.inject(SectionCounts);
     expect(counts.shared()).toBeNull();
 
     element.querySelector<HTMLButtonElement>('[role="alert"] button')!.click();
@@ -102,7 +102,7 @@ describe('SharedLibrariesPage', () => {
 
       expect(list).toHaveBeenCalledExactlyOnceWith({ skip: 12, limit: 12, search: 'ana' });
       expect(element.querySelector('input')?.value).toBe('ana');
-      expect(TestBed.inject(LibraryCounts).shared()).toBe(13);
+      expect(TestBed.inject(SectionCounts).shared()).toBe(13);
     });
 
     it('searches after the user stops typing, from the first page', async () => {
@@ -151,7 +151,7 @@ describe('SharedLibrariesPage', () => {
     const link = () => element.querySelector('.status a');
     expect(link()).toBeNull();
 
-    TestBed.inject(LibraryCounts).own.set(1);
+    TestBed.inject(SectionCounts).own.set(1);
     await harness.fixture.whenStable();
 
     expect(link()?.textContent?.trim()).toBe('Ver 1 en mis bibliotecas');

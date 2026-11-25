@@ -5,10 +5,10 @@ import { Router, RouterLink, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { NEVER, Observable, Subject, of, throwError } from 'rxjs';
 
+import { SectionCounts } from '../../../core/tabbed-section/section-counts';
 import { SharedLibrariesService } from '../../shared-libraries/shared-libraries.service';
 import { LibrariesService } from '../libraries.service';
 import { LibrariesSection } from './libraries-section';
-import { LibraryCounts } from './library-counts';
 
 type Result = Observable<{ items: unknown[]; total: number }>;
 
@@ -16,7 +16,7 @@ const total = (count: number): Result => of({ items: [], total: count });
 
 @Component({ template: 'own <a routerLink="/libraries/shared">other</a>', imports: [RouterLink] })
 class OwnPage {
-  readonly counts = inject(LibraryCounts);
+  readonly counts = inject(SectionCounts);
 }
 
 @Component({ template: 'shared' })

@@ -4,9 +4,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 
+import { SectionCounts } from '../../core/tabbed-section/section-counts';
 import { Tag } from '../tags/tag.model';
 import { TagsService } from '../tags/tags.service';
-import { LibraryCounts } from './libraries-section/library-counts';
 import { LibrariesService } from './libraries.service';
 import { LibrariesPage, SEARCH_DEBOUNCE_MS } from './libraries-page';
 import { Library } from './library.model';
@@ -44,7 +44,7 @@ describe('LibrariesPage', () => {
       imports: [LibrariesPage],
       providers: [
         provideRouter([]),
-        LibraryCounts,
+        SectionCounts,
         tagsStub(),
         { provide: LibrariesService, useValue: { list: () => of({ items, total: items.length }) } },
       ],
@@ -79,7 +79,7 @@ describe('LibrariesPage', () => {
     const link = () => element.querySelector('.status a');
     expect(link()).toBeNull();
 
-    TestBed.inject(LibraryCounts).shared.set(2);
+    TestBed.inject(SectionCounts).shared.set(2);
     TestBed.tick();
 
     expect(link()?.getAttribute('href')).toBe('/libraries/shared');
@@ -87,7 +87,7 @@ describe('LibrariesPage', () => {
 
   it('sets its number on the tab, and removes it if the list cannot be loaded', async () => {
     await render([library('1', 'Novela'), library('2', 'Ensayo')]);
-    const counts = TestBed.inject(LibraryCounts);
+    const counts = TestBed.inject(SectionCounts);
     expect(counts.own()).toBe(2);
 
     vi.spyOn(TestBed.inject(LibrariesService), 'list').mockReturnValue(
@@ -100,7 +100,7 @@ describe('LibrariesPage', () => {
 
   it('does not change the number once it is closed', async () => {
     await render([library('1', 'Novela')]);
-    const counts = TestBed.inject(LibraryCounts);
+    const counts = TestBed.inject(SectionCounts);
     const response = new Subject<{ items: Library[]; total: number }>();
     vi.spyOn(TestBed.inject(LibrariesService), 'list').mockReturnValue(response);
     const fixture = TestBed.createComponent(LibrariesPage);
@@ -142,7 +142,7 @@ describe('LibrariesPage', () => {
         imports: [LibrariesPage],
         providers: [
           provideRouter([]),
-          LibraryCounts,
+          SectionCounts,
           tagsStub(),
           { provide: LibrariesService, useValue: { list } },
         ],
@@ -191,7 +191,7 @@ describe('LibrariesPage', () => {
         tagIds: [],
       });
       expect(element.querySelectorAll('.card').length).toBe(1);
-      expect(TestBed.inject(LibraryCounts).own()).toBe(1);
+      expect(TestBed.inject(SectionCounts).own()).toBe(1);
     });
 
     it('restores the search from the URL', async () => {
@@ -261,19 +261,19 @@ describe('LibrariesPage', () => {
       const link = () => element.querySelector('.status a');
       expect(link()).toBeNull();
 
-      TestBed.inject(LibraryCounts).shared.set(2);
+      TestBed.inject(SectionCounts).shared.set(2);
       await wait();
       expect(link()?.textContent?.trim()).toBe('Ver 2 en compartidas conmigo');
       expect(link()?.getAttribute('href')).toBe('/libraries/shared?q=viajes');
 
-      TestBed.inject(LibraryCounts).shared.set(0);
+      TestBed.inject(SectionCounts).shared.set(0);
       await wait();
       expect(link()).toBeNull();
     });
 
     it('does not offer the shared libraries for the filters alone', async () => {
       const { element, wait } = await setup(() => [], '/?favorites=true&tags=t1');
-      TestBed.inject(LibraryCounts).shared.set(2);
+      TestBed.inject(SectionCounts).shared.set(2);
       await wait();
 
       expect(element.textContent).toContain('Ninguna biblioteca coincide con los filtros');
@@ -304,7 +304,7 @@ describe('LibrariesPage', () => {
         imports: [LibrariesPage],
         providers: [
           provideRouter([]),
-          LibraryCounts,
+          SectionCounts,
           tagsStub(),
           { provide: LibrariesService, useValue: { list } },
         ],
@@ -517,7 +517,7 @@ describe('LibrariesPage', () => {
         imports: [LibrariesPage],
         providers: [
           provideRouter([]),
-          LibraryCounts,
+          SectionCounts,
           tagsStub(),
           { provide: LibrariesService, useValue: { list, update } },
           { provide: MatSnackBar, useValue: { open: openSnackBar } },
@@ -553,7 +553,7 @@ describe('LibrariesPage', () => {
         tagIds: [],
       });
       expect(element.querySelectorAll('.card').length).toBe(1);
-      expect(TestBed.inject(LibraryCounts).own()).toBe(1);
+      expect(TestBed.inject(SectionCounts).own()).toBe(1);
     });
 
     it('restores the favorites filter from the URL', async () => {
@@ -683,7 +683,7 @@ describe('LibrariesPage', () => {
         imports: [LibrariesPage],
         providers: [
           provideRouter([]),
-          LibraryCounts,
+          SectionCounts,
           { provide: LibrariesService, useValue: { list } },
           { provide: TagsService, useValue: { listAll } },
           { provide: MatDialog, useValue: { open: openDialog } },
@@ -764,7 +764,7 @@ describe('LibrariesPage', () => {
         tagIds: ['t1'],
       });
       expect(element.querySelectorAll('.card').length).toBe(1);
-      expect(TestBed.inject(LibraryCounts).own()).toBe(1);
+      expect(TestBed.inject(SectionCounts).own()).toBe(1);
       expect(activeChips()).toEqual(['Novela']);
 
       // The panel stays open: a second tag is added to the first one
