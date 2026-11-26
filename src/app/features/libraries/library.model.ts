@@ -40,6 +40,11 @@ export type UpdateLibrary = Partial<CreateLibrary> & {
 
 export type LibraryExportFormat = 'pdf' | 'csv';
 
+/** Content-Disposition is not exposed through CORS, so the backend's naming rule is mirrored here. */
+export function libraryExportFilename(name: string, format: LibraryExportFormat): string {
+  return `${name.replace(/[^a-z0-9_-]/gi, '_')}.${format}`;
+}
+
 /** Body of POST /libraries/:id/books: at least one of the two ISBNs must have a value. */
 export interface AddBookToLibrary {
   title: string;

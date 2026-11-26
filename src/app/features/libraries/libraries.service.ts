@@ -11,6 +11,7 @@ import {
   Library,
   LibraryExportFormat,
   UpdateLibrary,
+  libraryExportFilename,
 } from './library.model';
 
 type LibraryAttributes = Omit<Library, 'id'>;
@@ -110,11 +111,7 @@ export class LibrariesService {
     return this.http
       .get(`${environment.apiUrl}/user-books/download`, { params, responseType: 'blob' })
       .pipe(
-        // Content-Disposition is not exposed through CORS, so the backend's naming rule is mirrored here
-        map((blob) => ({
-          blob,
-          filename: `${library.name.replace(/[^a-z0-9_-]/gi, '_')}.${format}`,
-        })),
+        map((blob) => ({ blob, filename: libraryExportFilename(library.name, format) })),
         catchError(toApiError),
       );
   }

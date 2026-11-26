@@ -5,6 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
 import { ApiError } from '../../core/http/api-error';
 import { SharedLibrariesService } from './shared-libraries.service';
+import { SharedLibrary } from './shared-library.model';
 
 describe('SharedLibrariesService', () => {
   const url = `${environment.apiUrl}/shared-libraries`;
@@ -112,6 +113,19 @@ describe('SharedLibrariesService', () => {
     req.flush(null, { status: 204, statusText: 'No Content' });
 
     expect(done).toBe(true);
+  });
+
+  it('exports a library and names the file like the backend does', () => {
+    let filename = '';
+    const library = { id: 'l1', name: 'Novela negra!' } as SharedLibrary;
+    service.export(library, 'csv').subscribe((file) => (filename = file.filename));
+
+    const req = backend.expectOne((r) => r.url === `${url}/l1/download`);
+    expect(req.request.params.get('format')).toBe('csv');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['a,b']));
+
+    expect(filename).toBe('Novela_negra_.csv');
   });
 
   it('reports the errors of the backend', () => {

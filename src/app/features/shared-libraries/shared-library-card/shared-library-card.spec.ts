@@ -50,7 +50,20 @@ describe('SharedLibraryCard', () => {
     expect(leave).toHaveBeenCalledTimes(1);
   });
 
-  it('offers nothing else that only the owner can do', () => {
-    expect(render().element.querySelectorAll('button')).toHaveLength(1);
+  it('shows a spinner instead of the download button while exporting', () => {
+    const { fixture, element } = render();
+    fixture.componentRef.setInput('exporting', true);
+    fixture.detectChanges();
+
+    expect(element.querySelector('[aria-label="Descargar Novela, de Ana"]')).toBeNull();
+    expect(element.querySelector('mat-spinner')?.getAttribute('aria-label')).toBe('Descargando');
+  });
+
+  it('only offers to download and to leave: the rest is up to the owner', () => {
+    const labels = Array.from(render().element.querySelectorAll('button'), (button) =>
+      button.getAttribute('aria-label'),
+    );
+
+    expect(labels).toEqual(['Descargar Novela, de Ana', 'Salir de Novela, de Ana']);
   });
 });

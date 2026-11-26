@@ -19,16 +19,43 @@
       {{ booksLabel() }}
     </span>
 
-    <button
-      mat-icon-button
-      type="button"
-      class="leave"
-      matTooltip="Salir"
-      aria-haspopup="dialog"
-      [attr.aria-label]="'Salir de ' + library().name + ', de ' + library().ownerName"
-      (click)="leaveRequested.emit()"
-    >
-      <mat-icon>logout</mat-icon>
-    </button>
+    <div class="actions">
+      @if (exporting()) {
+        <span class="exporting">
+          <mat-spinner diameter="20" aria-label="Descargando" />
+        </span>
+      } @else {
+        <button
+          mat-icon-button
+          type="button"
+          [matMenuTriggerFor]="exportMenu"
+          matTooltip="Descargar"
+          [attr.aria-label]="'Descargar ' + library().name + ', de ' + library().ownerName"
+        >
+          <mat-icon>download</mat-icon>
+        </button>
+      }
+      <button
+        mat-icon-button
+        type="button"
+        matTooltip="Salir"
+        aria-haspopup="dialog"
+        [attr.aria-label]="'Salir de ' + library().name + ', de ' + library().ownerName"
+        (click)="leaveRequested.emit()"
+      >
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
   </footer>
 </article>
+
+<mat-menu #exportMenu="matMenu" xPosition="before">
+  <button mat-menu-item type="button" (click)="exportRequested.emit('pdf')">
+    <mat-icon>picture_as_pdf</mat-icon>
+    <span>PDF</span>
+  </button>
+  <button mat-menu-item type="button" (click)="exportRequested.emit('csv')">
+    <mat-icon>table_view</mat-icon>
+    <span>CSV (Excel)</span>
+  </button>
+</mat-menu>

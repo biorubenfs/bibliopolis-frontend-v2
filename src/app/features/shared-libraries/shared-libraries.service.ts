@@ -5,6 +5,7 @@ import { Observable, catchError, map, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiError } from '../../core/http/api-error';
 import { ApiCollectionResponse, ApiItemResponse, Page, flatten } from '../../core/http/api.models';
+import { LibraryExportFormat, libraryExportFilename } from '../libraries/library.model';
 import { SharedLibrary, SharedLibraryBook, SharedLibraryOwner } from './shared-library.model';
 
 /** The maximum page size of the API: more people would not fit in a menu anyway. */
@@ -79,6 +80,20 @@ export class SharedLibrariesService {
         params,
       })
       .pipe(map(toPage), catchError(toApiError));
+  }
+
+  /** Exports the books of the library as a PDF or CSV file, the same files its owner gets. */
+  export(
+    library: SharedLibrary,
+    format: LibraryExportFormat,
+  ): Observable<{ blob: Blob; filename: string }> {
+    const params = new HttpParams().set('format', format);
+    return this.http
+      .get(`${this.baseUrl}/${library.id}/download`, { params, responseType: 'blob' })
+      .pipe(
+        map((blob) => ({ blob, filename: libraryExportFilename(library.name, format) })),
+        catchError(toApiError),
+      );
   }
 
   /** The user gives up their access; only the owner can give it back. */

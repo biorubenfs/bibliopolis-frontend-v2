@@ -32,6 +32,7 @@ describe('SharedLibrariesPage', () => {
       url?: string;
       list?: ReturnType<typeof vi.fn>;
       listOwners?: ReturnType<typeof vi.fn>;
+      exportLibrary?: ReturnType<typeof vi.fn>;
       dialogResult?: unknown;
     } = {},
   ) {
@@ -41,13 +42,15 @@ describe('SharedLibrariesPage', () => {
         of({ items: [library('1', 'Novela', 'Ana'), library('2', 'Novela', 'Luis')], total: 2 }),
       );
     const listOwners = options.listOwners ?? vi.fn(() => of([ana, luis]));
+    const exportLibrary =
+      options.exportLibrary ?? vi.fn(() => of({ blob: new Blob(['a,b']), filename: 'Novela.csv' }));
     const openDialog = vi.fn(() => ({ afterClosed: () => of(options.dialogResult) }));
     const openSnackBar = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         provideRouter([{ path: 'libraries/shared', component: SharedLibrariesPage }]),
         LibraryCounts,
-        { provide: SharedLibrariesService, useValue: { list, listOwners } },
+        { provide: SharedLibrariesService, useValue: { list, listOwners, export: exportLibrary } },
         { provide: MatDialog, useValue: { open: openDialog } },
         { provide: MatSnackBar, useValue: { open: openSnackBar } },
       ],
@@ -55,7 +58,7 @@ describe('SharedLibrariesPage', () => {
     const harness = await RouterTestingHarness.create(options.url ?? '/libraries/shared');
     await harness.fixture.whenStable();
     const element = harness.routeNativeElement as HTMLElement;
-    return { harness, element, list, listOwners, openDialog, openSnackBar };
+    return { harness, element, list, listOwners, exportLibrary, openDialog, openSnackBar };
   }
 
   it('shows the libraries with their owners', async () => {
@@ -283,6 +286,59 @@ describe('SharedLibrariesPage', () => {
       await harness.fixture.whenStable();
 
       expect(element.querySelector('.status a')).toBeNull();
+    });
+  });
+
+  describe('export', () => {
+    async function exportAs(format: string, exportLibrary?: ReturnType<typeof vi.fn>) {
+      const result = await setup({ exportLibrary });
+      document.body.append(result.harness.fixture.nativeElement);
+      result.element
+        .querySelector<HTMLButtonElement>('[aria-label="Descargar Novela, de Luis"]')!
+        .click();
+      await result.harness.fixture.whenStable();
+      const item = Array.from(document.querySelectorAll<HTMLButtonElement>('[mat-menu-item]')).find(
+        (button) => button.textContent?.includes(format),
+      );
+      item!.click();
+      await result.harness.fixture.whenStable();
+      return result;
+    }
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+      document.body.replaceChildren();
+    });
+
+    it('downloads the file of the chosen library', async () => {
+      const fileNames: string[] = [];
+      vi.stubGlobal(
+        'URL',
+        Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: () => undefined }),
+      );
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+        this: HTMLAnchorElement,
+      ) {
+        fileNames.push(this.download);
+      });
+
+      const { exportLibrary, openSnackBar } = await exportAs('CSV');
+
+      expect(exportLibrary).toHaveBeenCalledWith(library('2', 'Novela', 'Luis'), 'csv');
+      expect(fileNames).toEqual(['Novela.csv']);
+      expect(openSnackBar).not.toHaveBeenCalled();
+    });
+
+    it('reports a failed download', async () => {
+      const { openSnackBar } = await exportAs(
+        'PDF',
+        vi.fn(() => throwError(() => new Error('down'))),
+      );
+
+      expect(openSnackBar.mock.calls[0][0]).toBe(
+        'No se ha podido descargar la biblioteca. Inténtalo de nuevo.',
+      );
     });
   });
 

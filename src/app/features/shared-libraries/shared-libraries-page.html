@@ -123,6 +123,8 @@
             <li>
               <app-shared-library-card
                 [library]="library"
+                [exporting]="exportingId() === library.id"
+                (exportRequested)="export(library, $event)"
                 (leaveRequested)="openLeaveDialog(library)"
               />
             </li>

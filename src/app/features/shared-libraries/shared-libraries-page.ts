@@ -21,9 +21,11 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { tap } from 'rxjs';
 
+import { saveFile } from '../../core/files/save-file';
 import { SpanishPaginatorIntl } from '../../core/i18n/paginator-intl';
 import { SearchableList } from '../../core/lists/searchable-list';
 import { LibraryCounts } from '../libraries/libraries-section/library-counts';
+import { LibraryExportFormat } from '../libraries/library.model';
 import { LeaveLibraryDialog } from './leave-library-dialog/leave-library-dialog';
 import { SharedLibrariesService } from './shared-libraries.service';
 import { SharedLibrary, SharedLibraryOwner } from './shared-library.model';
@@ -65,6 +67,9 @@ export class SharedLibrariesPage extends SearchableList<SharedLibrary> {
   protected override readonly filterParams = [OWNER_QUERY_PARAM];
   /** Only list the libraries of this owner; empty for all of them. */
   protected readonly ownerId = computed(() => this.filters()[OWNER_QUERY_PARAM] ?? '');
+
+  /** The library whose export is being downloaded, if any. */
+  protected readonly exportingId = signal<string | null>(null);
 
   /** Who shares libraries with the user, by name. */
   protected readonly owners = signal<SharedLibraryOwner[]>([]);
@@ -115,6 +120,26 @@ export class SharedLibrariesPage extends SearchableList<SharedLibrary> {
 
   protected changeOwner(ownerId: string): void {
     this.updateFilter(OWNER_QUERY_PARAM, ownerId);
+  }
+
+  protected export(library: SharedLibrary, format: LibraryExportFormat): void {
+    this.exportingId.set(library.id);
+    this.sharedLibraries.export(library, format).subscribe({
+      next: ({ blob, filename }) => {
+        this.exportingId.set(null);
+        saveFile(blob, filename);
+      },
+      error: () => {
+        this.exportingId.set(null);
+        this.snackBar.open(
+          'No se ha podido descargar la biblioteca. Inténtalo de nuevo.',
+          undefined,
+          {
+            duration: 4000,
+          },
+        );
+      },
+    });
   }
 
   protected openLeaveDialog(library: SharedLibrary): void {
