@@ -1,0 +1,68 @@
+<section class="shelf" [attr.aria-labelledby]="headingId">
+  <header class="shelf-header">
+    <div>
+      <h2 [id]="headingId">{{ heading() }}</h2>
+      @if (subheading(); as text) {
+        <p class="subheading">{{ text }}</p>
+      }
+    </div>
+
+    <!-- Only with a mouse: touch screens scroll with the finger -->
+    <div class="arrows">
+      <button
+        mat-icon-button
+        type="button"
+        matTooltip="Anteriores"
+        aria-label="Ver los libros anteriores"
+        [disabled]="atStart()"
+        (click)="scroll(-1)"
+      >
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        matTooltip="Siguientes"
+        aria-label="Ver los libros siguientes"
+        [disabled]="atEnd()"
+        (click)="scroll(1)"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  <ul
+    #track
+    class="track"
+    [class.fade-start]="!atStart()"
+    [class.fade-end]="!atEnd()"
+    [attr.aria-busy]="loading()"
+    (scroll)="updateEdges()"
+  >
+    @if (loading()) {
+      @for (index of skeletons; track index) {
+        <li class="item skeleton" aria-hidden="true">
+          <div class="skeleton-cover"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+        </li>
+      }
+    } @else {
+      @for (book of books(); track book.id) {
+        <li class="item">
+          <button
+            type="button"
+            class="open"
+            aria-haspopup="dialog"
+            (click)="openRequested.emit(book)"
+          >
+            <app-shelf-cover class="cover" [url]="book.coverUrl" [title]="book.title" />
+            <span class="title">{{ book.title }}</span>
+            <span class="authors">{{ authors(book) }}</span>
+          </button>
+        </li>
+      }
+    }
+  </ul>
+</section>
