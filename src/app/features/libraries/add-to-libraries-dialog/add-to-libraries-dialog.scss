@@ -28,3 +28,18 @@ mat-dialog-content {
   background: var(--mat-sys-error-container);
   color: var(--mat-sys-on-error-container);
 }
+
+.libraries {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  // Many libraries scroll inside the dialog, which keeps its buttons in view
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.contains {
+  margin-left: 8px;
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}

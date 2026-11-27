@@ -25,6 +25,7 @@ import { SpanishPaginatorIntl } from '../../../core/i18n/paginator-intl';
 import { SearchableList } from '../../../core/lists/searchable-list';
 import { BooksViewPreference } from '../../user-books/books-view';
 import { BooksViewToggle } from '../../user-books/books-view-toggle/books-view-toggle';
+import { addedMessage } from '../../libraries/add-to-libraries-dialog/add-to-libraries-dialog';
 import { UserBookCard } from '../../user-books/user-book-card/user-book-card';
 import { UserBooksTable } from '../../user-books/user-books-table/user-books-table';
 import { SharedLibrariesService } from '../shared-libraries.service';
@@ -161,7 +162,7 @@ export class SharedLibraryPage extends SearchableList<SharedLibraryBook> {
       .afterClosed()
       .subscribe((result) => {
         if (result) {
-          this.snackBar.open(`«${book.bookTitle}» añadido a «${result.addedTo}»`, undefined, {
+          this.snackBar.open(addedMessage(book.bookTitle, result.addedTo), undefined, {
             duration: 4000,
           });
           // The user may already have had an opinion of the book, which is shown again

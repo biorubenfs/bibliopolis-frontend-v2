@@ -230,7 +230,9 @@ describe('SharedLibraryPage', () => {
     });
 
     it('reloads the books after adding one to an own library', async () => {
-      const { listBooks, openSnackBar } = await open({ addedTo: 'Pendientes' });
+      const { listBooks, openSnackBar } = await open({
+        addedTo: [{ id: 'l2', name: 'Pendientes' }],
+      });
 
       expect(openSnackBar.mock.calls[0][0]).toBe('«Libro b1» añadido a «Pendientes»');
       expect(listBooks).toHaveBeenCalledTimes(2);

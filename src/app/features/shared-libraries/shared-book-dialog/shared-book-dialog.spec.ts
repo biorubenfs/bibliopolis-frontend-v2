@@ -21,7 +21,7 @@ describe('SharedBookDialog', () => {
 
   async function setup(
     changes: Partial<SharedLibraryBook> = {},
-    options: { shareRatings?: boolean; addResult?: string } = {},
+    options: { shareRatings?: boolean; addResult?: { id: string; name: string }[] } = {},
   ) {
     const close = vi.fn();
     const open = vi.fn(() => ({ afterClosed: () => of(options.addResult) }));
@@ -124,7 +124,10 @@ describe('SharedBookDialog', () => {
   });
 
   it('closes with the library the book was added to', async () => {
-    const { button, open, close, data } = await setup({ own: null }, { addResult: 'Pendientes' });
+    const { button, open, close, data } = await setup(
+      { own: null },
+      { addResult: [{ id: 'l2', name: 'Pendientes' }] },
+    );
 
     button('Añadir a mi biblioteca')!.click();
 
@@ -139,7 +142,7 @@ describe('SharedBookDialog', () => {
         },
       }),
     );
-    expect(close).toHaveBeenCalledWith({ addedTo: 'Pendientes' });
+    expect(close).toHaveBeenCalledWith({ addedTo: [{ id: 'l2', name: 'Pendientes' }] });
   });
 
   it('stays open if the book was not added', async () => {

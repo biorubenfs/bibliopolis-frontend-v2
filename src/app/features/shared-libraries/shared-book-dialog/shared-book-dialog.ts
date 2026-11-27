@@ -13,6 +13,7 @@ import { RatingValue } from '../../user-books/rating-value/rating-value';
 import {
   ADD_TO_LIBRARIES_DIALOG_SIZE,
   AddToLibrariesDialog,
+  AddedLibrary,
   BookToAdd,
   toBookToAdd,
 } from '../../libraries/add-to-libraries-dialog/add-to-libraries-dialog';
@@ -23,9 +24,9 @@ export interface SharedBookDialogData {
   book: SharedLibraryBook;
 }
 
-/** The library of the user the book was added to, or nothing if it was not added. */
+/** The libraries of the user the book was added to, or nothing if it was not added. */
 export interface SharedBookDialogResult {
-  addedTo: string;
+  addedTo: AddedLibrary[];
 }
 
 export const SHARED_BOOK_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100vw - 32px)' };
@@ -64,14 +65,14 @@ export class SharedBookDialog {
 
   protected openAddDialog(): void {
     this.dialog
-      .open<AddToLibrariesDialog, BookToAdd, string>(AddToLibrariesDialog, {
+      .open<AddToLibrariesDialog, BookToAdd, AddedLibrary[]>(AddToLibrariesDialog, {
         ...ADD_TO_LIBRARIES_DIALOG_SIZE,
         data: toBookToAdd(this.book),
       })
       .afterClosed()
-      .subscribe((libraryName) => {
-        if (libraryName) {
-          this.dialogRef.close({ addedTo: libraryName });
+      .subscribe((libraries) => {
+        if (libraries) {
+          this.dialogRef.close({ addedTo: libraries });
         }
       });
   }

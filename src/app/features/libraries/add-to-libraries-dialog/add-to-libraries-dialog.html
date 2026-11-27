@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>Añadir a mi biblioteca</h2>
+<h2 mat-dialog-title>Añadir a mis bibliotecas</h2>
 
 @switch (state()) {
   @case ('loading') {
@@ -8,7 +8,7 @@
       </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" mat-dialog-close>Cancelar</button>
+      <button mat-button type="button" (click)="close()">Cancelar</button>
     </mat-dialog-actions>
   }
   @case ('error') {
@@ -19,7 +19,7 @@
       </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button type="button" mat-dialog-close>Cancelar</button>
+      <button mat-button type="button" (click)="close()">Cancelar</button>
     </mat-dialog-actions>
   }
   @default {
@@ -28,21 +28,36 @@
         <p>Aún no tienes bibliotecas. Crea una en «Bibliotecas» y vuelve para añadir el libro.</p>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
-        <button mat-button type="button" mat-dialog-close>Cerrar</button>
+        <button mat-button type="button" (click)="close()">Cerrar</button>
+      </mat-dialog-actions>
+    } @else if (allContain()) {
+      <mat-dialog-content>
+        <p>«{{ book.title }}» ya está en todas tus bibliotecas.</p>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button type="button" (click)="close()">Cerrar</button>
       </mat-dialog-actions>
     } @else {
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <form (submit)="submit($event)">
         <mat-dialog-content>
-          <p>Elige dónde quieres añadir «{{ book.title }}».</p>
-          <mat-form-field appearance="outline" subscriptSizing="dynamic">
-            <mat-label>Biblioteca</mat-label>
-            <mat-select formControlName="libraryId" required>
-              @for (library of libraries(); track library.id) {
-                <mat-option [value]="library.id">{{ library.name }}</mat-option>
-              }
-            </mat-select>
-            <mat-error>Elige una biblioteca.</mat-error>
-          </mat-form-field>
+          <p id="add-to-libraries-hint">Elige dónde quieres añadir «{{ book.title }}».</p>
+          <ul class="libraries" role="group" aria-labelledby="add-to-libraries-hint">
+            @for (library of libraries(); track library.id) {
+              @let contains = containing().has(library.id);
+              <li>
+                <mat-checkbox
+                  [checked]="contains || selected().has(library.id)"
+                  [disabled]="contains || adding()"
+                  (change)="toggle(library.id, $event.checked)"
+                >
+                  {{ library.name }}
+                  @if (contains) {
+                    <span class="contains">Ya está</span>
+                  }
+                </mat-checkbox>
+              </li>
+            }
+          </ul>
           <div class="error" role="alert">
             @if (errorMessage(); as message) {
               {{ message }}
@@ -50,9 +65,14 @@
           </div>
         </mat-dialog-content>
         <mat-dialog-actions align="end">
-          <button mat-button type="button" mat-dialog-close>Cancelar</button>
+          <button mat-button type="button" (click)="close()">Cancelar</button>
           <!-- Still focusable while disabled, so the keyboard focus is not lost -->
-          <button mat-flat-button type="submit" [disabled]="adding()" disabledInteractive>
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="adding() || selected().size === 0"
+            disabledInteractive
+          >
             @if (adding()) {
               <mat-spinner diameter="20" aria-label="Añadiendo libro" />
             } @else {
