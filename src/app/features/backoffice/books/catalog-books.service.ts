@@ -25,11 +25,22 @@ export class CatalogBooksService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/books`;
 
-  /** An ISBN finds that exact book; any other text is searched in the title and the authors. */
-  list(options: { skip: number; limit: number; search?: string }): Observable<Page<CatalogBook>> {
+  /**
+   * An ISBN finds that exact book; any other text is searched in the title and the authors.
+   * `hasCover` keeps only the books with a cover (true) or without one (false).
+   */
+  list(options: {
+    skip: number;
+    limit: number;
+    search?: string;
+    hasCover?: boolean;
+  }): Observable<Page<CatalogBook>> {
     let params = new HttpParams().set('skip', options.skip).set('limit', options.limit);
     if (options.search) {
       params = params.set('search', options.search);
+    }
+    if (options.hasCover !== undefined) {
+      params = params.set('hasCover', options.hasCover);
     }
     return this.http.get<ApiCollectionResponse<BookAttributes>>(this.baseUrl, { params }).pipe(
       map((response) => ({

@@ -1,0 +1,190 @@
+:host {
+  display: block;
+  // Width of each book: smaller on phones so more than two fit
+  --shelf-item-width: 104px;
+  --shelf-gap: 16px;
+}
+
+.shelf-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+h2 {
+  margin: 0;
+  font: var(--mat-sys-title-large);
+  color: var(--mat-sys-on-surface);
+}
+
+.subheading {
+  margin: 2px 0 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// Touch screens scroll with the finger, so the arrows only appear with a mouse or a trackpad
+.arrows {
+  display: none;
+  flex: none;
+  gap: 4px;
+
+  @media (hover: hover) and (pointer: fine) {
+    display: flex;
+  }
+}
+
+.track {
+  display: flex;
+  gap: var(--shelf-gap);
+  margin: 0;
+  // Room for the shadows and the focus ring, which overflow: auto would cut
+  padding: 8px 4px 12px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 4px;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  // The edges fade out when there are more books past them, as a hint to keep scrolling
+  &.fade-end {
+    mask-image: linear-gradient(to right, black calc(100% - 48px), transparent);
+  }
+
+  &.fade-start {
+    mask-image: linear-gradient(to left, black calc(100% - 48px), transparent);
+  }
+
+  &.fade-start.fade-end {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 48px,
+      black calc(100% - 48px),
+      transparent
+    );
+  }
+}
+
+.item {
+  flex: none;
+  width: var(--shelf-item-width);
+  scroll-snap-align: start;
+}
+
+.open {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+
+    .cover {
+      outline: 2px solid var(--mat-sys-primary);
+      outline-offset: 2px;
+    }
+  }
+}
+
+.cover {
+  margin-bottom: 6px;
+  box-shadow: var(--app-card-shadow);
+  transition:
+    box-shadow 150ms,
+    transform 150ms;
+}
+
+.open:hover .cover {
+  box-shadow: var(--app-card-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.title,
+.authors {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+}
+
+.title {
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface);
+  -webkit-line-clamp: 2;
+}
+
+.authors {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  -webkit-line-clamp: 1;
+}
+
+// The same size as a book, so nothing jumps when they arrive
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-cover,
+.skeleton-line {
+  border-radius: 10px;
+  background: var(--mat-sys-surface-container-high);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-cover {
+  aspect-ratio: 2 / 3;
+  margin-bottom: 2px;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+
+  &.short {
+    width: 60%;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover,
+  .open:hover .cover {
+    transition: none;
+    transform: none;
+  }
+
+  .skeleton-cover,
+  .skeleton-line {
+    animation: none;
+  }
+}
+
+@media (min-width: 600px) {
+  :host {
+    --shelf-item-width: 124px;
+    --shelf-gap: 20px;
+  }
+}

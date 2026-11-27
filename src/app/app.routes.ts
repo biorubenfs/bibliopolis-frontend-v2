@@ -2,8 +2,6 @@ import { Routes } from '@angular/router';
 
 import { adminGuard, authGuard, guestGuard, regularGuard } from './core/auth/auth.guards';
 
-const comingSoon = () => import('./pages/coming-soon/coming-soon').then((m) => m.ComingSoon);
-
 export const routes: Routes = [
   {
     path: 'login',
@@ -104,8 +102,7 @@ export const routes: Routes = [
       {
         path: 'explore',
         title: 'Explorar · Bibliopolis',
-        data: { heading: 'Explorar' },
-        loadComponent: comingSoon,
+        loadComponent: () => import('./features/explore/explore-page').then((m) => m.ExplorePage),
       },
       {
         path: 'profile',
