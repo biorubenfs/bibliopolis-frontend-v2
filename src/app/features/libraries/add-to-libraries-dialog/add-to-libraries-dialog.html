@@ -41,23 +41,25 @@
       <form (submit)="submit($event)">
         <mat-dialog-content>
           <p id="add-to-libraries-hint">Elige dónde quieres añadir «{{ book.title }}».</p>
-          <ul class="libraries" role="group" aria-labelledby="add-to-libraries-hint">
-            @for (library of libraries(); track library.id) {
-              @let contains = containing().has(library.id);
-              <li>
-                <mat-checkbox
-                  [checked]="contains || selected().has(library.id)"
-                  [disabled]="contains || adding()"
-                  (change)="toggle(library.id, $event.checked)"
-                >
-                  {{ library.name }}
-                  @if (contains) {
-                    <span class="contains">Ya está</span>
-                  }
-                </mat-checkbox>
-              </li>
-            }
-          </ul>
+          <div role="group" aria-labelledby="add-to-libraries-hint">
+            <ul class="libraries">
+              @for (library of libraries(); track library.id) {
+                @let contains = containing().has(library.id);
+                <li>
+                  <mat-checkbox
+                    [checked]="contains || selected().has(library.id)"
+                    [disabled]="contains || adding()"
+                    (change)="toggle(library.id, $event.checked)"
+                  >
+                    {{ library.name }}
+                    @if (contains) {
+                      <span class="contains">Ya está</span>
+                    }
+                  </mat-checkbox>
+                </li>
+              }
+            </ul>
+          </div>
           <div class="error" role="alert">
             @if (errorMessage(); as message) {
               {{ message }}

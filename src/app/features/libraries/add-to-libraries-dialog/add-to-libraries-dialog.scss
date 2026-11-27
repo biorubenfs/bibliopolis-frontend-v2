@@ -31,11 +31,11 @@ mat-dialog-content {
 
 .libraries {
   margin: 0;
-  padding: 0;
+  // The invisible touch target of the checkboxes is taller than them: room for it, or the dialog
+  // content would scroll by a few pixels
+  padding: 6px 0;
+  // Many libraries scroll with the dialog content, which keeps the buttons in view
   list-style: none;
-  // Many libraries scroll inside the dialog, which keeps its buttons in view
-  max-height: 320px;
-  overflow-y: auto;
 }
 
 .contains {
