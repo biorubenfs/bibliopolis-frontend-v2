@@ -25,7 +25,14 @@ import { SpanishPaginatorIntl } from '../../../core/i18n/paginator-intl';
 import { SearchableList } from '../../../core/lists/searchable-list';
 import { BooksViewPreference } from '../../user-books/books-view';
 import { BooksViewToggle } from '../../user-books/books-view-toggle/books-view-toggle';
-import { addedMessage } from '../../libraries/add-to-libraries-dialog/add-to-libraries-dialog';
+import {
+  ADD_TO_LIBRARIES_DIALOG_SIZE,
+  AddToLibrariesDialog,
+  AddedLibrary,
+  BookToAdd,
+  addedMessage,
+  toBookToAdd,
+} from '../../libraries/add-to-libraries-dialog/add-to-libraries-dialog';
 import { UserBookCard } from '../../user-books/user-book-card/user-book-card';
 import { UserBooksTable } from '../../user-books/user-books-table/user-books-table';
 import { SharedLibrariesService } from '../shared-libraries.service';
@@ -162,12 +169,28 @@ export class SharedLibraryPage extends SearchableList<SharedLibraryBook> {
       .afterClosed()
       .subscribe((result) => {
         if (result) {
-          this.snackBar.open(addedMessage(book.bookTitle, result.addedTo), undefined, {
-            duration: 4000,
-          });
-          // The user may already have had an opinion of the book, which is shown again
-          this.load({ quiet: true });
+          this.onAdded(book, result.addedTo);
         }
       });
+  }
+
+  protected openAddToLibrariesDialog(book: SharedLibraryBook): void {
+    this.dialog
+      .open<AddToLibrariesDialog, BookToAdd, AddedLibrary[]>(AddToLibrariesDialog, {
+        ...ADD_TO_LIBRARIES_DIALOG_SIZE,
+        data: toBookToAdd(book),
+      })
+      .afterClosed()
+      .subscribe((libraries) => {
+        if (libraries) {
+          this.onAdded(book, libraries);
+        }
+      });
+  }
+
+  private onAdded(book: SharedLibraryBook, libraries: AddedLibrary[]): void {
+    this.snackBar.open(addedMessage(book.bookTitle, libraries), undefined, { duration: 4000 });
+    // The user may already have had an opinion of the book, which is shown again
+    this.load({ quiet: true });
   }
 }

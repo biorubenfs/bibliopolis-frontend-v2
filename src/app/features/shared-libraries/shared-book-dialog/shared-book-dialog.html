@@ -64,12 +64,15 @@
 <mat-dialog-actions align="end">
   <button mat-button type="button" mat-dialog-close>Cerrar</button>
   @if (book.own) {
+    <button mat-button type="button" aria-haspopup="dialog" (click)="openAddDialog()">
+      Añadir a otra biblioteca
+    </button>
     <a mat-flat-button routerLink="/books" [queryParams]="{ q: book.bookIsbn13 }" (click)="close()">
       Editar en Mis libros
     </a>
   } @else {
     <button mat-flat-button type="button" aria-haspopup="dialog" (click)="openAddDialog()">
-      Añadir a mi biblioteca
+      Añadir a mis bibliotecas
     </button>
   }
 </mat-dialog-actions>
