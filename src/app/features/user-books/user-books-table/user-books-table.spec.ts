@@ -16,6 +16,8 @@ describe('UserBooksTable', () => {
     bookIsbn10: '059538529X',
     rating: 8,
     notes: 'Muy recomendable',
+    readingStatus: null,
+    finishedAt: null,
     userId: 'u1',
     createdAt: '',
     updatedAt: '',
@@ -32,10 +34,16 @@ describe('UserBooksTable', () => {
   };
 
   function render(
-    inputs: { removable?: boolean; showLibraryCount?: boolean; showCover?: boolean } = {},
+    inputs: {
+      removable?: boolean;
+      showLibraryCount?: boolean;
+      showCover?: boolean;
+      showReadingStatus?: boolean;
+    } = {},
+    books: UserBook[] = [book, other],
   ) {
     const fixture = TestBed.createComponent(UserBooksTable);
-    fixture.componentRef.setInput('books', [book, other]);
+    fixture.componentRef.setInput('books', books);
     for (const [name, value] of Object.entries(inputs)) {
       fixture.componentRef.setInput(name, value);
     }
@@ -51,6 +59,30 @@ describe('UserBooksTable', () => {
   function headers(element: HTMLElement): string[] {
     return Array.from(element.querySelectorAll('th'), (th) => th.textContent!.trim());
   }
+
+  it('shows the reading status after the rating, only when asked to', () => {
+    const { element, rows } = render({ showReadingStatus: true }, [
+      { ...book, readingStatus: 'reading' },
+      other,
+    ]);
+
+    expect(headers(element)).toEqual([
+      'Título',
+      'Autores',
+      'Valoración',
+      'Estado',
+      'ISBN-13',
+      'ISBN-10',
+      'Acciones',
+    ]);
+    expect(rows[0].querySelector('app-reading-status-badge')?.getAttribute('aria-label')).toBe(
+      'Leyendo',
+    );
+    expect(
+      rows[1].querySelector('.mat-column-readingStatus [aria-label]')?.getAttribute('aria-label'),
+    ).toBe('Sin estado');
+    expect(element.querySelector('table')?.classList).toContain('with-reading-status');
+  });
 
   it('shows one row per book with its data', () => {
     const { element, rows } = render();

@@ -1,3 +1,13 @@
+/** Whether the user has read a book; null when they have not said. */
+export type ReadingStatus = 'to_read' | 'reading' | 'read';
+
+/** What the interface shows for each status, in the order it offers them. */
+export const READING_STATUSES: readonly { value: ReadingStatus; label: string; icon: string }[] = [
+  { value: 'to_read', label: 'Pendiente', icon: 'bookmark' },
+  { value: 'reading', label: 'Leyendo', icon: 'auto_stories' },
+  { value: 'read', label: 'Leído', icon: 'task_alt' },
+];
+
 /** A user's copy of a book (see docs/api/user-books.md in the backend). */
 export interface UserBook {
   id: string;
@@ -12,6 +22,9 @@ export interface UserBook {
   /** The user's rating, from 1 to 10. */
   rating: number | null;
   notes: string | null;
+  readingStatus: ReadingStatus | null;
+  /** The day the book was finished, as YYYY-MM-DD. Only a read book may have it, and it may not. */
+  finishedAt: string | null;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -34,14 +47,16 @@ export interface ListedBook extends Pick<
 > {
   /** The rating of the user, in their own lists. */
   rating?: number | null;
+  /** The reading status of the user, in their own lists. */
+  readingStatus?: ReadingStatus | null;
   /** The ratings of several people, in the shared libraries. */
   ratings?: readonly PersonRating[];
   /** IDs of the libraries of the user that contain the book, in their own lists. */
   libraries?: readonly string[];
 }
 
-/** The backend requires both fields on every update. */
-export type UpdateUserBook = Pick<UserBook, 'rating' | 'notes'>;
+/** The backend requires the four fields on every update. */
+export type UpdateUserBook = Pick<UserBook, 'rating' | 'notes' | 'readingStatus' | 'finishedAt'>;
 
 /** Validation limits defined by the backend (see docs/api/user-books.md). */
 export const USER_BOOK_RATINGS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];

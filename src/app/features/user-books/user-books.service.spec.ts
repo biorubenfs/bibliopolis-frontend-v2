@@ -74,13 +74,39 @@ describe('UserBooksService', () => {
     req.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
   });
 
-  it('updates the rating and notes and returns the flat model', () => {
+  it('sends the reading status, and the year only with the status read', () => {
+    service.list({ skip: 0, limit: 12, readingStatus: 'read', readYear: 2026 }).subscribe();
+    service.listByLibrary('lib-1', { skip: 0, limit: 12, readingStatus: 'none' }).subscribe();
+    service.list({ skip: 0, limit: 12, readingStatus: 'reading', readYear: 2026 }).subscribe();
+    service.list({ skip: 0, limit: 12, readingStatus: '', readYear: 2026 }).subscribe();
+
+    const [read, none, reading, all] = backend.match((r) => r.url === url);
+    expect(read.request.params.get('readingStatus')).toBe('read');
+    expect(read.request.params.get('readYear')).toBe('2026');
+    expect(none.request.params.get('readingStatus')).toBe('none');
+    expect(none.request.params.get('libraryId')).toBe('lib-1');
+    expect(reading.request.params.get('readingStatus')).toBe('reading');
+    expect(reading.request.params.has('readYear')).toBe(false);
+    expect(all.request.params.has('readingStatus')).toBe(false);
+    expect(all.request.params.has('readYear')).toBe(false);
+    for (const req of [read, none, reading, all]) {
+      req.flush({ results: [], paginationInfo: { skip: 0, limit: 12, total: 0 } });
+    }
+  });
+
+  it('updates the rating, notes and reading status and returns the flat model', () => {
     let result: unknown;
-    service.update('ub-1', { rating: 5, notes: null }).subscribe((book) => (result = book));
+    const changes = {
+      rating: 5,
+      notes: null,
+      readingStatus: 'read' as const,
+      finishedAt: '2026-03-14',
+    };
+    service.update('ub-1', changes).subscribe((book) => (result = book));
 
     const req = backend.expectOne(`${url}/ub-1`);
     expect(req.request.method).toBe('PATCH');
-    expect(req.request.body).toEqual({ rating: 5, notes: null });
+    expect(req.request.body).toEqual(changes);
     req.flush({ results: { type: 'user-books', id: 'ub-1', attributes: { rating: 5 } } });
 
     expect(result).toEqual({ id: 'ub-1', rating: 5 });

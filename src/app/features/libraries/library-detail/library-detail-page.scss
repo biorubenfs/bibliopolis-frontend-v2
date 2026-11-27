@@ -7,9 +7,9 @@
   margin: 0 0 8px -12px;
 }
 
-// Phones and tablets: one column, with the view switch last, right above the list.
+// Phones and tablets: one column, with the view switch and the filter last, right above the list.
 // Desktop (see the media query): the heading and the search on top, and below them the view switch
-// on the left and the actions on the right, both next to the list they act on
+// and the filter on the left and the actions on the right, all next to the list they act on
 .page-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -17,7 +17,7 @@
     'heading'
     'search'
     'actions'
-    'toggle';
+    'tools';
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -44,9 +44,13 @@
   max-width: 100%;
 }
 
-.view-toggle {
-  grid-area: toggle;
-  justify-self: start;
+.list-tools {
+  display: flex;
+  flex-wrap: wrap;
+  grid-area: tools;
+  align-items: center;
+  // The same gap between the view switch and the filter as in «Mis libros»
+  gap: 12px 24px;
 }
 
 .import-notice {
@@ -137,7 +141,6 @@ h1 {
   }
 }
 
-// Just above the list, aligned with its right edge
 .list-toolbar {
   display: flex;
   justify-content: flex-end;
@@ -169,7 +172,7 @@ mat-paginator {
     grid-template-columns: auto minmax(0, 1fr) 360px;
     grid-template-areas:
       'heading heading search'
-      'toggle actions actions';
+      'tools actions actions';
   }
 
   .search {
@@ -181,7 +184,7 @@ mat-paginator {
     justify-content: flex-end;
   }
 
-  .view-toggle {
+  .list-tools {
     align-self: end;
   }
 }

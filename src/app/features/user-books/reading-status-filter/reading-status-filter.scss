@@ -1,0 +1,28 @@
+@use '../../../core/styles/select-chip';
+
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-filter {
+  @include select-chip.chip;
+
+  width: 160px;
+}
+
+.status-select {
+  @include select-chip.select;
+}
+
+.year-filter {
+  @include select-chip.chip;
+
+  width: 168px;
+}
+
+.year-select {
+  @include select-chip.select;
+}

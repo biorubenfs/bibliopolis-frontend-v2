@@ -1,0 +1,71 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.status {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// Three equal segments in one outlined pill, like Material's segmented buttons
+.segments {
+  display: flex;
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+button {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-label-large);
+  cursor: pointer;
+
+  & + button {
+    border-left: 1px solid var(--mat-sys-outline);
+  }
+
+  &.selected {
+    background: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+  }
+
+  &:hover:enabled:not(.selected) {
+    background: var(--mat-sys-surface-container-high);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: -3px;
+    border-radius: 999px;
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.38;
+  }
+}
+
+mat-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}

@@ -1,0 +1,22 @@
+<div class="header">
+  <ng-content />
+  @if (value() === null) {
+    <span class="status">Sin estado</span>
+  }
+</div>
+
+<div class="segments">
+  @for (status of statuses; track status.value) {
+    <button
+      type="button"
+      [class.selected]="status.value === value()"
+      [disabled]="disabled()"
+      [attr.aria-pressed]="status.value === value()"
+      (click)="select(status.value)"
+      (blur)="onTouched()"
+    >
+      <mat-icon aria-hidden="true">{{ status.icon }}</mat-icon>
+      {{ status.label }}
+    </button>
+  }
+</div>

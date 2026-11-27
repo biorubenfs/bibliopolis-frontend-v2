@@ -24,6 +24,10 @@
     </h2>
     <p class="authors">{{ authors() }}</p>
 
+    @if (book().readingStatus; as status) {
+      <p class="reading-status"><app-reading-status-badge [status]="status" /></p>
+    }
+
     @if (book().rating; as rating) {
       <p class="rating"><app-rating-value [value]="rating" /></p>
     }

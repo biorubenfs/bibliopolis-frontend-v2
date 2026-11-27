@@ -1,0 +1,39 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  font: var(--mat-sys-label-medium);
+  white-space: nowrap;
+}
+
+// From hollow to filled as the book is read, with the container tokens of the brand palette, which
+// keep the contrast in both schemes
+:host(.to_read) {
+  border: 1px solid var(--mat-sys-outline-variant);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+:host(.reading) {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+}
+
+:host(.read) {
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+// Compact tables hide the text and keep the icon; the label of the host still says it
+.label {
+  display: var(--app-reading-status-label-display, inline);
+}
+
+mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}

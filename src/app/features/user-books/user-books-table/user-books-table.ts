@@ -5,6 +5,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { RatingValue } from '../rating-value/rating-value';
+import { ReadingStatusBadge } from '../reading-status-badge/reading-status-badge';
 import { ListedBook, PersonRating } from '../user-book.model';
 import { TruncatedTooltip } from './truncated-tooltip';
 
@@ -17,6 +18,7 @@ import { TruncatedTooltip } from './truncated-tooltip';
     MatTableModule,
     MatTooltipModule,
     RatingValue,
+    ReadingStatusBadge,
     TruncatedTooltip,
   ],
   templateUrl: './user-books-table.html',
@@ -39,6 +41,8 @@ export class UserBooksTable<T extends ListedBook> {
    * are lower, so more books fit on screen. The column is kept in case it is wanted back.
    */
   readonly showCover = input(false);
+  /** Shows the reading status of the user, in their own lists. */
+  readonly showReadingStatus = input(false);
 
   readonly openRequested = output<T>();
   readonly removeRequested = output<T>();
@@ -61,6 +65,7 @@ export class UserBooksTable<T extends ListedBook> {
     'title',
     'authors',
     ...this.ratingColumns(),
+    ...(this.showReadingStatus() ? ['readingStatus'] : []),
     ...(this.showLibraryCount() ? ['libraries'] : []),
     'isbn',
     'isbn10',

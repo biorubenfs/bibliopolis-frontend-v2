@@ -41,6 +41,27 @@
       <span id="book-rating-label" class="rating-label">Valoración</span>
     </app-rating-input>
 
+    <app-reading-status-input
+      class="reading-status"
+      formControlName="readingStatus"
+      aria-labelledby="book-reading-status-label"
+    >
+      <span id="book-reading-status-label" class="rating-label">Estado de lectura</span>
+    </app-reading-status-input>
+
+    @if (readingStatus() === 'read') {
+      <!-- The date input of the browser: its own calendar, in the language of the user -->
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha de lectura</mat-label>
+        <input matInput type="date" formControlName="finishedAt" [attr.max]="today" />
+        @if (form.controls.finishedAt.hasError('future')) {
+          <mat-error>No puede ser posterior a hoy</mat-error>
+        } @else {
+          <mat-hint>Déjala vacía si no recuerdas cuándo lo terminaste</mat-hint>
+        }
+      </mat-form-field>
+    }
+
     <mat-form-field appearance="outline">
       <mat-label>Notas</mat-label>
       <textarea

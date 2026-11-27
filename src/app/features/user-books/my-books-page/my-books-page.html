@@ -1,7 +1,7 @@
 <header class="page-header">
   <div>
     <h1>Mis libros</h1>
-    @if (total() > 0) {
+    @if (showCount()) {
       <p class="count">{{ countLabel() }}</p>
     }
   </div>
@@ -41,9 +41,16 @@
 </header>
 
 <!-- Above the list it changes, on its left, away from the header so the search keeps its place -->
-@if (showViewToggle()) {
+@if (showSearch()) {
   <div class="list-toolbar">
-    <app-books-view-toggle />
+    @if (showViewToggle()) {
+      <app-books-view-toggle />
+    }
+    <app-reading-status-filter
+      [status]="readingStatus()"
+      [year]="readYear()"
+      (changed)="changeReadingStatus($event)"
+    />
   </div>
 }
 
@@ -61,12 +68,32 @@
     </div>
   }
   @default {
-    @if (items().length === 0 && search()) {
+    @if (items().length === 0 && search() && readingStatus()) {
+      <div class="status empty">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h2>Ningún libro coincide con «{{ search() }}» y el filtro</h2>
+        <p>Prueba con otra búsqueda o quita el filtro.</p>
+        <button mat-stroked-button type="button" (click)="clearFilters()">Quitar filtros</button>
+      </div>
+    } @else if (items().length === 0 && search()) {
       <div class="status empty">
         <mat-icon aria-hidden="true">search_off</mat-icon>
         <h2>Ningún libro coincide con «{{ search() }}»</h2>
         <p>Prueba con otra parte del título, otro autor o el ISBN.</p>
         <button mat-stroked-button type="button" (click)="clearSearch()">Borrar búsqueda</button>
+      </div>
+    } @else if (items().length === 0 && readingStatus()) {
+      <div class="status empty">
+        <mat-icon aria-hidden="true">filter_list_off</mat-icon>
+        <h2>{{ emptyStatusMessage() }}</h2>
+        <p>Cambia el estado de un libro desde su detalle.</p>
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="changeReadingStatus({ status: '', year: null })"
+        >
+          Quitar filtro
+        </button>
       </div>
     } @else if (items().length === 0) {
       <div class="status empty">
@@ -80,6 +107,7 @@
         [books]="items()"
         [removable]="false"
         [showLibraryCount]="true"
+        [showReadingStatus]="true"
         (openRequested)="openDetailDialog($event)"
       />
     } @else {
