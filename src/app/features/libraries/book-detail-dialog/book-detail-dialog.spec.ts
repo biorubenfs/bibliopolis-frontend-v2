@@ -6,6 +6,7 @@ import { of, throwError } from 'rxjs';
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
 import { LibrariesService } from '../libraries.service';
+import { AddToLibrariesDialog } from '../add-to-libraries-dialog/add-to-libraries-dialog';
 import { RemoveBookDialog } from '../remove-book-dialog/remove-book-dialog';
 import { BookDetailDialog, localDay } from './book-detail-dialog';
 
@@ -34,11 +35,14 @@ describe('BookDetailDialog', () => {
       /** The library the dialog is opened from; null opens it outside any library. */
       libraryId?: string | null;
       removeResult?: boolean;
+      addResult?: { id: string; name: string }[];
       update?: ReturnType<typeof vi.fn>;
     } = {},
   ) {
     const close = vi.fn();
-    const open = vi.fn(() => ({ afterClosed: () => of(options.removeResult) }));
+    const open = vi.fn(() => ({
+      afterClosed: () => of(options.addResult ?? options.removeResult),
+    }));
     const update =
       options.update ??
       vi.fn((_id: string, changes: Partial<UserBook>) => of({ ...book, ...changes }));
@@ -269,6 +273,41 @@ describe('BookDetailDialog', () => {
       expect.objectContaining({ data: { libraryId: 'l1', book: data.book } }),
     );
     expect(close).toHaveBeenCalledWith('removed');
+  });
+
+  it('adds the book to other libraries right away, showing them and telling the page', async () => {
+    const added = [{ id: 'l2', name: 'Préstamos' }];
+    const { fixture, open, list, close, clickButton } = await setup({ addResult: added });
+    const librariesAdded = vi.fn();
+    fixture.componentInstance.librariesAdded.subscribe(librariesAdded);
+
+    await clickButton('Añadir a otra biblioteca');
+
+    expect(open).toHaveBeenCalledWith(
+      AddToLibrariesDialog,
+      expect.objectContaining({
+        data: {
+          title: 'Rossiya',
+          isbn13: '9780595385294',
+          isbn10: '059538529X',
+          authors: ['Alex Shishin', 'Otra Autora'],
+        },
+      }),
+    );
+    expect(librariesAdded).toHaveBeenCalledWith(added);
+    expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ ids: ['l1', 'l2'] }));
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('changes nothing when no library is added', async () => {
+    const { fixture, list, clickButton } = await setup();
+    const librariesAdded = vi.fn();
+    fixture.componentInstance.librariesAdded.subscribe(librariesAdded);
+
+    await clickButton('Añadir a otra biblioteca');
+
+    expect(librariesAdded).not.toHaveBeenCalled();
+    expect(list).toHaveBeenCalledTimes(1);
   });
 
   it('stays open when the removal is cancelled', async () => {

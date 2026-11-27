@@ -42,6 +42,11 @@ export function toBookToAdd(book: ListedBook): BookToAdd {
   };
 }
 
+/** The IDs of the libraries of a book, with those it was just added to. */
+export function addLibraryIds(ids: readonly string[], added: readonly AddedLibrary[]): string[] {
+  return [...new Set([...ids, ...added.map(({ id }) => id)])];
+}
+
 /** What to tell the user once the book was added. */
 export function addedMessage(title: string, libraries: readonly AddedLibrary[]): string {
   return libraries.length === 1

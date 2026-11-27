@@ -176,6 +176,12 @@ td {
   // The 32px icon button plus the cell padding (16px left, 24px right on the last column)
   width: 72px;
   text-align: right;
+  white-space: nowrap;
+
+  // Add and remove: one more 32px button
+  &.two {
+    width: 104px;
+  }
 
   // Smaller than Material's 44px button, so the row keeps the same height as without the column
   button {

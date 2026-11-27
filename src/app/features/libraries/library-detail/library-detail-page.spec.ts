@@ -4,7 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { ApiError } from '../../../core/http/api-error';
 import { SEARCH_DEBOUNCE_MS } from '../../../core/lists/searchable-list';
@@ -14,6 +14,7 @@ import { ImportsService } from '../../imports/imports.service';
 import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
 import { AddBookDialog } from '../add-book-dialog/add-book-dialog';
+import { AddToLibrariesDialog } from '../add-to-libraries-dialog/add-to-libraries-dialog';
 import { BookDetailDialog } from '../book-detail-dialog/book-detail-dialog';
 import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
@@ -84,7 +85,12 @@ describe('LibraryDetailPage', () => {
       vi.fn((_id: string, changes: Partial<Library>) => of({ ...library, ...changes }));
     const listByLibrary = options.listByLibrary ?? vi.fn(() => of({ items: [], total: 0 }));
     const listImports = options.listImports ?? vi.fn(() => of({ items: [], total: 0 }));
-    const openDialog = vi.fn(() => ({ afterClosed: () => of(options.dialogResult) }));
+    // Lets a test tell the page that the book of an open detail was added to libraries
+    const librariesAdded = new Subject<{ id: string; name: string }[]>();
+    const openDialog = vi.fn(() => ({
+      afterClosed: () => of(options.dialogResult),
+      componentInstance: { librariesAdded },
+    }));
     const openSnackBar = vi.fn();
     TestBed.configureTestingModule({
       providers: [
@@ -117,6 +123,7 @@ describe('LibraryDetailPage', () => {
       listImports,
       openDialog,
       openSnackBar,
+      librariesAdded,
     };
   }
 
@@ -447,6 +454,47 @@ describe('LibraryDetailPage', () => {
         BookDetailDialog,
         expect.objectContaining({ data: { libraryId: 'l1', book: rossiya } }),
       );
+    });
+
+    it('adds a book to other libraries from its card, without reloading the list', async () => {
+      const { harness, element, listByLibrary, openDialog, openSnackBar } = await setup({
+        listByLibrary: withRossiya(),
+        dialogResult: [{ id: 'l2', name: 'Pendientes' }],
+      });
+
+      click(element, 'app-user-book-card button[aria-label^="Añadir a otra biblioteca"]');
+      await harness.fixture.whenStable();
+
+      expect(openDialog).toHaveBeenCalledWith(
+        AddToLibrariesDialog,
+        expect.objectContaining({
+          data: { title: 'Rossiya', isbn13: '9780595385294', isbn10: null, authors: ['Autora'] },
+        }),
+      );
+      expect(openSnackBar.mock.lastCall?.[0]).toBe('«Rossiya» añadido a «Pendientes»');
+      expect(listByLibrary).toHaveBeenCalledTimes(1);
+    });
+
+    it('adds a book to other libraries from its row in the table', async () => {
+      localStorage.setItem('bibliopolis.booksView', 'table');
+      const { harness, element, openDialog } = await setup({ listByLibrary: withRossiya() });
+
+      click(element, 'app-user-books-table button[aria-label^="Añadir a otra biblioteca"]');
+      await harness.fixture.whenStable();
+
+      expect(openDialog).toHaveBeenCalledWith(AddToLibrariesDialog, expect.anything());
+    });
+
+    it('tells the libraries a book was added to from its detail', async () => {
+      const { harness, element, openSnackBar, librariesAdded } = await setup({
+        listByLibrary: withRossiya(),
+      });
+
+      click(element, 'app-user-book-card h2 button');
+      librariesAdded.next([{ id: 'l2', name: 'Pendientes' }]);
+      await harness.fixture.whenStable();
+
+      expect(openSnackBar.mock.lastCall?.[0]).toBe('«Rossiya» añadido a «Pendientes»');
     });
 
     it('shows a book edited from its detail without reloading the list', async () => {

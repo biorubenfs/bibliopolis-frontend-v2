@@ -36,6 +36,8 @@ describe('UserBooksTable', () => {
   function render(
     inputs: {
       removable?: boolean;
+      addable?: boolean;
+      addLabel?: string;
       showLibraryCount?: boolean;
       showCover?: boolean;
       showReadingStatus?: boolean;
@@ -51,9 +53,11 @@ describe('UserBooksTable', () => {
     const element = fixture.nativeElement as HTMLElement;
     const open = vi.fn();
     const remove = vi.fn();
+    const add = vi.fn();
     fixture.componentInstance.openRequested.subscribe(open);
     fixture.componentInstance.removeRequested.subscribe(remove);
-    return { fixture, element, open, remove, rows: element.querySelectorAll('tbody tr') };
+    fixture.componentInstance.addRequested.subscribe(add);
+    return { fixture, element, open, remove, add, rows: element.querySelectorAll('tbody tr') };
   }
 
   function headers(element: HTMLElement): string[] {
@@ -207,6 +211,40 @@ describe('UserBooksTable', () => {
     expect(button.getAttribute('aria-label')).toBe('Quitar Rossiya de la biblioteca');
     expect(remove).toHaveBeenCalledExactlyOnceWith(book);
     expect(open).not.toHaveBeenCalled();
+  });
+
+  it('does not offer adding a book to libraries by default', () => {
+    const { element } = render();
+
+    expect(element.querySelector('[aria-label^="Añadir"]')).toBeNull();
+  });
+
+  it('asks to add a book to libraries through a labelled button, without opening it', () => {
+    const { rows, open, add } = render({ addable: true });
+    const button = rows[0].querySelector<HTMLButtonElement>('[aria-label^="Añadir"]')!;
+
+    button.click();
+
+    expect(button.getAttribute('aria-label')).toBe('Añadir a otra biblioteca: Rossiya');
+    expect(add).toHaveBeenCalledExactlyOnceWith(book);
+    expect(open).not.toHaveBeenCalled();
+    // Next to the trash button, in a wider column
+    expect(rows[0].querySelector('[aria-label^="Quitar"]')).not.toBeNull();
+    expect(rows[0].querySelector('.mat-column-actions')?.classList).toContain('two');
+  });
+
+  it('offers adding without removing, with its own label', () => {
+    const { element, rows } = render({
+      addable: true,
+      removable: false,
+      addLabel: 'Añadir a mis bibliotecas',
+    });
+
+    expect(element.querySelector('[aria-label^="Quitar"]')).toBeNull();
+    expect(rows[0].querySelector('[aria-label^="Añadir"]')?.getAttribute('aria-label')).toBe(
+      'Añadir a mis bibliotecas: Rossiya',
+    );
+    expect(rows[0].querySelector('.mat-column-actions')?.classList).not.toContain('two');
   });
 
   it('shows the library count instead of removing when the list spans several libraries', () => {

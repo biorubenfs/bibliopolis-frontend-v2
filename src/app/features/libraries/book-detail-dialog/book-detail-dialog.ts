@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -24,6 +24,14 @@ import { RatingInput } from '../../user-books/rating-input/rating-input';
 import { ReadingStatusInput } from '../../user-books/reading-status-input/reading-status-input';
 import { USER_BOOK_NOTES_MAX_LENGTH, UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
+import {
+  ADD_TO_LIBRARIES_DIALOG_SIZE,
+  AddToLibrariesDialog,
+  AddedLibrary,
+  BookToAdd,
+  addLibraryIds,
+  toBookToAdd,
+} from '../add-to-libraries-dialog/add-to-libraries-dialog';
 import { RemoveBookDialog, RemoveBookDialogData } from '../remove-book-dialog/remove-book-dialog';
 
 export interface BookDetailDialogData {
@@ -51,8 +59,9 @@ function notAfterToday(control: AbstractControl<string>): ValidationErrors | nul
 
 /**
  * Shows a book, with the libraries that contain it, and lets the user edit its rating, notes and
- * reading status, which are only persisted when saving. When opened from a library, it also lets the user remove
- * the book from that library.
+ * reading status, which are only persisted when saving. It adds the book to other libraries right
+ * away, telling the page through `librariesAdded`. When opened from a library, it also lets the user
+ * remove the book from that library.
  */
 @Component({
   selector: 'app-book-detail-dialog',
@@ -81,6 +90,11 @@ export class BookDetailDialog {
 
   protected readonly book = this.data.book;
   protected readonly libraryId = this.data.libraryId;
+  /** The libraries that contain the book, including those it is added to from here. */
+  protected readonly libraryIds = signal<readonly string[]>(this.book.libraries);
+
+  /** The book was added to these libraries, without waiting for the dialog to close. */
+  readonly librariesAdded = output<AddedLibrary[]>();
   protected readonly authors = this.book.bookAuthors.join(', ') || 'Autor desconocido';
 
   protected readonly notesMaxLength = USER_BOOK_NOTES_MAX_LENGTH;
@@ -168,6 +182,21 @@ export class BookDetailDialog {
   /** Following a link to a library leaves the dialog behind, so it closes without changes. */
   protected closeOnNavigation(): void {
     this.dialogRef.close();
+  }
+
+  protected openAddToLibrariesDialog(): void {
+    this.dialog
+      .open<AddToLibrariesDialog, BookToAdd, AddedLibrary[]>(AddToLibrariesDialog, {
+        ...ADD_TO_LIBRARIES_DIALOG_SIZE,
+        data: toBookToAdd(this.book),
+      })
+      .afterClosed()
+      .subscribe((libraries) => {
+        if (libraries) {
+          this.libraryIds.update((ids) => addLibraryIds(ids, libraries));
+          this.librariesAdded.emit(libraries);
+        }
+      });
   }
 
   protected openRemoveDialog(libraryId: string): void {
