@@ -252,6 +252,10 @@ describe('LibraryDetailPage', () => {
       const { harness, element } = await setup({ listByLibrary: vi.fn(books) });
 
       expect(element.querySelector('.page-header app-books-view-toggle')).not.toBeNull();
+      // The filter sits next to the view switch, like in «Mis libros»
+      expect(
+        element.querySelector('.list-tools app-books-view-toggle + app-reading-status-filter'),
+      ).not.toBeNull();
 
       element.querySelector<HTMLButtonElement>('button[aria-label="Ver como tabla"]')!.click();
       await harness.fixture.whenStable();
@@ -874,6 +878,8 @@ describe('LibraryDetailPage', () => {
 
       expect(element.textContent).toContain('Esta biblioteca no tiene libros pendientes');
       expect(element.textContent).not.toContain('Esta biblioteca aún no tiene libros');
+      // The view switch stays, so the filter next to it does not move
+      expect(element.querySelector('.list-tools app-books-view-toggle')).not.toBeNull();
 
       Array.from(element.querySelectorAll('button'))
         .find((button) => button.textContent?.includes('Quitar filtro'))!

@@ -93,9 +93,18 @@
         Añadir libro
       </button>
     </div>
-    <!-- At the level of the actions, on the left side of the list it changes -->
-    @if (showViewToggle()) {
-      <app-books-view-toggle class="view-toggle" />
+    <!-- At the level of the actions, on the left side of the list they change, like in «Mis libros» -->
+    @if (showSearch()) {
+      <div class="list-tools">
+        @if (showViewToggle()) {
+          <app-books-view-toggle />
+        }
+        <app-reading-status-filter
+          [status]="status()"
+          [year]="readYear()"
+          (changed)="changeReadingStatus($event)"
+        />
+      </div>
     }
   </header>
 
@@ -118,16 +127,6 @@
       }
     </p>
   }
-}
-
-<!-- Just above the list it filters -->
-@if (library() && showSearch()) {
-  <app-reading-status-filter
-    class="reading-status-filter"
-    [status]="status()"
-    [year]="readYear()"
-    (changed)="changeReadingStatus($event)"
-  />
 }
 
 @switch (state()) {

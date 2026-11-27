@@ -169,9 +169,14 @@ export class LibraryDetailPage {
   protected readonly state = signal<LoadState>('loading');
   protected readonly savingFavorite = signal(false);
   protected readonly view = inject(BooksViewPreference).view;
-  /** Only with books to show; it stays while a new page loads, so the list does not jump. */
+  /**
+   * With books to show, or with a search or filter even without results, so the filter next to it
+   * does not jump while they change. It stays while a new page loads.
+   */
   protected readonly showViewToggle = computed(
-    () => this.state() !== 'error' && this.total() > 0 && this.books().length > 0,
+    () =>
+      this.state() !== 'error' &&
+      (this.filtered() || (this.total() > 0 && this.books().length > 0)),
   );
 
   /** Tags the user can use, to show the names and colours of the library tags. */
