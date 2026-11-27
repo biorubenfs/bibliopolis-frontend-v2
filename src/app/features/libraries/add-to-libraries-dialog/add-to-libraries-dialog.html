@@ -33,7 +33,7 @@
     } @else {
       <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <mat-dialog-content>
-          <p>Elige dónde quieres añadir «{{ book.bookTitle }}».</p>
+          <p>Elige dónde quieres añadir «{{ book.title }}».</p>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>Biblioteca</mat-label>
             <mat-select formControlName="libraryId" required>

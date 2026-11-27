@@ -8,23 +8,36 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 
 import { ApiError } from '../../../core/http/api-error';
-import { LibrariesService } from '../../libraries/libraries.service';
-import { Library } from '../../libraries/library.model';
-import { SharedLibraryBook } from '../shared-library.model';
+import { ListedBook } from '../../user-books/user-book.model';
+import { LibrariesService } from '../libraries.service';
+import { AddBookToLibrary, Library } from '../library.model';
 
 type LoadState = 'loading' | 'loaded' | 'error';
 
 /** The maximum page size of the API. */
 const MAX_LIBRARIES = 100;
 
-export const ADD_TO_LIBRARY_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100vw - 32px)' };
+export const ADD_TO_LIBRARIES_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100vw - 32px)' };
+
+/** The book to add, from anywhere in the app. Without the cover: the catalog already has it. */
+export type BookToAdd = Omit<AddBookToLibrary, 'cover'>;
+
+/** The book of a card or a row, be it of the user or of a shared library. */
+export function toBookToAdd(book: ListedBook): BookToAdd {
+  return {
+    title: book.bookTitle,
+    isbn13: book.bookIsbn13,
+    isbn10: book.bookIsbn10,
+    authors: [...book.bookAuthors],
+  };
+}
 
 /**
- * Adds a book of a shared library to one of the libraries of the user. Closes with the name of the
- * library once it is added.
+ * Adds a book that is already in the catalog to one of the libraries of the user. Closes with the
+ * name of the library once it is added.
  */
 @Component({
-  selector: 'app-add-to-library-dialog',
+  selector: 'app-add-to-libraries-dialog',
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
@@ -33,15 +46,15 @@ export const ADD_TO_LIBRARY_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100v
     MatProgressSpinnerModule,
     MatSelectModule,
   ],
-  templateUrl: './add-to-library-dialog.html',
-  styleUrl: './add-to-library-dialog.scss',
+  templateUrl: './add-to-libraries-dialog.html',
+  styleUrl: './add-to-libraries-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AddToLibraryDialog {
+export class AddToLibrariesDialog {
   private readonly librariesService = inject(LibrariesService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly dialogRef = inject<MatDialogRef<AddToLibraryDialog, string>>(MatDialogRef);
-  protected readonly book = inject<SharedLibraryBook>(MAT_DIALOG_DATA);
+  private readonly dialogRef = inject<MatDialogRef<AddToLibrariesDialog, string>>(MatDialogRef);
+  protected readonly book = inject<BookToAdd>(MAT_DIALOG_DATA);
 
   protected readonly state = signal<LoadState>('loading');
   protected readonly libraries = signal<Library[]>([]);
@@ -85,15 +98,8 @@ export class AddToLibraryDialog {
     }
     this.adding.set(true);
     this.errorMessage.set(null);
-    const { bookTitle, bookIsbn13, bookIsbn10, bookAuthors } = this.book;
     this.librariesService
-      // Without the cover: the book is already in the catalog, which has it
-      .addBook(library.id, {
-        title: bookTitle,
-        isbn13: bookIsbn13,
-        isbn10: bookIsbn10,
-        authors: bookAuthors,
-      })
+      .addBook(library.id, this.book)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => this.dialogRef.close(library.name),

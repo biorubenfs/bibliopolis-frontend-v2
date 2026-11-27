@@ -11,9 +11,11 @@ import { RouterLink } from '@angular/router';
 
 import { RatingValue } from '../../user-books/rating-value/rating-value';
 import {
-  ADD_TO_LIBRARY_DIALOG_SIZE,
-  AddToLibraryDialog,
-} from '../add-to-library-dialog/add-to-library-dialog';
+  ADD_TO_LIBRARIES_DIALOG_SIZE,
+  AddToLibrariesDialog,
+  BookToAdd,
+  toBookToAdd,
+} from '../../libraries/add-to-libraries-dialog/add-to-libraries-dialog';
 import { SharedLibrary, SharedLibraryBook, personRatings } from '../shared-library.model';
 
 export interface SharedBookDialogData {
@@ -62,9 +64,9 @@ export class SharedBookDialog {
 
   protected openAddDialog(): void {
     this.dialog
-      .open<AddToLibraryDialog, SharedLibraryBook, string>(AddToLibraryDialog, {
-        ...ADD_TO_LIBRARY_DIALOG_SIZE,
-        data: this.book,
+      .open<AddToLibrariesDialog, BookToAdd, string>(AddToLibrariesDialog, {
+        ...ADD_TO_LIBRARIES_DIALOG_SIZE,
+        data: toBookToAdd(this.book),
       })
       .afterClosed()
       .subscribe((libraryName) => {

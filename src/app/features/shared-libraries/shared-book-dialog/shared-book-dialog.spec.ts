@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
-import { AddToLibraryDialog } from '../add-to-library-dialog/add-to-library-dialog';
+import { AddToLibrariesDialog } from '../../libraries/add-to-libraries-dialog/add-to-libraries-dialog';
 import { SharedLibraryBook } from '../shared-library.model';
 import { SharedBookDialog } from './shared-book-dialog';
 
@@ -129,8 +129,15 @@ describe('SharedBookDialog', () => {
     button('Añadir a mi biblioteca')!.click();
 
     expect(open).toHaveBeenCalledWith(
-      AddToLibraryDialog,
-      expect.objectContaining({ data: data.book }),
+      AddToLibrariesDialog,
+      expect.objectContaining({
+        data: {
+          title: data.book.bookTitle,
+          isbn13: data.book.bookIsbn13,
+          isbn10: data.book.bookIsbn10,
+          authors: data.book.bookAuthors,
+        },
+      }),
     );
     expect(close).toHaveBeenCalledWith({ addedTo: 'Pendientes' });
   });

@@ -5,20 +5,15 @@ import { MatSelectHarness } from '@angular/material/select/testing';
 import { of, throwError } from 'rxjs';
 
 import { ApiError } from '../../../core/http/api-error';
-import { LibrariesService } from '../../libraries/libraries.service';
-import { SharedLibraryBook } from '../shared-library.model';
-import { AddToLibraryDialog } from './add-to-library-dialog';
+import { LibrariesService } from '../libraries.service';
+import { AddToLibrariesDialog, BookToAdd } from './add-to-libraries-dialog';
 
-describe('AddToLibraryDialog', () => {
-  const book: SharedLibraryBook = {
-    id: 'b1',
-    bookTitle: 'Rossiya',
-    bookAuthors: ['Alex Shishin'],
-    bookCoverUrl: 'https://covers.example/1.jpg',
-    bookIsbn13: '9780595385294',
-    bookIsbn10: null,
-    ownerRating: 9,
-    own: null,
+describe('AddToLibrariesDialog', () => {
+  const book: BookToAdd = {
+    title: 'Rossiya',
+    isbn13: '9780595385294',
+    isbn10: null,
+    authors: ['Alex Shishin'],
   };
   const novela = { id: 'l1', name: 'Novela' };
   const pendientes = { id: 'l2', name: 'Pendientes' };
@@ -35,14 +30,14 @@ describe('AddToLibraryDialog', () => {
     const addBook = options.addBook ?? vi.fn(() => of({}));
     const close = vi.fn();
     TestBed.configureTestingModule({
-      imports: [AddToLibraryDialog],
+      imports: [AddToLibrariesDialog],
       providers: [
         { provide: MAT_DIALOG_DATA, useValue: book },
         { provide: MatDialogRef, useValue: { close } },
         { provide: LibrariesService, useValue: { list, addBook } },
       ],
     });
-    const fixture = TestBed.createComponent(AddToLibraryDialog);
+    const fixture = TestBed.createComponent(AddToLibrariesDialog);
     await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
     const loader = TestbedHarnessEnvironment.loader(fixture);
