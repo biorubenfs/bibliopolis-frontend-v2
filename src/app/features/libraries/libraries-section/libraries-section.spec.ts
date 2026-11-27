@@ -5,6 +5,8 @@ import { Router, RouterLink, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { NEVER, Observable, Subject, of, throwError } from 'rxjs';
 
+import { SEARCH_DEBOUNCE_MS } from '../../../core/lists/searchable-list';
+
 import { SharedLibrariesService } from '../../shared-libraries/shared-libraries.service';
 import { LibrariesService } from '../libraries.service';
 import { LibrariesSection } from './libraries-section';
@@ -197,5 +199,90 @@ describe('LibrariesSection', () => {
     expect(root.textContent).toContain('detail');
     expect(listOwn).not.toHaveBeenCalled();
     expect(listShared).toHaveBeenCalledTimes(1);
+  });
+
+  describe('search', () => {
+    const input = (root: HTMLElement) => root.querySelector<HTMLInputElement>('.page-header input');
+    const type = (root: HTMLElement, value: string) => {
+      const field = input(root)!;
+      field.value = value;
+      field.dispatchEvent(new Event('input'));
+    };
+    const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    it('searches in the open tab once the user stops typing, from the first page', async () => {
+      const { root, router, settle } = await setup('/libraries/shared?owner=u1&page=2&limit=24');
+
+      type(root, 'ana');
+      expect(router.url).toBe('/libraries/shared?owner=u1&page=2&limit=24');
+
+      await vi.waitFor(() => expect(router.url).toContain('q=ana'));
+      await settle();
+      const url = router.parseUrl(router.url);
+      expect(router.url.split('?')[0]).toBe('/libraries/shared');
+      // The filters and the page size of the tab stay
+      expect(url.queryParams).toEqual({ owner: 'u1', limit: '24', q: 'ana' });
+    });
+
+    it('does not lose the page when the search does not really change', async () => {
+      const { root, router } = await setup('/libraries?page=2');
+
+      type(root, '  ');
+      await pause(SEARCH_DEBOUNCE_MS + 50);
+
+      expect(router.url).toBe('/libraries?page=2');
+    });
+
+    it('restores it from the URL and follows the changes made outside the field', async () => {
+      const { root, harness, settle } = await setup('/libraries?q=nov');
+      expect(input(root)?.value).toBe('nov');
+
+      // Such as back/forward or a button of the page that clears the search
+      await harness.navigateByUrl('/libraries');
+      await settle();
+
+      expect(input(root)?.value).toBe('');
+    });
+
+    it('clears it with its button, keeping the filters', async () => {
+      const { root, router, settle } = await setup('/libraries?q=nov&favorites=true&page=2');
+
+      root
+        .querySelector<HTMLButtonElement>('.page-header button[aria-label="Borrar búsqueda"]')!
+        .click();
+      await settle();
+
+      expect(router.url).toBe('/libraries?favorites=true');
+      expect(input(root)?.value).toBe('');
+    });
+
+    it('says what each tab searches', async () => {
+      const { root, harness, settle } = await setup('/libraries');
+      expect(input(root)?.getAttribute('aria-label')).toBe('Buscar bibliotecas');
+      expect(input(root)?.placeholder).toBe('Nombre o descripción');
+
+      await harness.navigateByUrl('/libraries/shared');
+      await settle();
+
+      expect(input(root)?.getAttribute('aria-label')).toBe(
+        'Buscar bibliotecas compartidas conmigo',
+      );
+      expect(input(root)?.placeholder).toBe('Nombre, descripción o propietario');
+    });
+
+    it('is hidden without libraries in any tab, but not with a filter', async () => {
+      const { root, harness, settle } = await setup('/libraries', { shared: () => total(0) });
+      const page = () => harness.fixture.debugElement.query(By.directive(OwnPage));
+
+      page().componentInstance.counts.own.set(0);
+      await settle();
+      expect(input(root)).toBeNull();
+
+      // With no results for a filter, the search stays, to change it
+      await harness.navigateByUrl('/libraries?favorites=true');
+      page().componentInstance.counts.own.set(0);
+      await settle();
+      expect(input(root)).not.toBeNull();
+    });
   });
 });

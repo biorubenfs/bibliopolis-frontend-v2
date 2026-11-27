@@ -1,33 +1,45 @@
+@use '../../../core/styles/page-header';
+
 :host {
-  display: block;
-  padding: 16px 16px 24px;
+  @include page-header.page;
 }
 
 .back {
-  margin: 0 0 8px -12px;
+  grid-area: back;
+  justify-self: start;
+  // The text lines up with the title, not the edge of the button
+  margin-left: -12px;
 }
 
+// Without the library (loading or error) it is alone above the content
+:host > .back {
+  margin-bottom: 8px;
+}
+
+// Phones: one column. Desktop: the link back and the search on the first line, like the search of
+// the other list pages, and the heading below
 .page-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'back'
+    'heading'
+    'search';
+  gap: 16px;
   margin-bottom: 24px;
 }
 
 .heading {
-  flex: 1 1 320px;
+  grid-area: heading;
   min-width: 0;
 }
 
 .search {
+  grid-area: search;
   // Pill shape: half of the field's 48px height
   --mat-form-field-outlined-container-shape: 24px;
 
-  // Full width on phones; a fixed comfortable width next to the title on larger screens
-  flex: 1 1 100%;
-  max-width: 100%;
+  width: 100%;
 }
 
 h1 {
@@ -107,12 +119,15 @@ mat-paginator {
   background: transparent;
 }
 
-@media (min-width: 900px) {
-  :host {
-    padding: 32px 48px 40px;
+@media (min-width: page-header.$desktop) {
+  .page-header {
+    grid-template-columns: minmax(0, 1fr) page-header.$search-width;
+    grid-template-areas:
+      'back search'
+      'heading heading';
   }
 
-  .search {
-    flex: 0 1 360px;
+  .back {
+    align-self: center;
   }
 }

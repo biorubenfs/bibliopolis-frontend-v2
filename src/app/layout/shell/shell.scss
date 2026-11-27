@@ -22,6 +22,12 @@
   height: 100%;
 }
 
+// The pages scroll here. Keep the room of the scrollbar even when a page does not need it, so what
+// is aligned to the right (such as the search) stays in place when moving between pages
+.content {
+  scrollbar-gutter: stable;
+}
+
 .sidebar-content {
   display: flex;
   flex-direction: column;

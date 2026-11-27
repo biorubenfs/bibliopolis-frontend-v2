@@ -1,0 +1,28 @@
+// The list pages («Bibliotecas», «Mis libros» and the libraries) share the same header: the title on
+// the left and, on desktop, the search on the right, on the first line of the page. With the same
+// padding in all of them, the search stays in place when moving from one page to another
+
+$desktop: 900px;
+$search-width: 360px;
+
+@mixin page {
+  display: block;
+  padding: 16px 16px 24px;
+
+  @media (min-width: $desktop) {
+    padding: 32px 48px 40px;
+  }
+}
+
+// In a flex row: full width on its own line on phones, a fixed width on the right on desktop
+@mixin search {
+  // Pill shape: half of the field's 48px height
+  --mat-form-field-outlined-container-shape: 24px;
+
+  flex: 1 1 100%;
+  max-width: 100%;
+
+  @media (min-width: $desktop) {
+    flex: 0 0 $search-width;
+  }
+}

@@ -1,67 +1,35 @@
 <section #content tabindex="-1" aria-label="Compartidas conmigo">
+  <!-- The search is in the header of «Bibliotecas», shared with the other tab -->
   @if (showFilters()) {
     <div class="filters">
-      <mat-form-field
-        class="search app-tonal-field"
-        appearance="outline"
-        subscriptSizing="dynamic"
-        role="search"
-      >
-        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-        <input
-          matInput
-          type="text"
-          placeholder="Nombre, descripción o propietario"
-          aria-label="Buscar bibliotecas compartidas conmigo"
-          autocomplete="off"
-          [attr.maxlength]="searchMaxLength"
-          [value]="query()"
-          (input)="onSearchInput($any($event.target).value)"
-          (keydown.escape)="clearSearch()"
-        />
-        @if (query()) {
-          <button
-            mat-icon-button
-            matSuffix
-            type="button"
-            aria-label="Borrar búsqueda"
-            (click)="clearSearch()"
-          >
-            <mat-icon>close</mat-icon>
-          </button>
-        }
-      </mat-form-field>
-
-      @if (showOwners()) {
-        <!-- A select without its form field, styled as a filter chip -->
-        <div class="owner-filter" [class.active]="ownerId()">
-          <mat-icon aria-hidden="true">person</mat-icon>
-          <mat-select
-            class="owner-select"
-            panelClass="app-chip-select-panel"
-            placeholder="Propietario"
-            aria-label="Filtrar por propietario"
-            [panelWidth]="null"
-            [value]="ownerId() || null"
-            (selectionChange)="changeOwner($event.value ?? '')"
-          >
-            <mat-select-trigger>{{ ownerName() }}</mat-select-trigger>
-            <mat-option [value]="null">Todos</mat-option>
-            @for (owner of owners(); track owner.id) {
-              <mat-option [value]="owner.id">
-                <span class="owner-option">
-                  {{ owner.name }}
-                  <span class="owner-count" aria-hidden="true">{{ owner.librariesCount }}</span>
-                  <span class="visually-hidden">
-                    , {{ owner.librariesCount }}
-                    {{ owner.librariesCount === 1 ? 'biblioteca' : 'bibliotecas' }}
-                  </span>
+      <!-- A select without its form field, styled as a filter chip -->
+      <div class="owner-filter" [class.active]="ownerId()">
+        <mat-icon aria-hidden="true">person</mat-icon>
+        <mat-select
+          class="owner-select"
+          panelClass="app-chip-select-panel"
+          placeholder="Propietario"
+          aria-label="Filtrar por propietario"
+          [panelWidth]="null"
+          [value]="ownerId() || null"
+          (selectionChange)="changeOwner($event.value ?? '')"
+        >
+          <mat-select-trigger>{{ ownerName() }}</mat-select-trigger>
+          <mat-option [value]="null">Todos</mat-option>
+          @for (owner of owners(); track owner.id) {
+            <mat-option [value]="owner.id">
+              <span class="owner-option">
+                {{ owner.name }}
+                <span class="owner-count" aria-hidden="true">{{ owner.librariesCount }}</span>
+                <span class="visually-hidden">
+                  , {{ owner.librariesCount }}
+                  {{ owner.librariesCount === 1 ? 'biblioteca' : 'bibliotecas' }}
                 </span>
-              </mat-option>
-            }
-          </mat-select>
-        </div>
-      }
+              </span>
+            </mat-option>
+          }
+        </mat-select>
+      </div>
     </div>
   }
 

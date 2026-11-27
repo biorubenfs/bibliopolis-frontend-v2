@@ -1,10 +1,25 @@
+@use '../../../core/styles/page-header';
+
 :host {
-  display: block;
-  padding: 24px 16px;
+  @include page-header.page;
+}
+
+// The search on the first line, like in the other list pages
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 12px;
+}
+
+.search {
+  @include page-header.search;
 }
 
 h1 {
-  margin: 0 0 12px;
+  margin: 0;
   font: var(--app-font-title);
   letter-spacing: var(--app-font-title-tracking);
   color: var(--mat-sys-on-surface);
@@ -48,10 +63,4 @@ a {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
-}
-
-@media (min-width: 900px) {
-  :host {
-    padding: 40px 48px;
-  }
 }

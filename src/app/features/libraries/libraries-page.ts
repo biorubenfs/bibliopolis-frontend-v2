@@ -10,15 +10,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipListboxChange, MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subject, Subscription, debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { Subscription, distinctUntilChanged, map } from 'rxjs';
 
 import { saveFile } from '../../core/files/save-file';
 import { SpanishPaginatorIntl } from '../../core/i18n/paginator-intl';
@@ -53,9 +51,6 @@ type LoadState = 'loading' | 'loaded' | 'error';
 
 const DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
 
-/** Wait this long after the last keystroke before searching, to avoid one request per key. */
-export const SEARCH_DEBOUNCE_MS = 300;
-
 /** Query param that keeps the search in the URL (survives reloads and back/forward). */
 export const SEARCH_QUERY_PARAM = 'q';
 
@@ -87,9 +82,7 @@ const LIMIT_QUERY_PARAM = 'limit';
     LibraryCard,
     MatButtonModule,
     MatChipsModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSelectModule,
@@ -111,7 +104,6 @@ export class LibrariesPage {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
-  protected readonly searchMaxLength = LIBRARY_SEARCH_MAX_LENGTH;
   protected readonly tagStyles = TAG_COLOR_STYLES;
 
   protected readonly libraries = signal<Library[]>([]);
@@ -122,9 +114,7 @@ export class LibrariesPage {
   protected readonly exportingId = signal<string | null>(null);
   /** Library whose favorite mark is being saved. */
   protected readonly savingFavoriteId = signal<string | null>(null);
-  /** Text in the search field, updated on every keystroke. */
-  protected readonly query = signal('');
-  /** Search applied to the list (debounced and trimmed). */
+  /** Search in the URL, typed in the header of «Bibliotecas» (`LibrariesSection`). */
   protected readonly search = signal('');
   /** Only list the favorites. */
   protected readonly favoritesOnly = signal(false);
@@ -175,13 +165,12 @@ export class LibrariesPage {
    */
   protected readonly showFilters = computed(() => this.filtered() || this.total() > 0);
 
-  private readonly searchInput = new Subject<string>();
   private loadSubscription?: Subscription;
 
   constructor() {
-    // The URL is the source of truth: typing and the paginator only update ?q=, ?page= and
-    // ?limit=, and the list reacts to changes from any origin (typing, paginator, reload, a link,
-    // back/forward). Its first emission performs the initial load.
+    // The URL is the source of truth: the search of the header and the paginator only update ?q=,
+    // ?page= and ?limit=, and the list reacts to changes from any origin (search, paginator,
+    // reload, a link, back/forward). Its first emission performs the initial load.
     this.route.queryParamMap
       .pipe(
         map((params) => ({
@@ -203,14 +192,6 @@ export class LibrariesPage {
         takeUntilDestroyed(),
       )
       .subscribe((listParams) => this.applyListParams(listParams));
-
-    this.searchInput
-      .pipe(
-        map((value) => value.trim()),
-        debounceTime(SEARCH_DEBOUNCE_MS),
-        takeUntilDestroyed(),
-      )
-      .subscribe((term) => this.updateUrl(term));
 
     this.loadTags();
   }
@@ -276,15 +257,7 @@ export class LibrariesPage {
       });
   }
 
-  protected onSearchInput(value: string): void {
-    this.query.set(value);
-    this.searchInput.next(value);
-  }
-
   protected clearSearch(): void {
-    this.query.set('');
-    // Replace any keystroke still waiting in the debounce, then clear the URL right away
-    this.searchInput.next('');
     this.updateUrl('');
   }
 
@@ -334,9 +307,6 @@ export class LibrariesPage {
   }
 
   protected clearFilters(): void {
-    this.query.set('');
-    // Replace any keystroke still waiting in the debounce
-    this.searchInput.next('');
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
@@ -350,17 +320,11 @@ export class LibrariesPage {
   }
 
   private updateUrl(term: string): void {
-    // Typing a trailing space does not change the search, so it must not lose the current page
-    if (term === this.search()) {
-      return;
-    }
     this.router.navigate([], {
       relativeTo: this.route,
       // A new search has different results: start again from the first page
       queryParams: { [SEARCH_QUERY_PARAM]: term || null, [PAGE_QUERY_PARAM]: null },
       queryParamsHandling: 'merge',
-      // One history entry per page visit, not one per search typed
-      replaceUrl: true,
     });
   }
 
@@ -384,11 +348,6 @@ export class LibrariesPage {
     favorites: boolean;
     tags: string[];
   }): void {
-    // Only overwrite the field when the change comes from outside (reload, link, back/forward),
-    // so a trailing space being typed is not removed
-    if (this.query().trim() !== params.term) {
-      this.query.set(params.term);
-    }
     this.search.set(params.term);
     this.favoritesOnly.set(params.favorites);
     this.selectedTagIds.set(params.tags);

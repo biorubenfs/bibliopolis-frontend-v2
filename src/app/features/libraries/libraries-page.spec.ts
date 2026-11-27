@@ -8,7 +8,7 @@ import { Tag } from '../tags/tag.model';
 import { TagsService } from '../tags/tags.service';
 import { LibraryCounts } from './libraries-section/library-counts';
 import { LibrariesService } from './libraries.service';
-import { LibrariesPage, SEARCH_DEBOUNCE_MS } from './libraries-page';
+import { LibrariesPage } from './libraries-page';
 import { Library } from './library.model';
 import { ShareLibraryDialog } from './share-library-dialog/share-library-dialog';
 
@@ -157,31 +157,21 @@ describe('LibrariesPage', () => {
         await vi.advanceTimersByTimeAsync(ms);
         fixture.detectChanges();
       };
-      const input = () =>
-        element.querySelector<HTMLInputElement>('input[aria-label="Buscar bibliotecas"]');
-      const type = (value: string) => {
-        input()!.value = value;
-        input()!.dispatchEvent(new Event('input'));
-        fixture.detectChanges();
-      };
       await wait();
-      return { element, list, router, input, type, wait };
+      return { element, list, router, wait };
     }
 
     const all = [library('1', 'Novela'), library('2', 'Ensayo')];
     const byName = (search: string) =>
       all.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()));
 
-    it('searches after the user stops typing and keeps the search in the URL', async () => {
-      const { element, list, router, type, wait } = await setup(byName);
+    it('follows a new search in the URL, typed in the header of «Bibliotecas»', async () => {
+      const { element, list, router, wait } = await setup(byName);
       expect(list).toHaveBeenCalledTimes(1);
 
-      type('nov');
-      await wait(SEARCH_DEBOUNCE_MS - 1);
-      expect(list).toHaveBeenCalledTimes(1);
+      await router.navigateByUrl('/?q=nov');
+      await wait();
 
-      await wait(1);
-      expect(router.url).toBe('/?q=nov');
       expect(list).toHaveBeenCalledTimes(2);
       expect(list).toHaveBeenLastCalledWith({
         skip: 0,
@@ -195,7 +185,7 @@ describe('LibrariesPage', () => {
     });
 
     it('restores the search from the URL', async () => {
-      const { element, list, input } = await setup(byName, '/?q=ensayo');
+      const { element, list } = await setup(byName, '/?q=ensayo');
 
       expect(list).toHaveBeenCalledTimes(1);
       expect(list).toHaveBeenLastCalledWith({
@@ -205,12 +195,11 @@ describe('LibrariesPage', () => {
         favorites: false,
         tagIds: [],
       });
-      expect(input()?.value).toBe('ensayo');
       expect(element.querySelectorAll('.card').length).toBe(1);
     });
 
-    it('follows URL changes made outside the field, such as back/forward', async () => {
-      const { list, router, input, wait } = await setup(byName, '/?q=nov');
+    it('follows URL changes such as back/forward', async () => {
+      const { list, router, wait } = await setup(byName, '/?q=nov');
 
       await router.navigateByUrl('/');
       await wait();
@@ -222,7 +211,6 @@ describe('LibrariesPage', () => {
         favorites: false,
         tagIds: [],
       });
-      expect(input()?.value).toBe('');
     });
 
     it('shows a no-results state that clears the search and the URL', async () => {
@@ -247,9 +235,6 @@ describe('LibrariesPage', () => {
         tagIds: [],
       });
       expect(element.querySelectorAll('.card').length).toBe(2);
-
-      // The cleared search is not re-applied when the debounce time passes
-      await wait(SEARCH_DEBOUNCE_MS);
       expect(list).toHaveBeenCalledTimes(2);
     });
 
@@ -278,12 +263,6 @@ describe('LibrariesPage', () => {
 
       expect(element.textContent).toContain('Ninguna biblioteca coincide con los filtros');
       expect(element.querySelector('.status a')).toBeNull();
-    });
-
-    it('hides the search field when the user has no libraries', async () => {
-      const { input } = await setup(() => []);
-
-      expect(input()).toBeNull();
     });
   });
 
@@ -450,44 +429,6 @@ describe('LibrariesPage', () => {
       });
       expect(element.querySelectorAll('.card').length).toBe(1);
     });
-
-    it('goes back to the first page on a new search, keeping the page size', async () => {
-      const { element, fixture, list, router, wait } = await setup('/?page=2&limit=24', () =>
-        of({ items: [library('1', 'Novela')], total: 60 }),
-      );
-
-      const input = element.querySelector<HTMLInputElement>(
-        'input[aria-label="Buscar bibliotecas"]',
-      )!;
-      input.value = 'nov';
-      input.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
-      await wait(SEARCH_DEBOUNCE_MS);
-
-      expect(router.parseUrl(router.url).queryParams).toEqual({ limit: '24', q: 'nov' });
-      expect(list).toHaveBeenLastCalledWith({
-        skip: 0,
-        limit: 24,
-        search: 'nov',
-        favorites: false,
-        tagIds: [],
-      });
-    });
-
-    it('stays on the same page when the search does not really change', async () => {
-      const { element, fixture, list, router, wait } = await setup('/?page=2');
-
-      const input = element.querySelector<HTMLInputElement>(
-        'input[aria-label="Buscar bibliotecas"]',
-      )!;
-      input.value = '  ';
-      input.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
-      await wait(SEARCH_DEBOUNCE_MS);
-
-      expect(router.url).toBe('/?page=2');
-      expect(list).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe('favorites', () => {
@@ -577,7 +518,6 @@ describe('LibrariesPage', () => {
 
       expect(element.textContent).toContain('Aún no tienes bibliotecas favoritas');
       expect(chip()).not.toBeNull();
-      expect(element.querySelector('input[aria-label="Buscar bibliotecas"]')).not.toBeNull();
 
       Array.from(element.querySelectorAll('button'))
         .find((button) => button.textContent?.includes('Ver todas'))!

@@ -1,24 +1,21 @@
+@use '../../../core/styles/page-header';
+
 :host {
-  display: block;
-  padding: 16px 16px 24px;
+  @include page-header.page;
 }
 
 .page-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  // The search on the first line, like in the other list pages
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px 24px;
   margin-bottom: 24px;
 }
 
 .search {
-  // Pill shape: half of the field's 48px height
-  --mat-form-field-outlined-container-shape: 24px;
-
-  // Full width on phones; a fixed comfortable width next to the title on larger screens
-  flex: 1 1 100%;
-  max-width: 100%;
+  @include page-header.search;
 }
 
 h1 {
@@ -85,14 +82,4 @@ h1 {
 mat-paginator {
   margin-top: 16px;
   background: transparent;
-}
-
-@media (min-width: 900px) {
-  :host {
-    padding: 32px 48px 40px;
-  }
-
-  .search {
-    flex: 0 1 360px;
-  }
 }

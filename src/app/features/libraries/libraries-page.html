@@ -1,36 +1,6 @@
+<!-- The search is in the header of «Bibliotecas», shared with the other tab -->
 @if (showFilters()) {
   <div class="filters">
-    <mat-form-field
-      class="search app-tonal-field"
-      appearance="outline"
-      subscriptSizing="dynamic"
-      role="search"
-    >
-      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
-      <input
-        matInput
-        type="text"
-        placeholder="Nombre o descripción"
-        aria-label="Buscar bibliotecas"
-        autocomplete="off"
-        [attr.maxlength]="searchMaxLength"
-        [value]="query()"
-        (input)="onSearchInput($any($event.target).value)"
-        (keydown.escape)="clearSearch()"
-      />
-      @if (query()) {
-        <button
-          mat-icon-button
-          matSuffix
-          type="button"
-          aria-label="Borrar búsqueda"
-          (click)="clearSearch()"
-        >
-          <mat-icon>close</mat-icon>
-        </button>
-      }
-    </mat-form-field>
-
     <mat-chip-listbox aria-label="Filtro de favoritas" (change)="changeFavorites($event)">
       <mat-chip-option value="favorites" [selected]="favoritesOnly()">
         <mat-icon matChipAvatar aria-hidden="true">bookmark</mat-icon>

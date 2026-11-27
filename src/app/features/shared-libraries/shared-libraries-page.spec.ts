@@ -118,24 +118,17 @@ describe('SharedLibrariesPage', () => {
         search: 'ana',
         ownerId: '',
       });
-      expect(element.querySelector('input')?.value).toBe('ana');
       expect(TestBed.inject(LibraryCounts).shared()).toBe(13);
     });
 
-    it('searches after the user stops typing, from the first page', async () => {
-      const { harness, element, list } = await setup({
-        url: '/libraries/shared?page=2',
+    it('follows a new search in the URL, typed in the header of «Bibliotecas»', async () => {
+      const { harness, list } = await setup({
         list: vi.fn(() => of({ items: [library('1', 'Novela', 'Ana')], total: 13 })),
       });
-      const input = element.querySelector('input')!;
 
-      input.value = 'ana';
-      input.dispatchEvent(new Event('input'));
-      await vi.waitFor(() => expect(list).toHaveBeenCalledTimes(2));
-      await harness.fixture.whenStable();
+      await harness.navigateByUrl('/libraries/shared?q=ana');
 
       expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: 'ana', ownerId: '' });
-      expect(TestBed.inject(Router).url).toBe('/libraries/shared?q=ana');
     });
 
     it('offers to clear it when nothing matches', async () => {
@@ -149,7 +142,6 @@ describe('SharedLibrariesPage', () => {
       });
       expect(element.textContent).toContain('coincide con «nada»');
       expect(element.textContent).not.toContain('Nadie ha compartido');
-      expect(element.querySelector('input')).not.toBeNull();
 
       element.querySelector<HTMLButtonElement>('.status button')!.click();
       await harness.fixture.whenStable();
