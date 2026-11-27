@@ -1,10 +1,17 @@
-<a mat-button class="back" routerLink="/libraries/shared">
-  <mat-icon>arrow_back</mat-icon>
-  Compartidas conmigo
-</a>
+<!-- With the library it goes into the header, on the line of the search -->
+@if (!library()) {
+  <a mat-button class="back" routerLink="/libraries/shared">
+    <mat-icon>arrow_back</mat-icon>
+    Compartidas conmigo
+  </a>
+}
 
 @if (library(); as library) {
   <header class="page-header">
+    <a mat-button class="back" routerLink="/libraries/shared">
+      <mat-icon>arrow_back</mat-icon>
+      Compartidas conmigo
+    </a>
     <div class="heading">
       <h1>{{ library.name }}</h1>
       <p class="owner">De {{ library.ownerName }}</p>

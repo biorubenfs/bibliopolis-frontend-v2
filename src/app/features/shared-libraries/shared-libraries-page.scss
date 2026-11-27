@@ -9,14 +9,6 @@ section:focus {
   outline: none;
 }
 
-.search {
-  // Pill shape: half of the field's 48px height
-  --mat-form-field-outlined-container-shape: 24px;
-
-  // Full width on phones, as in the other tab
-  flex: 1 1 100%;
-}
-
 .filters {
   display: flex;
   flex-wrap: wrap;
@@ -110,10 +102,4 @@ section:focus {
 mat-paginator {
   margin-top: 16px;
   background: transparent;
-}
-
-@media (min-width: 900px) {
-  .search {
-    flex: 0 1 360px;
-  }
 }

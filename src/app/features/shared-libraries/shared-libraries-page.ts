@@ -11,9 +11,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
@@ -41,9 +39,7 @@ const DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
   selector: 'app-shared-libraries-page',
   imports: [
     MatButtonModule,
-    MatFormFieldModule,
     MatIconModule,
-    MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSelectModule,
@@ -79,9 +75,12 @@ export class SharedLibrariesPage extends SearchableList<SharedLibrary> {
   /** With a single owner there is nothing to choose. */
   protected readonly showOwners = computed(() => this.owners().length > 1 || this.ownerId() !== '');
 
-  /** Without libraries there is nothing to look for; with no results it stays, to change it. */
+  /**
+   * The row of the owner filter, its only filter, so not without it. Without libraries there is
+   * nothing to look for; with no results it stays, to change it.
+   */
   protected readonly showFilters = computed(
-    () => this.search() !== '' || this.ownerId() !== '' || this.total() > 0,
+    () => this.showOwners() && (this.search() !== '' || this.ownerId() !== '' || this.total() > 0),
   );
 
   /** Own libraries that match the search. The owner does not apply to them. */

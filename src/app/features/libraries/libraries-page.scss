@@ -4,15 +4,6 @@
   display: block;
 }
 
-.search {
-  // Pill shape: half of the field's 48px height
-  --mat-form-field-outlined-container-shape: 24px;
-
-  // Full width on phones; next to the filters on larger screens
-  flex: 1 1 100%;
-  max-width: 100%;
-}
-
 .status {
   display: flex;
   flex-direction: column;
@@ -43,7 +34,7 @@
 }
 
 .filters {
-  // Tonal pill chips, without outline, like the search field next to them
+  // Tonal pill chips, without outline, like the search field of the header
   --mat-chip-container-shape-radius: 999px;
   --mat-chip-outline-width: 0;
   --mat-chip-elevated-container-color: var(--mat-sys-surface-container-high);
@@ -113,11 +104,4 @@
 mat-paginator {
   margin-top: 16px;
   background: transparent;
-}
-
-@media (min-width: 900px) {
-  .search {
-    flex: 1 1 220px;
-    max-width: 360px;
-  }
 }

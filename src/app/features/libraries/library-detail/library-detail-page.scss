@@ -1,19 +1,30 @@
+@use '../../../core/styles/page-header';
+
 :host {
-  display: block;
-  padding: 16px 16px 24px;
+  @include page-header.page;
 }
 
 .back {
-  margin: 0 0 8px -12px;
+  grid-area: back;
+  justify-self: start;
+  // The text lines up with the title, not the edge of the button
+  margin-left: -12px;
+}
+
+// Without the library (loading or error) it is alone above the content
+:host > .back {
+  margin-bottom: 8px;
 }
 
 // Phones and tablets: one column, with the view switch and the filter last, right above the list.
-// Desktop (see the media query): the heading and the search on top, and below them the view switch
-// and the filter on the left and the actions on the right, all next to the list they act on
+// Desktop (see the media query): the link back and the search on the first line, like the search of
+// the other list pages; then the heading; and below it the view switch and the filter on the left
+// and the actions on the right, all next to the list they act on
 .page-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
+    'back'
     'heading'
     'search'
     'actions'
@@ -162,21 +173,18 @@ mat-paginator {
   background: transparent;
 }
 
-@media (min-width: 900px) {
-  :host {
-    padding: 32px 48px 40px;
-  }
-
+@media (min-width: page-header.$desktop) {
   .page-header {
     // The actions may be wider than the search: they also take the space under the heading
-    grid-template-columns: auto minmax(0, 1fr) 360px;
+    grid-template-columns: auto minmax(0, 1fr) page-header.$search-width;
     grid-template-areas:
-      'heading heading search'
+      'back back search'
+      'heading heading heading'
       'tools actions actions';
   }
 
-  .search {
-    align-self: start;
+  .back {
+    align-self: center;
   }
 
   .actions {

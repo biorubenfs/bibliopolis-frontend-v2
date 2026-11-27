@@ -1,10 +1,17 @@
-<a mat-button class="back" routerLink="/libraries">
-  <mat-icon>arrow_back</mat-icon>
-  Bibliotecas
-</a>
+<!-- With the library it goes into the header, on the line of the search -->
+@if (!library()) {
+  <a mat-button class="back" routerLink="/libraries">
+    <mat-icon>arrow_back</mat-icon>
+    Bibliotecas
+  </a>
+}
 
 @if (library(); as library) {
   <header class="page-header">
+    <a mat-button class="back" routerLink="/libraries">
+      <mat-icon>arrow_back</mat-icon>
+      Bibliotecas
+    </a>
     <div class="heading">
       <div class="title-row">
         <h1>{{ library.name }}</h1>

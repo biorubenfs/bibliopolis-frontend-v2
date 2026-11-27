@@ -1,4 +1,39 @@
-<h1>Bibliotecas</h1>
+<header class="page-header">
+  <h1>Bibliotecas</h1>
+
+  @if (showSearch()) {
+    <mat-form-field
+      class="search app-tonal-field"
+      appearance="outline"
+      subscriptSizing="dynamic"
+      role="search"
+    >
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <input
+        matInput
+        type="text"
+        autocomplete="off"
+        [attr.placeholder]="searchPlaceholder()"
+        [attr.aria-label]="searchLabel()"
+        [attr.maxlength]="searchMaxLength"
+        [value]="query()"
+        (input)="onSearchInput($any($event.target).value)"
+        (keydown.escape)="clearSearch()"
+      />
+      @if (query()) {
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          aria-label="Borrar búsqueda"
+          (click)="clearSearch()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+  }
+</header>
 
 <nav mat-tab-nav-bar aria-label="Bibliotecas" [mat-stretch-tabs]="false" [tabPanel]="tabPanel">
   @for (item of tabs(); track item.id) {
