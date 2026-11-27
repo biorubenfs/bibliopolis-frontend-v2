@@ -1,0 +1,22 @@
+<h1>Bibliotecas</h1>
+
+<nav mat-tab-nav-bar aria-label="Bibliotecas" [mat-stretch-tabs]="false" [tabPanel]="tabPanel">
+  @for (item of tabs(); track item.id) {
+    <a
+      mat-tab-link
+      [routerLink]="item.path"
+      [queryParams]="tabQueryParams()"
+      [active]="tab() === item.id"
+    >
+      {{ item.label }}
+      @if (item.count !== null) {
+        <span class="count" aria-hidden="true">{{ item.count }}</span>
+        <span class="visually-hidden">, {{ item.countLabel }}</span>
+      }
+    </a>
+  }
+</nav>
+
+<mat-tab-nav-panel #tabPanel class="panel">
+  <router-outlet />
+</mat-tab-nav-panel>

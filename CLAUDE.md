@@ -94,7 +94,7 @@ Material 3 (`mat.theme` en `src/styles.scss`) con la paleta verde de la marca y 
 
 ## Contrato con el backend
 
-Referencia completa: `../bibliopolis-backend/docs/index.md` (autenticación, formato de respuestas, paginación, tabla de códigos de error) y una página por recurso en `../bibliopolis-backend/docs/api/` (`auth`, `users`, `books`, `libraries`, `user-books`, `external`, `imports`). Consultarla antes de implementar una llamada; no inventar campos ni endpoints.
+Referencia completa: `../bibliopolis-backend/docs/index.md` (autenticación, formato de respuestas, paginación, tabla de códigos de error) y una página por recurso en `../bibliopolis-backend/docs/api/` (`auth`, `users`, `books`, `libraries`, `shared-libraries`, `user-books`, `external`, `imports`). Consultarla antes de implementar una llamada; no inventar campos ni endpoints.
 
 ### URLs por entorno
 

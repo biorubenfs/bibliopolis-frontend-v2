@@ -8,8 +8,10 @@ export interface Library {
   userId: string;
   /** IDs of the user books in this library. */
   books: string[];
-  /** Favorites are listed first in «Mis bibliotecas». */
+  /** Favorites are listed first in «Bibliotecas». */
   isFavorite: boolean;
+  /** The people the library is shared with see the ratings of the owner, but never the notes. */
+  shareRatings: boolean;
   /** IDs of its tags, own or global (at most 5). */
   tagIds: string[];
   createdAt: string;
@@ -30,10 +32,18 @@ export const LIBRARY_NAME_MAX_LENGTH = 50;
 export const LIBRARY_DESCRIPTION_MAX_LENGTH = 100;
 export const LIBRARY_SEARCH_MAX_LENGTH = 100;
 
-/** A new library is never a favorite: it can only be marked with an update. */
-export type UpdateLibrary = Partial<CreateLibrary> & { isFavorite?: boolean };
+/** A new library is never a favorite nor shares the ratings: that is only set with an update. */
+export type UpdateLibrary = Partial<CreateLibrary> & {
+  isFavorite?: boolean;
+  shareRatings?: boolean;
+};
 
 export type LibraryExportFormat = 'pdf' | 'csv';
+
+/** Content-Disposition is not exposed through CORS, so the backend's naming rule is mirrored here. */
+export function libraryExportFilename(name: string, format: LibraryExportFormat): string {
+  return `${name.replace(/[^a-z0-9_-]/gi, '_')}.${format}`;
+}
 
 /** Body of POST /libraries/:id/books: at least one of the two ISBNs must have a value. */
 export interface AddBookToLibrary {

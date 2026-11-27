@@ -1,0 +1,109 @@
+h2 {
+  overflow-wrap: anywhere;
+}
+
+p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.summary {
+  display: flex;
+  gap: 16px;
+}
+
+.cover {
+  display: grid;
+  flex: none;
+  place-items: center;
+  align-self: flex-start;
+  width: 96px;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.placeholder {
+  width: 40px;
+  height: 40px;
+  font-size: 40px;
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  // Lets long words wrap instead of pushing the content wider than the dialog
+  min-width: 0;
+}
+
+.authors {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.isbn {
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+h3 {
+  margin: 0 0 8px;
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.ratings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+
+  div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  dt {
+    min-width: 0;
+    font: var(--mat-sys-body-large);
+    color: var(--mat-sys-on-surface);
+    overflow-wrap: anywhere;
+  }
+
+  dd {
+    flex: none;
+    margin: 0;
+  }
+}
+
+.missing,
+.hint {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.notes {
+  font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface);
+  // Keeps the line breaks of the notes
+  white-space: pre-line;
+}

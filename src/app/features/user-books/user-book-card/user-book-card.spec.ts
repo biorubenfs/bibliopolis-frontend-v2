@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { UserBook } from '../user-book.model';
+import { PersonRating, UserBook } from '../user-book.model';
 import { UserBookCard } from './user-book-card';
 
 describe('UserBookCard', () => {
@@ -35,8 +35,8 @@ describe('UserBookCard', () => {
     expect(element.textContent).toContain('Alex Shishin, Otra Autora');
     expect(element.querySelector('.rating')?.textContent).toMatch(/star\s*8\/10\s*$/);
     expect(element.textContent).not.toContain('Valoración');
-    expect(element.querySelector('.rating mat-icon')?.getAttribute('aria-label')).toBe(
-      'Valoración',
+    expect(element.querySelector('.rating [role="img"]')?.getAttribute('aria-label')).toBe(
+      'Valoración: 8 de 10',
     );
     expect(element.textContent).not.toContain('Muy recomendable');
     expect(element.textContent).toContain('ISBN-13: 9780595385294');
@@ -138,5 +138,48 @@ describe('UserBookCard', () => {
 
     expect(element.querySelector('img')).toBeNull();
     expect(element.querySelector('.placeholder')).not.toBeNull();
+  });
+
+  it('shows the ratings of several people with their names, in place of the own one', () => {
+    const fixture = render();
+    const { rating, libraries, ...shared } = book;
+    fixture.componentRef.setInput('book', {
+      ...shared,
+      ratings: [
+        { name: 'Ana', own: false, value: 9 },
+        { name: 'Tú', own: true, value: 7 },
+      ],
+    });
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('.rating')).toBeNull();
+    const ratings = Array.from(element.querySelectorAll('.ratings app-rating-value'));
+    expect(ratings.map((item) => item.getAttribute('aria-label'))).toEqual([
+      'Valoración de Ana: 9 de 10',
+      'Tu valoración: 7 de 10',
+    ]);
+    expect(ratings[0].textContent).toContain('Ana');
+    expect(ratings[1].textContent).toContain('Tú');
+  });
+
+  it('leaves out the people who have not rated the book', () => {
+    const fixture = render();
+    const { rating, libraries, ...shared } = book;
+    const show = (ratings: PersonRating[]) => {
+      fixture.componentRef.setInput('book', { ...shared, ratings });
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    };
+
+    const onlyOwn = show([
+      { name: 'Ana', own: false, value: null },
+      { name: 'Tú', own: true, value: 7 },
+    ]);
+    expect(onlyOwn.querySelectorAll('app-rating-value')).toHaveLength(1);
+    expect(onlyOwn.textContent).not.toContain('Ana');
+
+    const none = show([{ name: 'Tú', own: true, value: null }]);
+    expect(none.querySelector('.ratings')).toBeNull();
   });
 });

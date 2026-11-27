@@ -19,6 +19,7 @@ import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
 import { RemoveBookDialog } from '../remove-book-dialog/remove-book-dialog';
 import { ScanBooksDialog } from '../scan-books-dialog/scan-books-dialog';
+import { ShareLibraryDialog } from '../share-library-dialog/share-library-dialog';
 import { Tag } from '../../tags/tag.model';
 import { TagsService } from '../../tags/tags.service';
 import { LibraryDetailPage } from './library-detail-page';
@@ -29,6 +30,7 @@ const library: Library = {
   description: 'Mis novelas',
   books: [],
   isFavorite: false,
+  shareRatings: false,
   tagIds: [],
   userId: 'u1',
   createdAt: '',
@@ -133,6 +135,19 @@ describe('LibraryDetailPage', () => {
     }
     const listing = (item: LibraryImport) => vi.fn(() => of({ items: [item], total: 1 }));
     const notice = (element: HTMLElement) => element.querySelector('.import-notice');
+
+    it('opens the dialog to share the library', async () => {
+      const { element, openDialog } = await setup();
+
+      Array.from(element.querySelectorAll('button'))
+        .find((button) => button.textContent?.includes('Compartir'))!
+        .click();
+
+      expect(openDialog).toHaveBeenCalledWith(
+        ShareLibraryDialog,
+        expect.objectContaining({ data: library }),
+      );
+    });
 
     it('opens the import dialog with this library as the destination', async () => {
       const { element, openDialog } = await setup();

@@ -1,37 +1,16 @@
+@use '../../core/styles/select-chip';
+
 :host {
   display: block;
-  padding: 24px 16px;
-}
-
-.page-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px 24px;
-  margin-bottom: 24px;
 }
 
 .search {
   // Pill shape: half of the field's 48px height
   --mat-form-field-outlined-container-shape: 24px;
 
-  // Full width on phones; a fixed comfortable width next to the title on larger screens
+  // Full width on phones; next to the filters on larger screens
   flex: 1 1 100%;
   max-width: 100%;
-}
-
-h1 {
-  margin: 0;
-  font: var(--app-font-title);
-  letter-spacing: var(--app-font-title-tracking);
-  color: var(--mat-sys-on-surface);
-}
-
-.count {
-  margin: 4px 0 0;
-  font: var(--mat-sys-body-large);
-  color: var(--mat-sys-on-surface-variant);
 }
 
 .status {
@@ -64,7 +43,7 @@ h1 {
 }
 
 .filters {
-  // Tonal pill chips, without outline, like the search field above them
+  // Tonal pill chips, without outline, like the search field next to them
   --mat-chip-container-shape-radius: 999px;
   --mat-chip-outline-width: 0;
   --mat-chip-elevated-container-color: var(--mat-sys-surface-container-high);
@@ -73,7 +52,7 @@ h1 {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 16px;
-  margin: -8px 0 24px;
+  margin-bottom: 24px;
 
   // With selected tags below, the chips sit closer to the filters they belong to
   &:has(+ .active-tags) {
@@ -81,69 +60,19 @@ h1 {
   }
 }
 
-// Pushed to the right edge, under the search field; wraps onto its own line on narrow screens
+// Pushed to the right edge, wraps onto its own line on narrow screens
 .filters .create {
   margin-left: auto;
 }
 
-// Same look as the filter chip next to it: 32px high pill, tonal when off and highlighted when
-// some tag is selected
 .tag-filter {
-  // The select text uses the chip label font and colours
-  --mat-select-trigger-text-font: var(--mat-sys-label-large-font);
-  --mat-select-trigger-text-size: var(--mat-sys-label-large-size);
-  --mat-select-trigger-text-weight: var(--mat-sys-label-large-weight);
-  --mat-select-trigger-text-line-height: var(--mat-sys-label-large-line-height);
-  --mat-select-trigger-text-tracking: var(--mat-sys-label-large-tracking);
-  --mat-select-enabled-trigger-text-color: var(--mat-sys-on-surface-variant);
-  --mat-select-placeholder-text-color: var(--mat-sys-on-surface-variant);
-  --mat-select-enabled-arrow-color: var(--mat-sys-on-surface-variant);
+  @include select-chip.chip;
 
-  position: relative;
-  display: flex;
-  align-items: center;
   width: 160px;
-  height: 32px;
-  box-sizing: border-box;
-  border-radius: 999px;
-  background: var(--mat-sys-surface-container-high);
-  color: var(--mat-sys-on-surface-variant);
-
-  &.active {
-    --mat-select-enabled-trigger-text-color: var(--mat-sys-on-secondary-container);
-    --mat-select-enabled-arrow-color: var(--mat-sys-on-secondary-container);
-
-    background: var(--mat-sys-secondary-container);
-    color: var(--mat-sys-on-secondary-container);
-  }
-
-  &.disabled {
-    opacity: 0.38;
-  }
-
-  &:has(.tag-select:focus-visible) {
-    outline: 2px solid var(--mat-sys-primary);
-    outline-offset: 2px;
-  }
-
-  // Decorative: clicks go through to the select, which covers the whole chip
-  mat-icon {
-    position: absolute;
-    left: 8px;
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
-    pointer-events: none;
-  }
 }
 
-// Covers the whole chip, so a click anywhere opens it; flex centres the text vertically
 .tag-select {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding: 0 8px 0 32px;
-  box-sizing: border-box;
+  @include select-chip.select;
 }
 
 .active-tags {
@@ -163,9 +92,18 @@ h1 {
   border-radius: 50%;
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  // Room for the four buttons of the card and a count of four digits. min(): never wider than the
+  // screen on very narrow phones
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 16px;
   margin: 0;
   padding: 0;
@@ -178,11 +116,8 @@ mat-paginator {
 }
 
 @media (min-width: 900px) {
-  :host {
-    padding: 40px 48px;
-  }
-
   .search {
-    flex: 0 1 360px;
+    flex: 1 1 220px;
+    max-width: 360px;
   }
 }

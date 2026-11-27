@@ -165,15 +165,15 @@ mat-paginator {
   }
 
   .page-header {
-    grid-template-columns: minmax(0, 1fr) auto;
+    // The actions may be wider than the search: they also take the space under the heading
+    grid-template-columns: auto minmax(0, 1fr) 360px;
     grid-template-areas:
-      'heading search'
-      'toggle actions';
+      'heading heading search'
+      'toggle actions actions';
   }
 
   .search {
     align-self: start;
-    width: 360px;
   }
 
   .actions {

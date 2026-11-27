@@ -1,14 +1,16 @@
 import { TestBed } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 
 import { Tag } from '../tags/tag.model';
 import { TagsService } from '../tags/tags.service';
+import { LibraryCounts } from './libraries-section/library-counts';
 import { LibrariesService } from './libraries.service';
 import { LibrariesPage, SEARCH_DEBOUNCE_MS } from './libraries-page';
 import { Library } from './library.model';
+import { ShareLibraryDialog } from './share-library-dialog/share-library-dialog';
 
 function library(
   id: string,
@@ -23,6 +25,7 @@ function library(
     description: `Descripción de ${name}`,
     books,
     isFavorite,
+    shareRatings: false,
     tagIds,
     userId: 'u1',
     createdAt: '',
@@ -41,6 +44,7 @@ describe('LibrariesPage', () => {
       imports: [LibrariesPage],
       providers: [
         provideRouter([]),
+        LibraryCounts,
         tagsStub(),
         { provide: LibrariesService, useValue: { list: () => of({ items, total: items.length }) } },
       ],
@@ -70,6 +74,55 @@ describe('LibrariesPage', () => {
     expect(element.querySelector('.status .create')?.textContent).toContain('Nueva biblioteca');
   });
 
+  it('links to the shared libraries when there are only those', async () => {
+    const element = await render([]);
+    const link = () => element.querySelector('.status a');
+    expect(link()).toBeNull();
+
+    TestBed.inject(LibraryCounts).shared.set(2);
+    TestBed.tick();
+
+    expect(link()?.getAttribute('href')).toBe('/libraries/shared');
+  });
+
+  it('sets its number on the tab, and removes it if the list cannot be loaded', async () => {
+    await render([library('1', 'Novela'), library('2', 'Ensayo')]);
+    const counts = TestBed.inject(LibraryCounts);
+    expect(counts.own()).toBe(2);
+
+    vi.spyOn(TestBed.inject(LibrariesService), 'list').mockReturnValue(
+      throwError(() => new Error('down')),
+    );
+    TestBed.createComponent(LibrariesPage);
+
+    expect(counts.own()).toBeNull();
+  });
+
+  it('does not change the number once it is closed', async () => {
+    await render([library('1', 'Novela')]);
+    const counts = TestBed.inject(LibraryCounts);
+    const response = new Subject<{ items: Library[]; total: number }>();
+    vi.spyOn(TestBed.inject(LibrariesService), 'list').mockReturnValue(response);
+    const fixture = TestBed.createComponent(LibrariesPage);
+
+    fixture.destroy();
+    response.next({ items: [], total: 9 });
+
+    expect(counts.own()).toBe(1);
+  });
+
+  it('opens the dialog to share a library', async () => {
+    const item = library('1', 'Novela');
+    const element = await render([item]);
+    const open = vi
+      .spyOn(TestBed.inject(MatDialog), 'open')
+      .mockReturnValue({} as MatDialogRef<unknown>);
+
+    element.querySelector<HTMLButtonElement>('[aria-label="Compartir Novela"]')!.click();
+
+    expect(open).toHaveBeenCalledWith(ShareLibraryDialog, expect.objectContaining({ data: item }));
+  });
+
   it('shows the create button in the filters row when there are libraries', async () => {
     const element = await render([library('1', 'Novela', ['a'])]);
 
@@ -89,6 +142,7 @@ describe('LibrariesPage', () => {
         imports: [LibrariesPage],
         providers: [
           provideRouter([]),
+          LibraryCounts,
           tagsStub(),
           { provide: LibrariesService, useValue: { list } },
         ],
@@ -137,7 +191,7 @@ describe('LibrariesPage', () => {
         tagIds: [],
       });
       expect(element.querySelectorAll('.card').length).toBe(1);
-      expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
+      expect(TestBed.inject(LibraryCounts).own()).toBe(1);
     });
 
     it('restores the search from the URL', async () => {
@@ -199,6 +253,33 @@ describe('LibrariesPage', () => {
       expect(list).toHaveBeenCalledTimes(2);
     });
 
+    it.each([
+      ['', '/?q=viajes'],
+      [' and filters', '/?q=viajes&favorites=true'],
+    ])('offers the shared libraries that match a search%s without results', async (_, url) => {
+      const { element, wait } = await setup(() => [], url);
+      const link = () => element.querySelector('.status a');
+      expect(link()).toBeNull();
+
+      TestBed.inject(LibraryCounts).shared.set(2);
+      await wait();
+      expect(link()?.textContent?.trim()).toBe('Ver 2 en compartidas conmigo');
+      expect(link()?.getAttribute('href')).toBe('/libraries/shared?q=viajes');
+
+      TestBed.inject(LibraryCounts).shared.set(0);
+      await wait();
+      expect(link()).toBeNull();
+    });
+
+    it('does not offer the shared libraries for the filters alone', async () => {
+      const { element, wait } = await setup(() => [], '/?favorites=true&tags=t1');
+      TestBed.inject(LibraryCounts).shared.set(2);
+      await wait();
+
+      expect(element.textContent).toContain('Ninguna biblioteca coincide con los filtros');
+      expect(element.querySelector('.status a')).toBeNull();
+    });
+
     it('hides the search field when the user has no libraries', async () => {
       const { input } = await setup(() => []);
 
@@ -223,6 +304,7 @@ describe('LibrariesPage', () => {
         imports: [LibrariesPage],
         providers: [
           provideRouter([]),
+          LibraryCounts,
           tagsStub(),
           { provide: LibrariesService, useValue: { list } },
         ],
@@ -435,6 +517,7 @@ describe('LibrariesPage', () => {
         imports: [LibrariesPage],
         providers: [
           provideRouter([]),
+          LibraryCounts,
           tagsStub(),
           { provide: LibrariesService, useValue: { list, update } },
           { provide: MatSnackBar, useValue: { open: openSnackBar } },
@@ -470,7 +553,7 @@ describe('LibrariesPage', () => {
         tagIds: [],
       });
       expect(element.querySelectorAll('.card').length).toBe(1);
-      expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
+      expect(TestBed.inject(LibraryCounts).own()).toBe(1);
     });
 
     it('restores the favorites filter from the URL', async () => {
@@ -600,6 +683,7 @@ describe('LibrariesPage', () => {
         imports: [LibrariesPage],
         providers: [
           provideRouter([]),
+          LibraryCounts,
           { provide: LibrariesService, useValue: { list } },
           { provide: TagsService, useValue: { listAll } },
           { provide: MatDialog, useValue: { open: openDialog } },
@@ -680,7 +764,7 @@ describe('LibrariesPage', () => {
         tagIds: ['t1'],
       });
       expect(element.querySelectorAll('.card').length).toBe(1);
-      expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
+      expect(TestBed.inject(LibraryCounts).own()).toBe(1);
       expect(activeChips()).toEqual(['Novela']);
 
       // The panel stays open: a second tag is added to the first one

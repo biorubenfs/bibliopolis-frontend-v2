@@ -1,18 +1,5 @@
-<header class="page-header">
-  <div>
-    <h1>Mis bibliotecas</h1>
-    @if (total() > 0) {
-      <p class="count">
-        @if (filtered()) {
-          {{ total() }} {{ total() === 1 ? 'resultado' : 'resultados' }}
-        } @else {
-          {{ total() }} {{ total() === 1 ? 'biblioteca' : 'bibliotecas' }}
-        }
-      </p>
-    }
-  </div>
-
-  @if (showFilters()) {
+@if (showFilters()) {
+  <div class="filters">
     <mat-form-field
       class="search app-tonal-field"
       appearance="outline"
@@ -23,7 +10,7 @@
       <input
         matInput
         type="text"
-        placeholder="Buscar por nombre o descripción"
+        placeholder="Nombre o descripción"
         aria-label="Buscar bibliotecas"
         autocomplete="off"
         [attr.maxlength]="searchMaxLength"
@@ -43,11 +30,7 @@
         </button>
       }
     </mat-form-field>
-  }
-</header>
 
-@if (showFilters()) {
-  <div class="filters">
     <mat-chip-listbox aria-label="Filtro de favoritas" (change)="changeFavorites($event)">
       <mat-chip-option value="favorites" [selected]="favoritesOnly()">
         <mat-icon matChipAvatar aria-hidden="true">bookmark</mat-icon>
@@ -68,7 +51,7 @@
         multiple
         placeholder="Etiquetas"
         aria-label="Filtrar por etiquetas"
-        panelClass="tag-select-panel"
+        panelClass="tag-select-panel app-chip-select-panel"
         [panelWidth]="null"
         [value]="selectedTagIds()"
         [disabled]="tags().length === 0"
@@ -140,14 +123,28 @@
         <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
         <h2>Ninguna biblioteca coincide con los filtros</h2>
         <p>Prueba a quitar alguno de los filtros o a cambiar la búsqueda.</p>
-        <button mat-stroked-button type="button" (click)="clearFilters()">Quitar filtros</button>
+        <div class="actions">
+          <button mat-stroked-button type="button" (click)="clearFilters()">Quitar filtros</button>
+          @if (sharedMatches(); as count) {
+            <a mat-button routerLink="/libraries/shared" [queryParams]="{ q: search() }">
+              Ver {{ count }} en compartidas conmigo
+            </a>
+          }
+        </div>
       </div>
     } @else if (libraries().length === 0 && filterKind() === 'search') {
       <div class="status empty">
         <mat-icon aria-hidden="true">search_off</mat-icon>
         <h2>Ninguna biblioteca coincide con «{{ search() }}»</h2>
         <p>Prueba con otra palabra del nombre o de la descripción.</p>
-        <button mat-stroked-button type="button" (click)="clearSearch()">Borrar búsqueda</button>
+        <div class="actions">
+          <button mat-stroked-button type="button" (click)="clearSearch()">Borrar búsqueda</button>
+          @if (sharedMatches(); as count) {
+            <a mat-button routerLink="/libraries/shared" [queryParams]="{ q: search() }">
+              Ver {{ count }} en compartidas conmigo
+            </a>
+          }
+        </div>
       </div>
     } @else if (libraries().length === 0 && filterKind() === 'favorites') {
       <div class="status empty">
@@ -169,6 +166,9 @@
           <mat-icon>add</mat-icon>
           Nueva biblioteca
         </button>
+        @if (sharedCount()) {
+          <a mat-button routerLink="/libraries/shared">Ver las compartidas conmigo</a>
+        }
       </div>
     } @else {
       <ul class="grid">
@@ -181,6 +181,7 @@
               [savingFavorite]="savingFavoriteId() === library.id"
               (favoriteToggled)="toggleFavorite(library)"
               (exportRequested)="export(library, $event)"
+              (shareRequested)="openShareDialog(library)"
               (editRequested)="openEditDialog(library)"
               (deleteRequested)="openDeleteDialog(library)"
             />

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MatTooltip } from '@angular/material/tooltip';
 
-import { UserBook } from '../user-book.model';
+import { PersonRating, UserBook } from '../user-book.model';
 import { UserBooksTable } from './user-books-table';
 
 describe('UserBooksTable', () => {
@@ -185,5 +185,74 @@ describe('UserBooksTable', () => {
     expect(rows[0].textContent).toContain('1 biblioteca');
     expect(rows[1].textContent).toContain('2 bibliotecas');
     expect(element.querySelector('[aria-label^="Quitar"]')).toBeNull();
+  });
+
+  describe('with the ratings of several people', () => {
+    const { rating, libraries, ...shared } = book;
+
+    function renderShared(raters: string[], ratings: PersonRating[]) {
+      const fixture = TestBed.createComponent(UserBooksTable);
+      fixture.componentRef.setInput('books', [{ ...shared, ratings }]);
+      fixture.componentRef.setInput('raters', raters);
+      fixture.componentRef.setInput('removable', false);
+      fixture.detectChanges();
+      return { fixture, element: fixture.nativeElement as HTMLElement };
+    }
+
+    const ana: PersonRating = { name: 'Ana', own: false, value: 9 };
+    const own: PersonRating = { name: 'Tú', own: true, value: 7 };
+
+    it('shows a column per person, and another with all of them for narrow frames', () => {
+      const { element } = renderShared(['Ana', 'Tú'], [ana, own]);
+
+      expect(headers(element)).toEqual([
+        'Título',
+        'Autores',
+        'Ana',
+        'Tú',
+        'Valoraciones',
+        'ISBN-13',
+        'ISBN-10',
+      ]);
+      const labels = (selector: string) =>
+        Array.from(element.querySelectorAll(`td${selector} app-rating-value`), (item) =>
+          item.getAttribute('aria-label'),
+        );
+      const both = ['Valoración de Ana: 9 de 10', 'Tu valoración: 7 de 10'];
+      expect(labels('.rater')).toEqual(both);
+      expect(labels('.mat-column-ratings')).toEqual(both);
+      // The names are in the headers, except where the ratings are stacked
+      expect(element.querySelector('td.rater')?.textContent).not.toContain('Ana');
+      expect(element.querySelector('td.mat-column-ratings')?.textContent).toContain('Ana');
+    });
+
+    it('needs no stacked column with a single person', () => {
+      const { element } = renderShared(['Tú'], [own]);
+
+      expect(headers(element)).toEqual(['Título', 'Autores', 'Tú', 'ISBN-13', 'ISBN-10']);
+      expect(element.querySelector('.stackable')).toBeNull();
+    });
+
+    it('marks who has not rated the book', () => {
+      const { element } = renderShared(['Ana', 'Tú'], [{ ...ana, value: null }, own]);
+
+      const [anaCell, ownCell] = Array.from(element.querySelectorAll('td.rater'));
+      expect(anaCell.querySelector('[aria-label="Sin valorar"]')).not.toBeNull();
+      expect(ownCell.textContent).toContain('7/10');
+      expect(element.querySelectorAll('td.mat-column-ratings app-rating-value')).toHaveLength(1);
+    });
+
+    it('follows the people to show', () => {
+      const { fixture, element } = renderShared(['Ana', 'Tú'], [ana, own]);
+
+      fixture.componentRef.setInput('books', [{ ...shared, ratings: [own] }]);
+      fixture.componentRef.setInput('raters', ['Tú']);
+      fixture.detectChanges();
+
+      expect(headers(element)).toEqual(['Título', 'Autores', 'Tú', 'ISBN-13', 'ISBN-10']);
+      expect(element.querySelector('td.rater app-rating-value')?.getAttribute('aria-label')).toBe(
+        'Tu valoración: 7 de 10',
+      );
+    });
   });
 });

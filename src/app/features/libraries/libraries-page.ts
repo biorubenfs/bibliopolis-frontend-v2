@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipListboxChange, MatChipsModule } from '@angular/material/chips';
@@ -10,7 +17,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, Subscription, debounceTime, distinctUntilChanged, map } from 'rxjs';
 
 import { saveFile } from '../../core/files/save-file';
@@ -28,6 +35,7 @@ import {
 import { MAX_TAGS_PER_LIBRARY, TAG_COLOR_STYLES, Tag } from '../tags/tag.model';
 import { TagsService } from '../tags/tags.service';
 import { DeleteLibraryDialog } from './delete-library-dialog/delete-library-dialog';
+import { LibraryCounts } from './libraries-section/library-counts';
 import { LibrariesService } from './libraries.service';
 import { LibraryCard } from './library-card/library-card';
 import {
@@ -35,6 +43,11 @@ import {
   LibraryFormDialogData,
 } from './library-form-dialog/library-form-dialog';
 import { LIBRARY_SEARCH_MAX_LENGTH, Library, LibraryExportFormat } from './library.model';
+import {
+  SHARE_DIALOG_SIZE,
+  ShareLibraryDialog,
+  ShareLibraryDialogData,
+} from './share-library-dialog/share-library-dialog';
 
 type LoadState = 'loading' | 'loaded' | 'error';
 
@@ -80,6 +93,7 @@ const LIMIT_QUERY_PARAM = 'limit';
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    RouterLink,
   ],
   templateUrl: './libraries-page.html',
   styleUrl: './libraries-page.scss',
@@ -89,6 +103,8 @@ const LIMIT_QUERY_PARAM = 'limit';
 export class LibrariesPage {
   private readonly librariesService = inject(LibrariesService);
   private readonly tagsService = inject(TagsService);
+  private readonly counts = inject(LibraryCounts);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
@@ -127,6 +143,10 @@ export class LibrariesPage {
     if (favorites && !search && !tags) return 'favorites';
     return 'mixed';
   });
+  /** Libraries shared with the user; with a search, only the ones that match it. */
+  protected readonly sharedCount = this.counts.shared.asReadonly();
+  /** Only with a search: the filters do not apply to the shared libraries. */
+  protected readonly sharedMatches = computed(() => (this.search() ? this.sharedCount() : null));
   /** True when a search or a filter is applied. */
   protected readonly filtered = computed(() => this.filterKind() !== 'none');
 
@@ -232,9 +252,12 @@ export class LibrariesPage {
         favorites: this.favoritesOnly(),
         tagIds: this.selectedTagIds(),
       })
+      // The other tab may be open by then, and its number would be overwritten
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ items, total }) => {
           this.total.set(total);
+          this.counts.own.set(total);
           // Past the end, because the last library of the page was deleted or a shared link is
           // outdated: show the last page. Replacing the URL keeps the invalid one out of the
           // history, and the URL change reloads the list.
@@ -246,7 +269,10 @@ export class LibrariesPage {
           this.libraries.set(items);
           this.state.set('loaded');
         },
-        error: () => this.state.set('error'),
+        error: () => {
+          this.counts.own.set(null);
+          this.state.set('error');
+        },
       });
   }
 
@@ -414,6 +440,14 @@ export class LibrariesPage {
           this.notify('Cambios guardados');
         }
       });
+  }
+
+  /** The dialog saves each change by itself, and nothing on the cards depends on them. */
+  protected openShareDialog(library: Library): void {
+    this.dialog.open<ShareLibraryDialog, ShareLibraryDialogData>(ShareLibraryDialog, {
+      ...SHARE_DIALOG_SIZE,
+      data: library,
+    });
   }
 
   protected openDeleteDialog(library: Library): void {

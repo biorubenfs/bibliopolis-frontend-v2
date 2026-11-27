@@ -1,6 +1,6 @@
 <a mat-button class="back" routerLink="/libraries">
   <mat-icon>arrow_back</mat-icon>
-  Mis bibliotecas
+  Bibliotecas
 </a>
 
 @if (library(); as library) {
@@ -78,6 +78,15 @@
       <button mat-stroked-button type="button" (click)="openImportDialog(library)">
         <mat-icon>upload_file</mat-icon>
         Importar CSV
+      </button>
+      <button
+        mat-stroked-button
+        type="button"
+        aria-haspopup="dialog"
+        (click)="openShareDialog(library)"
+      >
+        <mat-icon>group_add</mat-icon>
+        Compartir
       </button>
       <button #addButton mat-flat-button type="button" (click)="openAddDialog()">
         <mat-icon>add</mat-icon>

@@ -1,0 +1,33 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  // A long name is cut instead of pushing the rating out of its place
+  max-width: 100%;
+  min-width: 0;
+  font: var(--mat-sys-label-large);
+  white-space: nowrap;
+  // The baseline is the one of the icon, which would leave the text above its line
+  vertical-align: middle;
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+  text-overflow: ellipsis;
+}
+
+mat-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  color: var(--mat-sys-secondary);
+}
+
+// Only a reinforcement: the name is what tells the ratings apart
+:host(.own) mat-icon {
+  color: var(--mat-sys-primary);
+}

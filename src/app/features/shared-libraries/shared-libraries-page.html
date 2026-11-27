@@ -1,0 +1,149 @@
+<section #content tabindex="-1" aria-label="Compartidas conmigo">
+  @if (showFilters()) {
+    <div class="filters">
+      <mat-form-field
+        class="search app-tonal-field"
+        appearance="outline"
+        subscriptSizing="dynamic"
+        role="search"
+      >
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input
+          matInput
+          type="text"
+          placeholder="Nombre, descripción o propietario"
+          aria-label="Buscar bibliotecas compartidas conmigo"
+          autocomplete="off"
+          [attr.maxlength]="searchMaxLength"
+          [value]="query()"
+          (input)="onSearchInput($any($event.target).value)"
+          (keydown.escape)="clearSearch()"
+        />
+        @if (query()) {
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            aria-label="Borrar búsqueda"
+            (click)="clearSearch()"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      @if (showOwners()) {
+        <!-- A select without its form field, styled as a filter chip -->
+        <div class="owner-filter" [class.active]="ownerId()">
+          <mat-icon aria-hidden="true">person</mat-icon>
+          <mat-select
+            class="owner-select"
+            panelClass="app-chip-select-panel"
+            placeholder="Propietario"
+            aria-label="Filtrar por propietario"
+            [panelWidth]="null"
+            [value]="ownerId() || null"
+            (selectionChange)="changeOwner($event.value ?? '')"
+          >
+            <mat-select-trigger>{{ ownerName() }}</mat-select-trigger>
+            <mat-option [value]="null">Todos</mat-option>
+            @for (owner of owners(); track owner.id) {
+              <mat-option [value]="owner.id">
+                <span class="owner-option">
+                  {{ owner.name }}
+                  <span class="owner-count" aria-hidden="true">{{ owner.librariesCount }}</span>
+                  <span class="visually-hidden">
+                    , {{ owner.librariesCount }}
+                    {{ owner.librariesCount === 1 ? 'biblioteca' : 'bibliotecas' }}
+                  </span>
+                </span>
+              </mat-option>
+            }
+          </mat-select>
+        </div>
+      }
+    </div>
+  }
+
+  @switch (state()) {
+    @case ('loading') {
+      <div class="status">
+        <mat-spinner diameter="40" aria-label="Cargando bibliotecas" />
+      </div>
+    }
+    @case ('error') {
+      <div class="status" role="alert">
+        <mat-icon aria-hidden="true">cloud_off</mat-icon>
+        <p>No se han podido cargar las bibliotecas compartidas contigo.</p>
+        <button mat-stroked-button type="button" (click)="load()">Reintentar</button>
+      </div>
+    }
+    @default {
+      @if (items().length === 0 && ownerId()) {
+        <div class="status empty">
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          <h2>Ninguna biblioteca coincide con los filtros</h2>
+          <p>Prueba con otro propietario o a cambiar la búsqueda.</p>
+          <div class="actions">
+            <button mat-stroked-button type="button" (click)="clearFilters()">
+              Quitar filtros
+            </button>
+            @if (ownMatches(); as count) {
+              <a mat-button routerLink="/libraries" [queryParams]="{ q: search() }">
+                Ver {{ count }} en mis bibliotecas
+              </a>
+            }
+          </div>
+        </div>
+      } @else if (items().length === 0 && search()) {
+        <div class="status empty">
+          <mat-icon aria-hidden="true">search_off</mat-icon>
+          <h2>Ninguna biblioteca compartida contigo coincide con «{{ search() }}»</h2>
+          <p>Prueba con otra palabra del nombre o de la descripción, o con otro propietario.</p>
+          <div class="actions">
+            <button mat-stroked-button type="button" (click)="clearSearch()">
+              Borrar búsqueda
+            </button>
+            @if (ownMatches(); as count) {
+              <a mat-button routerLink="/libraries" [queryParams]="{ q: search() }">
+                Ver {{ count }} en mis bibliotecas
+              </a>
+            }
+          </div>
+        </div>
+      } @else if (items().length === 0) {
+        <div class="status empty">
+          <mat-icon aria-hidden="true">group</mat-icon>
+          <h2>Nadie ha compartido una biblioteca contigo</h2>
+          <p>Cuando alguien te invite a ver una de las suyas, aparecerá aquí.</p>
+        </div>
+      } @else {
+        <ul class="grid">
+          @for (library of items(); track library.id) {
+            <li>
+              <app-shared-library-card
+                [library]="library"
+                [exporting]="exportingId() === library.id"
+                (exportRequested)="export(library, $event)"
+                (leaveRequested)="openLeaveDialog(library)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    }
+  }
+
+  <!-- Outside the @switch so it stays in the DOM while a page loads and keeps the keyboard focus -->
+  @if (showPaginator()) {
+    <mat-paginator
+      [length]="total()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      showFirstLastButtons
+      (page)="changePage($event)"
+      aria-label="Páginas de bibliotecas compartidas"
+    />
+  }
+</section>

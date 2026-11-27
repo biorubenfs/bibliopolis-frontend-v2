@@ -24,11 +24,20 @@
     </h2>
     <p class="authors">{{ authors() }}</p>
 
-    @if (book().rating !== null) {
-      <p class="rating">
-        <!-- The star is the only hint of what the number means, so screen readers must get it -->
-        <mat-icon aria-hidden="false" aria-label="Valoración">star</mat-icon>
-        {{ book().rating }}/10
+    @if (book().rating; as rating) {
+      <p class="rating"><app-rating-value [value]="rating" /></p>
+    }
+
+    @if (personRatings().length > 0) {
+      <p class="ratings">
+        @for (rating of personRatings(); track $index) {
+          <app-rating-value
+            [value]="rating.value"
+            [name]="rating.name"
+            [own]="rating.own"
+            [showName]="true"
+          />
+        }
       </p>
     }
 

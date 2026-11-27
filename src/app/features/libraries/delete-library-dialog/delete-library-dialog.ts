@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { LibrariesService } from '../libraries.service';
 import { Library } from '../library.model';
+import { LibraryMembersService } from '../library-members.service';
 
 /** Asks for confirmation and deletes the library. Closes with `true` once it is deleted. */
 @Component({
@@ -16,6 +18,14 @@ import { Library } from '../library.model';
       <p>
         Los libros no se borran: solo dejarán de estar en esta biblioteca y seguirán disponibles en
         «Mis libros».
+      </p>
+      <!-- Always there, so screen readers announce the warning when it arrives -->
+      <p class="members" role="status">
+        @if (membersCount() === 1) {
+          La compartes con 1 persona, que dejará de verla.
+        } @else if (membersCount() > 1) {
+          La compartes con {{ membersCount() }} personas, que dejarán de verla.
+        }
       </p>
       <div class="error" role="alert">
         @if (errorMessage(); as message) {
@@ -45,6 +55,12 @@ import { Library } from '../library.model';
       margin: 0;
     }
 
+    .members:not(:empty) {
+      margin-top: 16px;
+      color: var(--mat-sys-on-surface);
+      font-weight: 500;
+    }
+
     .error:not(:empty) {
       margin-top: 16px;
       padding: 12px 16px;
@@ -65,8 +81,22 @@ export class DeleteLibraryDialog {
   private readonly dialogRef = inject<MatDialogRef<DeleteLibraryDialog, boolean>>(MatDialogRef);
   protected readonly library = inject<Library>(MAT_DIALOG_DATA);
 
+  /** People who will lose access to the library; 0 until it is known. */
+  protected readonly membersCount = signal(0);
   protected readonly deleting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+
+  constructor() {
+    // The pagination total says how many they are, without loading them
+    inject(LibraryMembersService)
+      .list(this.library.id, { skip: 0, limit: 1 })
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: ({ total }) => this.membersCount.set(total),
+        // Not knowing the count must not prevent the deletion
+        error: () => undefined,
+      });
+  }
 
   protected confirm(): void {
     this.deleting.set(true);

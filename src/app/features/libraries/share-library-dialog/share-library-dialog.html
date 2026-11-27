@@ -1,0 +1,115 @@
+<h2 mat-dialog-title>Compartir «{{ library.name }}»</h2>
+
+<mat-dialog-content>
+  @switch (state()) {
+    @case ('loading') {
+      <div class="status">
+        <mat-spinner diameter="32" aria-label="Cargando personas con acceso" />
+      </div>
+    }
+    @case ('error') {
+      <div class="status" role="alert">
+        <p>No se ha podido cargar con quién compartes esta biblioteca.</p>
+        <button mat-stroked-button type="button" (click)="load()">Reintentar</button>
+      </div>
+    }
+    @default {
+      <p class="note">
+        Las personas que invites podrán ver sus libros, pero no cambiarlos. Deben tener una cuenta
+        en Bibliopolis.
+      </p>
+
+      <form class="invite" [formGroup]="form" (ngSubmit)="invite()" novalidate>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Email</mat-label>
+          <input
+            #emailInput
+            matInput
+            type="email"
+            formControlName="email"
+            autocomplete="off"
+            required
+            [readonly]="limitReached()"
+          />
+          <mat-error>Introduce un email válido.</mat-error>
+        </mat-form-field>
+        <!-- Still focusable while disabled, so the keyboard focus is not lost -->
+        <button
+          mat-flat-button
+          type="submit"
+          [disabled]="inviting() || limitReached()"
+          disabledInteractive
+        >
+          @if (inviting()) {
+            <mat-spinner diameter="20" aria-label="Invitando" />
+          } @else {
+            Invitar
+          }
+        </button>
+      </form>
+      @if (limitReached()) {
+        <p class="note">Has llegado al máximo de {{ maxMembers }} personas.</p>
+      }
+      <div class="error" role="alert">
+        @if (inviteError(); as message) {
+          {{ message }}
+        }
+      </div>
+
+      <h3>Personas con acceso ({{ members().length }} de {{ maxMembers }})</h3>
+      @if (members().length === 0) {
+        <p class="note">Aún no la compartes con nadie.</p>
+      } @else {
+        <ul class="members">
+          @for (member of members(); track member.id) {
+            <li>
+              <span class="member">
+                <span class="name">{{ member.name }}</span>
+                <span class="email">{{ member.email }}</span>
+              </span>
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Retirar acceso"
+                [attr.aria-label]="'Retirar el acceso a ' + member.name + ' (' + member.email + ')'"
+                [disabled]="removingId() !== null"
+                disabledInteractive
+                (click)="remove(member)"
+              >
+                <mat-icon>person_remove</mat-icon>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="ratings">
+        <mat-slide-toggle
+          [checked]="shareRatings()"
+          [disabled]="savingRatings()"
+          disabledInteractive
+          aria-describedby="share-ratings-help"
+          (change)="changeShareRatings($event)"
+        >
+          Mostrar mis valoraciones
+        </mat-slide-toggle>
+        <p id="share-ratings-help" class="note">
+          Quienes tengan acceso verán tus valoraciones actuales y futuras de estos libros. El cambio
+          se aplica al momento a todas las personas con acceso. Tus notas son siempre privadas.
+        </p>
+        <p class="saved" role="status">{{ ratingsMessage() }}</p>
+      </div>
+
+      <div class="error" role="alert">
+        @if (changeError(); as message) {
+          {{ message }}
+        }
+      </div>
+      <p class="visually-hidden" role="status">{{ statusMessage() }}</p>
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Cerrar</button>
+</mat-dialog-actions>

@@ -126,6 +126,24 @@ td {
   width: 120px;
 }
 
+// One column per person, as wide as the rating of the user in their own lists
+.rater {
+  width: 120px;
+}
+
+// Only shown on narrow frames, where it replaces the columns of each person
+.mat-column-ratings {
+  display: none;
+  width: 160px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
 .mat-column-libraries {
   width: 128px;
 }
@@ -143,20 +161,6 @@ td {
 .mat-column-isbn,
 .mat-column-isbn10 {
   white-space: nowrap;
-}
-
-.rating {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font: var(--mat-sys-label-large);
-
-  mat-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
-    color: var(--mat-sys-secondary);
-  }
 }
 
 .isbn {
@@ -206,9 +210,26 @@ td {
   }
 }
 
+// Two people take the place of the rating and the libraries, so they fit down to the same width
 @container (width < 600px) {
-  .mat-column-libraries {
+  .mat-column-libraries,
+  .rater.stackable {
     display: none;
+  }
+
+  .mat-column-ratings {
+    display: table-cell;
+  }
+}
+
+// The stacked ratings are wider than a single one: the authors go under the title a bit earlier
+@container (width < 520px) {
+  .stacks-ratings .mat-column-authors {
+    display: none;
+  }
+
+  .stacks-ratings .inline-authors {
+    display: block;
   }
 }
 

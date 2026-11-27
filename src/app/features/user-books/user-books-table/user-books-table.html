@@ -1,5 +1,10 @@
 <div class="wrapper">
-  <table mat-table [dataSource]="books()" aria-label="Libros">
+  <table
+    mat-table
+    [dataSource]="books()"
+    aria-label="Libros"
+    [class.stacks-ratings]="stacksRatings()"
+  >
     <ng-container matColumnDef="cover">
       <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Portada</span></th>
       <td mat-cell *matCellDef="let book">
@@ -54,13 +59,46 @@
       <th mat-header-cell *matHeaderCellDef>Valoración</th>
       <td mat-cell *matCellDef="let book">
         @if (book.rating !== null) {
-          <span class="rating">
-            <mat-icon aria-hidden="true">star</mat-icon>
-            {{ book.rating }}/10
-          </span>
+          <app-rating-value [value]="book.rating" />
         } @else {
           <span class="secondary" aria-label="Sin valorar">—</span>
         }
+      </td>
+    </ng-container>
+
+    @for (rater of raters(); track $index; let index = $index) {
+      <ng-container [matColumnDef]="raterColumn(index)">
+        <th mat-header-cell *matHeaderCellDef class="rater" [class.stackable]="stacksRatings()">
+          <span class="truncate" appTruncatedTooltip [matTooltip]="rater">{{ rater }}</span>
+        </th>
+        <td mat-cell *matCellDef="let book" class="rater" [class.stackable]="stacksRatings()">
+          @if (personRating(book, index); as rating) {
+            @if (rating.value !== null) {
+              <app-rating-value [value]="rating.value" [name]="rating.name" [own]="rating.own" />
+            } @else {
+              <span class="secondary" aria-label="Sin valorar">—</span>
+            }
+          }
+        </td>
+      </ng-container>
+    }
+
+    <!-- Replaces the columns above on narrow frames -->
+    <ng-container matColumnDef="ratings">
+      <th mat-header-cell *matHeaderCellDef>Valoraciones</th>
+      <td mat-cell *matCellDef="let book">
+        <div class="stack">
+          @for (rating of book.ratings; track $index) {
+            @if (rating.value !== null) {
+              <app-rating-value
+                [value]="rating.value"
+                [name]="rating.name"
+                [own]="rating.own"
+                [showName]="true"
+              />
+            }
+          }
+        </div>
       </td>
     </ng-container>
 

@@ -18,6 +18,7 @@ const library: Library = {
   description: 'Mis novelas',
   books: [],
   isFavorite: false,
+  shareRatings: false,
   tagIds: ['t1', 't2'],
   userId: 'u1',
   createdAt: '',
