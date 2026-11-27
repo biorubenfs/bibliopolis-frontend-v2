@@ -23,6 +23,8 @@ function book(id: string, title: string, libraries = ['l1']): UserBook {
     bookIsbn10: null,
     rating: null,
     notes: null,
+    readingStatus: null,
+    finishedAt: null,
     userId: 'u1',
     createdAt: '',
     updatedAt: '',
@@ -66,7 +68,13 @@ describe('MyBooksPage', () => {
       ),
     });
 
-    expect(list).toHaveBeenCalledWith({ skip: 0, limit: 12, search: '' });
+    expect(list).toHaveBeenCalledWith({
+      skip: 0,
+      limit: 12,
+      search: '',
+      readingStatus: '',
+      readYear: null,
+    });
     expect(element.querySelector('h1')?.textContent).toContain('Mis libros');
     expect(element.querySelector('.count')?.textContent).toContain('2 libros');
     expect(element.querySelectorAll('app-user-book-card').length).toBe(2);
@@ -132,7 +140,13 @@ describe('MyBooksPage', () => {
 
     const { element } = await setup({ url: '/books?page=3&limit=24', list });
 
-    expect(list).toHaveBeenCalledWith({ skip: 48, limit: 24, search: '' });
+    expect(list).toHaveBeenCalledWith({
+      skip: 48,
+      limit: 24,
+      search: '',
+      readingStatus: '',
+      readYear: null,
+    });
     expect(element.querySelector('mat-paginator')).not.toBeNull();
   });
 
@@ -142,7 +156,13 @@ describe('MyBooksPage', () => {
     const { router } = await setup({ url: '/books?page=9', list });
 
     expect(router.url).toBe('/books?page=2');
-    expect(list).toHaveBeenLastCalledWith({ skip: 12, limit: 12, search: '' });
+    expect(list).toHaveBeenLastCalledWith({
+      skip: 12,
+      limit: 12,
+      search: '',
+      readingStatus: '',
+      readYear: null,
+    });
   });
 
   it('offers retrying after an error', async () => {
@@ -206,9 +226,10 @@ describe('MyBooksPage', () => {
     });
 
     async function setupSearch(url = '/books', list = byTitle) {
-      vi.useFakeTimers();
       list.mockClear();
       const page = await setup({ url, list });
+      // After the first load: the filter keeps the page from becoming stable with fake timers
+      vi.useFakeTimers();
       /** Lets timers, pending navigations and change detection run. */
       const wait = async (ms = 0) => {
         await vi.advanceTimersByTimeAsync(ms);
@@ -235,7 +256,13 @@ describe('MyBooksPage', () => {
 
       await wait(1);
       expect(router.url).toBe('/books?q=ros');
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: 'ros' });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: 'ros',
+        readingStatus: '',
+        readYear: null,
+      });
       expect(element.querySelectorAll('app-user-book-card').length).toBe(1);
       expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
     });
@@ -244,7 +271,13 @@ describe('MyBooksPage', () => {
       const { list, input } = await setupSearch('/books?q=ulises');
 
       expect(list).toHaveBeenCalledTimes(1);
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: 'ulises' });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: 'ulises',
+        readingStatus: '',
+        readYear: null,
+      });
       expect(input()?.value).toBe('ulises');
     });
 
@@ -260,7 +293,13 @@ describe('MyBooksPage', () => {
       await wait();
 
       expect(router.url).toBe('/books');
-      expect(list).toHaveBeenLastCalledWith({ skip: 0, limit: 12, search: '' });
+      expect(list).toHaveBeenLastCalledWith({
+        skip: 0,
+        limit: 12,
+        search: '',
+        readingStatus: '',
+        readYear: null,
+      });
       expect(element.querySelectorAll('app-user-book-card').length).toBe(2);
     });
 
@@ -271,6 +310,123 @@ describe('MyBooksPage', () => {
       );
 
       expect(input()).toBeNull();
+    });
+  });
+
+  describe('reading status filter', () => {
+    const statusText = (element: HTMLElement) =>
+      element.querySelector('.status-select')?.textContent?.trim();
+    /** Opens the status select and picks an option, which lives in an overlay. */
+    const chooseStatus = async (
+      harness: RouterTestingHarness,
+      element: HTMLElement,
+      label: string,
+    ) => {
+      element.querySelector<HTMLElement>('.status-select .mat-mdc-select-trigger')!.click();
+      await harness.fixture.whenStable();
+      Array.from(document.querySelectorAll<HTMLElement>('mat-option'))
+        .find((option) => option.textContent?.includes(label))!
+        .click();
+      await harness.fixture.whenStable();
+    };
+    const withBooks = () => vi.fn(() => of({ items: [book('1', 'Rossiya')], total: 1 }));
+
+    it('requests the status and the year in the URL', async () => {
+      const { list, element } = await setup({
+        url: '/books?status=read&year=2026',
+        list: withBooks(),
+      });
+
+      expect(list).toHaveBeenCalledWith({
+        skip: 0,
+        limit: 12,
+        search: '',
+        readingStatus: 'read',
+        readYear: 2026,
+      });
+      expect(statusText(element)).toBe('Leído');
+      expect(element.querySelector('.count')?.textContent).toContain('1 resultado');
+    });
+
+    it('ignores the year without the status read, and an unknown status', async () => {
+      const reading = await setup({ url: '/books?status=reading&year=2026', list: withBooks() });
+      expect(reading.list).toHaveBeenCalledWith(
+        expect.objectContaining({ readingStatus: 'reading', readYear: null }),
+      );
+      TestBed.resetTestingModule();
+
+      const unknown = await setup({ url: '/books?status=abandoned', list: withBooks() });
+      expect(unknown.list).toHaveBeenCalledWith(
+        expect.objectContaining({ readingStatus: '', readYear: null }),
+      );
+    });
+
+    it('keeps the chosen status in the URL, back on the first page', async () => {
+      const { harness, router, element, list } = await setup({
+        url: '/books?page=2&q=ros',
+        list: vi.fn(() => of({ items: [book('1', 'Rossiya')], total: 30 })),
+      });
+
+      await chooseStatus(harness, element, 'Pendiente');
+
+      expect(router.url).toBe('/books?q=ros&status=to_read');
+      expect(list).toHaveBeenLastCalledWith(
+        expect.objectContaining({ skip: 0, search: 'ros', readingStatus: 'to_read' }),
+      );
+    });
+
+    it('drops the year when the status read is removed', async () => {
+      const { harness, router, element } = await setup({
+        url: '/books?status=read&year=2026',
+        list: withBooks(),
+      });
+
+      await chooseStatus(harness, element, 'Todos los estados');
+
+      expect(router.url).toBe('/books');
+    });
+
+    it('says when no book has the status, and offers removing the filter', async () => {
+      const list = vi.fn((options: { readingStatus: string }) =>
+        of(
+          options.readingStatus
+            ? { items: [], total: 0 }
+            : { items: [book('1', 'Rossiya')], total: 1 },
+        ),
+      );
+      const { harness, router, element } = await setup({
+        url: '/books?status=read&year=2025',
+        list,
+      });
+
+      expect(element.textContent).toContain('No tienes libros leídos en 2025');
+      expect(element.textContent).not.toContain('Aún no tienes libros');
+      // The filter stays, so it can be changed
+      expect(element.querySelector('app-reading-status-filter')).not.toBeNull();
+
+      Array.from(element.querySelectorAll('button'))
+        .find((button) => button.textContent?.includes('Quitar filtro'))!
+        .click();
+      await harness.fixture.whenStable();
+
+      expect(router.url).toBe('/books');
+      expect(element.querySelectorAll('app-user-book-card').length).toBe(1);
+    });
+
+    it('reloads the list after saving a book, which may no longer have the status', async () => {
+      const original = book('1', 'Rossiya');
+      const list = vi.fn(() => of({ items: [original], total: 1 }));
+      const { harness, element } = await setup({
+        url: '/books?status=to_read',
+        list,
+        dialogResult: { ...original, readingStatus: 'read' },
+      });
+      expect(list).toHaveBeenCalledTimes(1);
+
+      element.querySelector<HTMLButtonElement>('app-user-book-card h2 button')!.click();
+      await harness.fixture.whenStable();
+
+      expect(list).toHaveBeenCalledTimes(2);
     });
   });
 });

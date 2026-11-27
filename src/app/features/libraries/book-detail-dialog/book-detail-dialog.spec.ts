@@ -7,7 +7,7 @@ import { UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
 import { LibrariesService } from '../libraries.service';
 import { RemoveBookDialog } from '../remove-book-dialog/remove-book-dialog';
-import { BookDetailDialog } from './book-detail-dialog';
+import { BookDetailDialog, localDay } from './book-detail-dialog';
 
 const book: UserBook = {
   id: 'ub1',
@@ -20,6 +20,8 @@ const book: UserBook = {
   bookIsbn10: '059538529X',
   rating: 8,
   notes: 'Muy recomendable',
+  readingStatus: null,
+  finishedAt: null,
   userId: 'u1',
   createdAt: '',
   updatedAt: '',
@@ -184,7 +186,12 @@ describe('BookDetailDialog', () => {
     await typeNotes('  Otra nota ');
     await clickButton('Guardar');
 
-    expect(update).toHaveBeenCalledWith('ub1', { rating: 9, notes: 'Otra nota' });
+    expect(update).toHaveBeenCalledWith('ub1', {
+      rating: 9,
+      notes: 'Otra nota',
+      readingStatus: null,
+      finishedAt: null,
+    });
     expect(close).toHaveBeenCalledWith(updated);
   });
 
@@ -195,7 +202,12 @@ describe('BookDetailDialog', () => {
     await chooseRating(8);
     await clickButton('Guardar');
 
-    expect(update).toHaveBeenCalledWith('ub1', { rating: null, notes: 'Muy recomendable' });
+    expect(update).toHaveBeenCalledWith('ub1', {
+      rating: null,
+      notes: 'Muy recomendable',
+      readingStatus: null,
+      finishedAt: null,
+    });
   });
 
   it('sends null when the notes are emptied', async () => {
@@ -204,7 +216,12 @@ describe('BookDetailDialog', () => {
     await typeNotes('   ');
     await clickButton('Guardar');
 
-    expect(update).toHaveBeenCalledWith('ub1', { rating: 8, notes: null });
+    expect(update).toHaveBeenCalledWith('ub1', {
+      rating: 8,
+      notes: null,
+      readingStatus: null,
+      finishedAt: null,
+    });
   });
 
   it('does not call the backend when saving without changes', async () => {
@@ -278,7 +295,129 @@ describe('BookDetailDialog', () => {
     await typeNotes('Otra nota');
     await clickButton('Guardar');
 
-    expect(update).toHaveBeenCalledWith('ub1', { rating: 8, notes: 'Otra nota' });
+    expect(update).toHaveBeenCalledWith('ub1', {
+      rating: 8,
+      notes: 'Otra nota',
+      readingStatus: null,
+      finishedAt: null,
+    });
     expect(close).toHaveBeenCalledWith(expect.objectContaining({ notes: 'Otra nota' }));
+  });
+
+  describe('reading status', () => {
+    const statusButton = (element: HTMLElement, label: string) =>
+      Array.from(
+        element.querySelectorAll<HTMLButtonElement>('app-reading-status-input button'),
+      ).find((button) => button.textContent?.includes(label))!;
+    const dateInput = (element: HTMLElement) =>
+      element.querySelector<HTMLInputElement>('input[type="date"]');
+
+    it('shows the current status pressed, and the date only for a read book', async () => {
+      const reading = await setup({ overrides: { readingStatus: 'reading' } });
+
+      expect(statusButton(reading.element, 'Leyendo').getAttribute('aria-pressed')).toBe('true');
+      expect(statusButton(reading.element, 'Leído').getAttribute('aria-pressed')).toBe('false');
+      expect(dateInput(reading.element)).toBeNull();
+    });
+
+    it('shows «Sin estado» for a book without status', async () => {
+      const { element } = await setup();
+
+      expect(element.querySelector('app-reading-status-input')?.textContent).toContain(
+        'Sin estado',
+      );
+    });
+
+    it('suggests today when marking a book as read, and saves it', async () => {
+      const { element, update, clickButton } = await setup();
+
+      statusButton(element, 'Leído').click();
+      await clickButton('Guardar');
+
+      expect(update).toHaveBeenCalledWith('ub1', {
+        rating: 8,
+        notes: 'Muy recomendable',
+        readingStatus: 'read',
+        finishedAt: localDay(),
+      });
+    });
+
+    it('saves a read book without date when the date is emptied', async () => {
+      const { element, fixture, update, clickButton } = await setup();
+
+      statusButton(element, 'Leído').click();
+      await fixture.whenStable();
+      const input = dateInput(element)!;
+      input.value = '';
+      input.dispatchEvent(new Event('input'));
+      await clickButton('Guardar');
+
+      expect(update).toHaveBeenCalledWith(
+        'ub1',
+        expect.objectContaining({ readingStatus: 'read', finishedAt: null }),
+      );
+    });
+
+    it('clears the date when a read book goes back to another status', async () => {
+      const { element, fixture, update, clickButton } = await setup({
+        overrides: { readingStatus: 'read', finishedAt: '2026-03-14' },
+      });
+      expect(dateInput(element)?.value).toBe('2026-03-14');
+
+      statusButton(element, 'Pendiente').click();
+      await fixture.whenStable();
+      expect(dateInput(element)).toBeNull();
+      await clickButton('Guardar');
+
+      expect(update).toHaveBeenCalledWith(
+        'ub1',
+        expect.objectContaining({ readingStatus: 'to_read', finishedAt: null }),
+      );
+    });
+
+    it('gets the date back when a mistake is undone before saving', async () => {
+      const { element, fixture } = await setup({
+        overrides: { readingStatus: 'read', finishedAt: '2026-03-14' },
+      });
+
+      statusButton(element, 'Pendiente').click();
+      await fixture.whenStable();
+      statusButton(element, 'Leído').click();
+      await fixture.whenStable();
+
+      expect(dateInput(element)?.value).toBe('2026-03-14');
+    });
+
+    it('clears the status when clicking on the current one', async () => {
+      const { element, update, clickButton } = await setup({
+        overrides: { readingStatus: 'read', finishedAt: '2026-03-14' },
+      });
+
+      statusButton(element, 'Leído').click();
+      await clickButton('Guardar');
+
+      expect(update).toHaveBeenCalledWith(
+        'ub1',
+        expect.objectContaining({ readingStatus: null, finishedAt: null }),
+      );
+    });
+
+    it('does not save a date in the future', async () => {
+      const { element, fixture, update, close, clickButton } = await setup({
+        overrides: { readingStatus: 'read', finishedAt: null },
+      });
+
+      const input = dateInput(element)!;
+      input.value = '2999-01-01';
+      input.dispatchEvent(new Event('input'));
+      await clickButton('Guardar');
+      fixture.detectChanges();
+
+      expect(update).not.toHaveBeenCalled();
+      expect(close).not.toHaveBeenCalled();
+      expect(element.querySelector('mat-error')?.textContent).toContain(
+        'No puede ser posterior a hoy',
+      );
+    });
   });
 });

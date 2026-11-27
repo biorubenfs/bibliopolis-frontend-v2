@@ -120,6 +120,16 @@
   }
 }
 
+<!-- Just above the list it filters -->
+@if (library() && showSearch()) {
+  <app-reading-status-filter
+    class="reading-status-filter"
+    [status]="status()"
+    [year]="readYear()"
+    (changed)="changeReadingStatus($event)"
+  />
+}
+
 @switch (state()) {
   @case ('loading') {
     <div class="status">
@@ -141,12 +151,32 @@
     </div>
   }
   @default {
-    @if (books().length === 0 && q()) {
+    @if (books().length === 0 && q() && status()) {
+      <div class="status empty">
+        <mat-icon aria-hidden="true">search_off</mat-icon>
+        <h2>Ningún libro de esta biblioteca coincide con «{{ q() }}» y el filtro</h2>
+        <p>Prueba con otra búsqueda o quita el filtro.</p>
+        <button mat-stroked-button type="button" (click)="clearFilters()">Quitar filtros</button>
+      </div>
+    } @else if (books().length === 0 && q()) {
       <div class="status empty">
         <mat-icon aria-hidden="true">search_off</mat-icon>
         <h2>Ningún libro de esta biblioteca coincide con «{{ q() }}»</h2>
         <p>Prueba con otra parte del título, otro autor o el ISBN.</p>
         <button mat-stroked-button type="button" (click)="clearSearch()">Borrar búsqueda</button>
+      </div>
+    } @else if (books().length === 0 && status()) {
+      <div class="status empty">
+        <mat-icon aria-hidden="true">filter_list_off</mat-icon>
+        <h2>{{ emptyStatusMessage() }}</h2>
+        <p>Cambia el estado de un libro desde su detalle.</p>
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="changeReadingStatus({ status: '', year: null })"
+        >
+          Quitar filtro
+        </button>
       </div>
     } @else if (books().length === 0) {
       <div class="status empty">
@@ -157,6 +187,7 @@
     } @else if (view() === 'table') {
       <app-user-books-table
         [books]="books()"
+        [showReadingStatus]="true"
         (openRequested)="openDetailDialog($event)"
         (removeRequested)="openRemoveDialog($event)"
       />

@@ -162,10 +162,18 @@ export abstract class SearchableList<T extends { id: string }> implements OnInit
 
   /** Sets one of `filterParams`, or removes it with an empty value. */
   protected updateFilter(param: string, value: string, replaceUrl = false): void {
+    this.updateFilters({ [param]: value }, replaceUrl);
+  }
+
+  /** Sets several of `filterParams` at once, in a single navigation; empty values remove them. */
+  protected updateFilters(values: Readonly<Record<string, string>>, replaceUrl = false): void {
+    const params = Object.fromEntries(
+      Object.entries(values).map(([param, value]) => [param, value || null]),
+    );
     this.router.navigate([], {
       relativeTo: this.route,
       // A different filter has different results: start again from the first page
-      queryParams: { [param]: value || null, page: null },
+      queryParams: { ...params, page: null },
       queryParamsHandling: 'merge',
       replaceUrl,
     });

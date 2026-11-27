@@ -4,6 +4,7 @@
     [dataSource]="books()"
     aria-label="Libros"
     [class.stacks-ratings]="stacksRatings()"
+    [class.with-reading-status]="showReadingStatus()"
   >
     <ng-container matColumnDef="cover">
       <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Portada</span></th>
@@ -99,6 +100,17 @@
             }
           }
         </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="readingStatus">
+      <th mat-header-cell *matHeaderCellDef>Estado</th>
+      <td mat-cell *matCellDef="let book">
+        @if (book.readingStatus) {
+          <app-reading-status-badge [status]="book.readingStatus" />
+        } @else {
+          <span class="secondary" aria-label="Sin estado">—</span>
+        }
       </td>
     </ng-container>
 

@@ -49,9 +49,15 @@ import { Tag } from '../../tags/tag.model';
 import { TagsService } from '../../tags/tags.service';
 import { BooksViewPreference } from '../../user-books/books-view';
 import { BooksViewToggle } from '../../user-books/books-view-toggle/books-view-toggle';
+import {
+  ReadingStatusFilter,
+  ReadingStatusFilterChange,
+  toReadYear,
+  toStatusQuery,
+} from '../../user-books/reading-status-filter/reading-status-filter';
 import { UserBookCard } from '../../user-books/user-book-card/user-book-card';
 import { UserBook } from '../../user-books/user-book.model';
-import { UserBooksService } from '../../user-books/user-books.service';
+import { ReadingStatusQuery, UserBooksService } from '../../user-books/user-books.service';
 import { UserBooksTable } from '../../user-books/user-books-table/user-books-table';
 import { AddBookDialog, AddBookDialogData } from '../add-book-dialog/add-book-dialog';
 import {
@@ -85,7 +91,10 @@ const DETAIL_DIALOG_SIZE = { width: '440px', maxWidth: 'calc(100vw - 32px)' };
  */
 const TOUCH_DEVICE_QUERY = '(hover: none) and (pointer: coarse)';
 
-/** Shows a library and the books it contains, with a search by title, author or ISBN. */
+/**
+ * Shows a library and the books it contains, with a search by title, author or ISBN and a filter by
+ * reading status.
+ */
 @Component({
   selector: 'app-library-detail-page',
   imports: [
@@ -97,6 +106,7 @@ const TOUCH_DEVICE_QUERY = '(hover: none) and (pointer: coarse)';
     MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
+    ReadingStatusFilter,
     RouterLink,
     TagBadge,
     UserBookCard,
@@ -128,6 +138,16 @@ export class LibraryDetailPage {
   readonly limit = input(DEFAULT_PAGE_SIZE, { transform: toPageSize });
   /** Search applied to the books (trimmed), bound from the `?q=` query param. */
   readonly q = input('', { transform: toSearchTerm });
+  /** Reading status filter, bound from the `?status=` query param; empty for every status. */
+  readonly status = input<ReadingStatusQuery | '', string | null | undefined>('', {
+    transform: toStatusQuery,
+  });
+  /** Year of the read books, bound from the `?year=` query param. */
+  readonly year = input<number | null, string | null | undefined>(null, { transform: toReadYear });
+  /** The year only applies to the read books. */
+  protected readonly readYear = computed(() => (this.status() === 'read' ? this.year() : null));
+  /** Some filter or search narrows the list. */
+  protected readonly filtered = computed(() => this.q() !== '' || this.status() !== '');
 
   protected readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
   protected readonly searchMaxLength = SEARCH_MAX_LENGTH;
@@ -173,17 +193,34 @@ export class LibraryDetailPage {
 
   protected readonly booksLabel = computed(() => {
     const count = this.total();
-    if (this.q()) {
+    if (this.filtered()) {
       return `${count} ${count === 1 ? 'resultado' : 'resultados'}`;
     }
     return `${count} ${count === 1 ? 'libro' : 'libros'}`;
   });
 
   /**
-   * Hide the search while the library has no books at all. It stays visible with no results, so
-   * the user can change it.
+   * Hide the search and the filter while the library has no books at all. They stay visible with
+   * no results, so the user can change them.
    */
-  protected readonly showSearch = computed(() => this.q() !== '' || this.total() > 0);
+  protected readonly showSearch = computed(() => this.filtered() || this.total() > 0);
+
+  /** What the empty list says when only the reading status filter is applied. */
+  protected readonly emptyStatusMessage = computed(() => {
+    const year = this.readYear();
+    switch (this.status()) {
+      case 'to_read':
+        return 'Esta biblioteca no tiene libros pendientes';
+      case 'reading':
+        return 'No estás leyendo ningún libro de esta biblioteca';
+      case 'read':
+        return year
+          ? `Esta biblioteca no tiene libros leídos en ${year}`
+          : 'Esta biblioteca no tiene libros leídos';
+      default:
+        return 'Esta biblioteca no tiene libros sin estado';
+    }
+  });
 
   private loadSubscription?: Subscription;
   private latestImportSubscription?: Subscription;
@@ -197,6 +234,8 @@ export class LibraryDetailPage {
       this.page();
       this.limit();
       this.q();
+      this.status();
+      this.readYear();
       untracked(() => this.load());
     });
     // Only overwrite the field when the search changes from outside (reload, a link,
@@ -257,6 +296,8 @@ export class LibraryDetailPage {
         skip: this.pageIndex() * limit,
         limit,
         search: this.q(),
+        readingStatus: this.status(),
+        readYear: this.readYear(),
       }),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -297,6 +338,27 @@ export class LibraryDetailPage {
 
   protected changePage(event: PageEvent): void {
     this.updateUrl(event.pageIndex + 1, event.pageSize);
+  }
+
+  protected changeReadingStatus({ status, year }: ReadingStatusFilterChange): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      // A different filter has different results: start again from the first page
+      queryParams: { status: status || null, year: year ?? null, page: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /** Removes the search and the reading status filter at once. */
+  protected clearFilters(): void {
+    this.query.set('');
+    // Replace any keystroke still waiting in the debounce
+    this.searchInput.next('');
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: null, status: null, year: null, page: null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   protected openAddDialog(): void {
@@ -381,7 +443,14 @@ export class LibraryDetailPage {
         if (result === 'removed') {
           this.onBookRemoved(book);
         } else if (result) {
-          this.books.update((list) => list.map((item) => (item.id === result.id ? result : item)));
+          // With the filter, a book whose status changed may no longer belong to the list
+          if (this.status()) {
+            this.load();
+          } else {
+            this.books.update((list) =>
+              list.map((item) => (item.id === result.id ? result : item)),
+            );
+          }
           this.notify('Cambios guardados');
         }
       });

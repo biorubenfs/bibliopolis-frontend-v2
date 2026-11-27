@@ -15,6 +15,8 @@ describe('UserBookCard', () => {
     bookIsbn10: '059538529X',
     rating: 8,
     notes: 'Muy recomendable',
+    readingStatus: null,
+    finishedAt: null,
     userId: 'u1',
     createdAt: '',
     updatedAt: '',
@@ -42,6 +44,18 @@ describe('UserBookCard', () => {
     expect(element.textContent).toContain('ISBN-13: 9780595385294');
     expect(element.textContent).toContain('ISBN-10: 059538529X');
     expect(element.querySelector('img')?.getAttribute('src')).toBe(book.bookCoverUrl);
+  });
+
+  it('shows the reading status of the user, and nothing without it', () => {
+    const read = render({ readingStatus: 'read' }).nativeElement as HTMLElement;
+    expect(read.querySelector('app-reading-status-badge')?.getAttribute('aria-label')).toBe(
+      'Leído',
+    );
+    TestBed.resetTestingModule();
+
+    const without = render().nativeElement as HTMLElement;
+    expect(without.querySelector('app-reading-status-badge')).toBeNull();
+    expect(without.textContent).not.toContain('Sin estado');
   });
 
   it('asks to open the book through its title', () => {

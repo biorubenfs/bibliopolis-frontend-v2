@@ -5,14 +5,21 @@ import { Observable, catchError, map, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiError } from '../../core/http/api-error';
 import { ApiCollectionResponse, ApiItemResponse, Page, flatten } from '../../core/http/api.models';
-import { UpdateUserBook, UserBook } from './user-book.model';
+import { ReadingStatus, UpdateUserBook, UserBook } from './user-book.model';
 
 type UserBookAttributes = Omit<UserBook, 'id'>;
+
+/** A reading status, or `'none'` for the books without one. */
+export type ReadingStatusQuery = ReadingStatus | 'none';
 
 interface ListOptions {
   skip: number;
   limit: number;
   search?: string;
+  /** Empty or missing for every status. */
+  readingStatus?: ReadingStatusQuery | '';
+  /** Only with `readingStatus: 'read'`: the books finished that year. */
+  readYear?: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -33,7 +40,7 @@ export class UserBooksService {
     return this.fetchPage(this.listParams(options).set('libraryId', libraryId));
   }
 
-  /** Changes the rating and notes of a book; send null to clear them. */
+  /** Changes the rating, notes and reading status of a book; send null to clear them. */
   update(id: string, changes: UpdateUserBook): Observable<UserBook> {
     return this.http
       .patch<ApiItemResponse<UserBookAttributes>>(`${this.baseUrl}/${id}`, changes)
@@ -48,6 +55,13 @@ export class UserBooksService {
     const search = options.search?.trim();
     if (search) {
       params = params.set('search', search);
+    }
+    if (options.readingStatus) {
+      params = params.set('readingStatus', options.readingStatus);
+      // The backend rejects a year without the status read
+      if (options.readingStatus === 'read' && options.readYear) {
+        params = params.set('readYear', options.readYear);
+      }
     }
     return params;
   }

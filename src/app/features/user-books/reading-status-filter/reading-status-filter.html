@@ -1,0 +1,39 @@
+<!-- Selects without their form field, styled as filter chips: they take little room however many
+     statuses there are -->
+<div class="status-filter" [class.active]="status() !== ''">
+  <mat-icon aria-hidden="true">{{ selectedOption()?.icon ?? 'auto_stories' }}</mat-icon>
+  <mat-select
+    class="status-select"
+    panelClass="app-chip-select-panel"
+    placeholder="Estado"
+    aria-label="Filtrar por estado de lectura"
+    [panelWidth]="null"
+    [value]="status() || null"
+    (selectionChange)="changeStatus($event.value)"
+  >
+    <mat-option [value]="null">Todos los estados</mat-option>
+    @for (option of options; track option.value) {
+      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+    }
+  </mat-select>
+</div>
+
+@if (status() === 'read') {
+  <div class="year-filter" [class.active]="year() !== null">
+    <mat-icon aria-hidden="true">calendar_month</mat-icon>
+    <mat-select
+      class="year-select"
+      panelClass="app-chip-select-panel"
+      placeholder="Todos los años"
+      aria-label="Filtrar por año de lectura"
+      [panelWidth]="null"
+      [value]="year()"
+      (selectionChange)="changeYear($event.value)"
+    >
+      <mat-option [value]="null">Todos los años</mat-option>
+      @for (year of years(); track year) {
+        <mat-option [value]="year">{{ year }}</mat-option>
+      }
+    </mat-select>
+  </div>
+}

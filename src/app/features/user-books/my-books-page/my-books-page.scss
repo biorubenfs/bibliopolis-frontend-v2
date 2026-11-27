@@ -62,10 +62,13 @@ h1 {
   }
 }
 
-// Just above the list, aligned with its left edge
+// Just above the list, aligned with its left edge: the view switch and the filter
 .list-toolbar {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-start;
+  gap: 12px 24px;
   margin-bottom: 12px;
 }
 

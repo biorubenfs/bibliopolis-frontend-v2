@@ -1,5 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import {
+  AbstractControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
@@ -14,6 +21,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { BookLibraries } from '../../user-books/book-libraries/book-libraries';
 import { RatingInput } from '../../user-books/rating-input/rating-input';
+import { ReadingStatusInput } from '../../user-books/reading-status-input/reading-status-input';
 import { USER_BOOK_NOTES_MAX_LENGTH, UserBook } from '../../user-books/user-book.model';
 import { UserBooksService } from '../../user-books/user-books.service';
 import { RemoveBookDialog, RemoveBookDialogData } from '../remove-book-dialog/remove-book-dialog';
@@ -29,9 +37,21 @@ export type BookDetailDialogResult = UserBook | 'removed';
 
 const REMOVE_DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
 
+/** The day of the user, as YYYY-MM-DD: the format of the date inputs and of the backend. */
+export function localDay(date = new Date()): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+/** Nobody finishes a book in the future. YYYY-MM-DD texts sort as dates. */
+function notAfterToday(control: AbstractControl<string>): ValidationErrors | null {
+  return control.value && control.value > localDay() ? { future: true } : null;
+}
+
 /**
- * Shows a book, with the libraries that contain it, and lets the user edit its rating and notes,
- * which are only persisted when saving. When opened from a library, it also lets the user remove
+ * Shows a book, with the libraries that contain it, and lets the user edit its rating, notes and
+ * reading status, which are only persisted when saving. When opened from a library, it also lets the user remove
  * the book from that library.
  */
 @Component({
@@ -46,6 +66,7 @@ const REMOVE_DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
     MatProgressSpinnerModule,
     BookLibraries,
     RatingInput,
+    ReadingStatusInput,
   ],
   templateUrl: './book-detail-dialog.html',
   styleUrl: './book-detail-dialog.scss',
@@ -64,10 +85,27 @@ export class BookDetailDialog {
 
   protected readonly notesMaxLength = USER_BOOK_NOTES_MAX_LENGTH;
 
+  /** The latest day a book can be finished, for the date input. */
+  protected readonly today = localDay();
+
   protected readonly form = inject(NonNullableFormBuilder).group({
     rating: [this.book.rating],
     notes: [this.book.notes ?? '', Validators.maxLength(USER_BOOK_NOTES_MAX_LENGTH)],
+    readingStatus: [this.book.readingStatus],
+    // Empty for no date, as the date input gives it
+    finishedAt: [this.book.finishedAt ?? '', notAfterToday],
   });
+
+  /** Only a read book has a finish date: the field is only shown then. */
+  protected readonly readingStatus = toSignal(this.form.controls.readingStatus.valueChanges, {
+    initialValue: this.book.readingStatus,
+  });
+
+  constructor() {
+    this.form.controls.readingStatus.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((status) => this.updateFinishedAt(status));
+  }
 
   /** Covers come from external services, so a URL may stop working: show the placeholder then. */
   protected readonly coverFailed = signal(false);
@@ -91,6 +129,8 @@ export class BookDetailDialog {
         rating: this.form.controls.rating.value,
         // The backend expects null, not an empty text, for a book without notes
         notes: this.form.controls.notes.value.trim() || null,
+        readingStatus: this.form.controls.readingStatus.value,
+        finishedAt: this.finishedAtToSave(),
       })
       .subscribe({
         next: (book) => this.dialogRef.close(book),
@@ -99,6 +139,30 @@ export class BookDetailDialog {
           this.errorMessage.set('No se han podido guardar los cambios. Inténtalo de nuevo.');
         },
       });
+  }
+
+  /**
+   * Marking a book as read suggests today as its finish date. If it was already read when the
+   * dialog opened, it gets back its date instead, so undoing a mistake before saving loses nothing.
+   * Any other status has no finish date.
+   */
+  private updateFinishedAt(status: UserBook['readingStatus']): void {
+    const finishedAt = this.form.controls.finishedAt;
+    if (status !== 'read') {
+      finishedAt.setValue('');
+    } else if (this.book.readingStatus === 'read') {
+      finishedAt.setValue(this.book.finishedAt ?? '');
+    } else {
+      finishedAt.setValue(this.today);
+    }
+  }
+
+  /** Only a read book may have a finish date, and it may not: null then. */
+  private finishedAtToSave(): string | null {
+    if (this.form.controls.readingStatus.value !== 'read') {
+      return null;
+    }
+    return this.form.controls.finishedAt.value || null;
   }
 
   /** Following a link to a library leaves the dialog behind, so it closes without changes. */

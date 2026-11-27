@@ -4,11 +4,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { RatingValue } from '../rating-value/rating-value';
+import { ReadingStatusBadge } from '../reading-status-badge/reading-status-badge';
 import { ListedBook } from '../user-book.model';
 
 @Component({
   selector: 'app-user-book-card',
-  imports: [MatButtonModule, MatIconModule, MatTooltipModule, RatingValue],
+  imports: [MatButtonModule, MatIconModule, MatTooltipModule, RatingValue, ReadingStatusBadge],
   templateUrl: './user-book-card.html',
   styleUrl: './user-book-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

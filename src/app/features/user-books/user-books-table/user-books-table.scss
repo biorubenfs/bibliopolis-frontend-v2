@@ -144,6 +144,10 @@ td {
   gap: 2px;
 }
 
+.mat-column-readingStatus {
+  width: 136px;
+}
+
 .mat-column-libraries {
   width: 128px;
 }
@@ -157,6 +161,7 @@ td {
 }
 
 .mat-column-rating,
+.mat-column-readingStatus,
 .mat-column-libraries,
 .mat-column-isbn,
 .mat-column-isbn10 {
@@ -229,6 +234,46 @@ td {
   }
 
   .stacks-ratings .inline-authors {
+    display: block;
+  }
+}
+
+// With the reading status (136px) every cut comes earlier, so the title keeps about 200px next to
+// the authors (24% of the frame): ISBN-10 at 1200px, ISBN-13 at 1000px and the libraries at 830px.
+// Below 610px the status keeps only its icon, in a column just wide enough for its header, and
+// below 550px the authors go under the title
+@container (width < 1200px) {
+  .with-reading-status .mat-column-isbn10 {
+    display: none;
+  }
+}
+
+@container (width < 1000px) {
+  .with-reading-status .mat-column-isbn {
+    display: none;
+  }
+}
+
+@container (width < 830px) {
+  .with-reading-status .mat-column-libraries {
+    display: none;
+  }
+}
+
+@container (width < 610px) {
+  .mat-column-readingStatus {
+    --app-reading-status-label-display: none;
+
+    width: 88px;
+  }
+}
+
+@container (width < 550px) {
+  .with-reading-status .mat-column-authors {
+    display: none;
+  }
+
+  .with-reading-status .inline-authors {
     display: block;
   }
 }
