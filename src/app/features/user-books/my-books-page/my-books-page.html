@@ -1,7 +1,7 @@
 <header class="page-header">
   <div>
     <h1>Mis libros</h1>
-    @if (total() > 0) {
+    @if (showCount()) {
       <p class="count">{{ countLabel() }}</p>
     }
   </div>

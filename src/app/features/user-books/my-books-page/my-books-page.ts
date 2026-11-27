@@ -75,9 +75,19 @@ export class MyBooksPage extends SearchableList<UserBook> {
   /** Some filter or search narrows the list. */
   protected readonly filtered = computed(() => this.search() !== '' || this.readingStatus() !== '');
 
-  /** Only with books to show; it stays while a new page loads, so the list does not jump. */
+  /**
+   * With books to show, or with a search or filter even without results, so the header does not
+   * jump while they change. It stays while a new page loads.
+   */
   protected readonly showViewToggle = computed(
-    () => this.state() !== 'error' && this.total() > 0 && this.items().length > 0,
+    () =>
+      this.state() !== 'error' &&
+      (this.filtered() || (this.total() > 0 && this.items().length > 0)),
+  );
+
+  /** Also «0 resultados» with a search or filter, once loaded, for the same reason. */
+  protected readonly showCount = computed(
+    () => this.total() > 0 || (this.filtered() && this.state() === 'loaded'),
   );
 
   protected readonly countLabel = computed(() => {

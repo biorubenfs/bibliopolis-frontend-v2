@@ -285,6 +285,9 @@ describe('MyBooksPage', () => {
       const { element, list, router, wait } = await setupSearch('/books?q=poes%C3%ADa');
       expect(element.textContent).toContain('Ningún libro coincide con «poesía»');
       expect(element.textContent).not.toContain('Aún no tienes libros');
+      // The header keeps its layout without results
+      expect(element.querySelector('.count')?.textContent).toContain('0 resultados');
+      expect(element.querySelector('app-books-view-toggle')).not.toBeNull();
 
       const clear = Array.from(element.querySelectorAll('button')).find((b) =>
         b.textContent?.includes('Borrar búsqueda'),
@@ -401,8 +404,10 @@ describe('MyBooksPage', () => {
 
       expect(element.textContent).toContain('No tienes libros leídos en 2025');
       expect(element.textContent).not.toContain('Aún no tienes libros');
-      // The filter stays, so it can be changed
+      // The filter stays, so it can be changed, and the header keeps its layout
       expect(element.querySelector('app-reading-status-filter')).not.toBeNull();
+      expect(element.querySelector('.count')?.textContent).toContain('0 resultados');
+      expect(element.querySelector('app-books-view-toggle')).not.toBeNull();
 
       Array.from(element.querySelectorAll('button'))
         .find((button) => button.textContent?.includes('Quitar filtro'))!
