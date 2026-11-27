@@ -44,6 +44,7 @@ import {
 } from '../../imports/import-csv-dialog/import-csv-dialog';
 import { LibraryImport, isActiveImport } from '../../imports/import.model';
 import { ImportsService } from '../../imports/imports.service';
+import { PublicBadge } from '../public-badge/public-badge';
 import { TagBadge } from '../../tags/tag-badge/tag-badge';
 import { Tag } from '../../tags/tag.model';
 import { TagsService } from '../../tags/tags.service';
@@ -108,6 +109,7 @@ const TOUCH_DEVICE_QUERY = '(hover: none) and (pointer: coarse)';
     MatProgressSpinnerModule,
     ReadingStatusFilter,
     RouterLink,
+    PublicBadge,
     TagBadge,
     UserBookCard,
     UserBooksTable,
@@ -412,12 +414,13 @@ export class LibraryDetailPage {
     });
   }
 
-  /** The dialog saves each change by itself, and nothing on this page depends on them. */
+  /** The dialog saves each change by itself; of them, this page only shows the visibility. */
   protected openShareDialog(library: Library): void {
-    this.dialog.open<ShareLibraryDialog, ShareLibraryDialogData>(ShareLibraryDialog, {
-      ...SHARE_DIALOG_SIZE,
-      data: library,
-    });
+    const dialogRef = this.dialog.open<ShareLibraryDialog, ShareLibraryDialogData>(
+      ShareLibraryDialog,
+      { ...SHARE_DIALOG_SIZE, data: library },
+    );
+    dialogRef.componentInstance.visibilityChanged.subscribe((updated) => this.library.set(updated));
   }
 
   protected openScanDialog(): void {

@@ -26,9 +26,14 @@
   }
 
   <footer class="footer">
-    <span class="count">
-      <mat-icon aria-hidden="true">menu_book</mat-icon>
-      {{ booksLabel() }}
+    <span class="details">
+      <span class="count">
+        <mat-icon aria-hidden="true">menu_book</mat-icon>
+        {{ booksLabel() }}
+      </span>
+      @if (library().isPublic) {
+        <app-public-badge />
+      }
     </span>
 
     <div class="actions">

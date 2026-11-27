@@ -6,6 +6,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 
+import { PublicBadge } from '../public-badge/public-badge';
 import { TagBadge } from '../../tags/tag-badge/tag-badge';
 import { Tag } from '../../tags/tag.model';
 import { FavoriteButton } from '../favorite-button/favorite-button';
@@ -20,6 +21,7 @@ import { Library, LibraryExportFormat } from '../library.model';
     MatMenuModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    PublicBadge,
     RouterLink,
     TagBadge,
   ],

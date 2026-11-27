@@ -21,6 +21,7 @@ import {
   Observable,
   Subject,
   catchError,
+  forkJoin,
   debounceTime,
   distinctUntilChanged,
   filter,
@@ -37,22 +38,30 @@ import {
   SEARCH_MAX_LENGTH,
   toSearchTerm,
 } from '../../../core/lists/searchable-list';
+import { PublicLibrariesService } from '../../public-libraries/public-libraries.service';
 import { SharedLibrariesService } from '../../shared-libraries/shared-libraries.service';
 import { LibrariesService } from '../libraries.service';
 import { LibraryCounts } from './library-counts';
 
-type LibrariesTab = 'own' | 'shared';
+type LibrariesTab = 'own' | 'shared' | 'public';
 
 const OWN_PATH = '/libraries';
 const SHARED_PATH = '/libraries/shared';
+const PUBLIC_PATH = '/libraries/public';
 
 /** Query params that only move through the list, without narrowing it. */
 const NAVIGATION_PARAMS = ['q', 'page', 'limit'];
 
+const SEARCH_LABELS: Record<LibrariesTab, string> = {
+  own: 'Buscar bibliotecas',
+  shared: 'Buscar bibliotecas compartidas conmigo',
+  public: 'Buscar bibliotecas públicas',
+};
+
 /**
- * «Bibliotecas»: the own libraries and the ones shared with the user, one tab each. The tabs are
+ * «Bibliotecas»: the own libraries, the ones shared with the user and the public ones, one tab each. The tabs are
  * here and not in the pages, or they would lose the keyboard focus when one page replaces the other.
- * So is the search, which applies to both tabs: in the header, in the same place as in the other
+ * So is the search, which applies to all the tabs: in the header, in the same place as in the other
  * list pages. It only updates `?q=`, and the page of the open tab reacts to it.
  */
 @Component({
@@ -75,6 +84,7 @@ export class LibrariesSection {
   private readonly router = inject(Router);
   private readonly librariesService = inject(LibrariesService);
   private readonly sharedLibraries = inject(SharedLibrariesService);
+  private readonly publicLibraries = inject(PublicLibrariesService);
   private readonly counts = inject(LibraryCounts);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
@@ -100,21 +110,21 @@ export class LibrariesSection {
       this.search() !== '' ||
       this.filtered() ||
       this.counts.own() !== 0 ||
-      this.counts.shared() !== 0,
+      this.counts.shared() !== 0 ||
+      this.counts.public() !== 0,
   );
   /** Each tab searches in different fields. */
   protected readonly searchPlaceholder = computed(() =>
     this.tab() === 'own' ? 'Nombre o descripción' : 'Nombre, descripción o propietario',
   );
-  protected readonly searchLabel = computed(() =>
-    this.tab() === 'own' ? 'Buscar bibliotecas' : 'Buscar bibliotecas compartidas conmigo',
-  );
+  protected readonly searchLabel = computed(() => SEARCH_LABELS[this.tab()]);
 
   private readonly searchInput = new Subject<string>();
 
   protected readonly tabs = computed(() => [
     this.toTab('own', 'Mías', OWN_PATH, this.counts.own()),
     this.toTab('shared', 'Compartidas conmigo', SHARED_PATH, this.counts.shared()),
+    this.toTab('public', 'Públicas', PUBLIC_PATH, this.counts.public()),
   ]);
 
   constructor() {
@@ -136,7 +146,7 @@ export class LibrariesSection {
           if (this.query().trim() !== search) {
             this.query.set(search);
           }
-          return this.countOther(tab, search);
+          return this.countOthers(tab, search);
         }),
         takeUntilDestroyed(),
       )
@@ -167,7 +177,7 @@ export class LibrariesSection {
     const url = this.router.parseUrl(this.router.url);
     const path = this.router.url.split(/[?#]/)[0];
     return {
-      tab: path === SHARED_PATH ? 'shared' : 'own',
+      tab: path === SHARED_PATH ? 'shared' : path === PUBLIC_PATH ? 'public' : 'own',
       search: toSearchTerm(url.queryParamMap.get('q')),
       filtered: url.queryParamMap.keys.some((key) => !NAVIGATION_PARAMS.includes(key)),
     };
@@ -188,12 +198,18 @@ export class LibrariesSection {
   }
 
   /** The open tab gets its number from its page, which also applies its filters. */
-  private countOther(tab: LibrariesTab, search: string): Observable<void> {
+  private countOthers(tab: LibrariesTab, search: string): Observable<unknown> {
     const options = { skip: 0, limit: 1, search };
-    const [list, count]: [Observable<Page<unknown>>, WritableSignal<number | null>] =
-      tab === 'own'
-        ? [this.sharedLibraries.list(options), this.counts.shared]
-        : [this.librariesService.list(options), this.counts.own];
+    const lists: Record<LibrariesTab, () => Observable<Page<unknown>>> = {
+      own: () => this.librariesService.list(options),
+      shared: () => this.sharedLibraries.list(options),
+      public: () => this.publicLibraries.list(options),
+    };
+    const others = (Object.keys(lists) as LibrariesTab[]).filter((other) => other !== tab);
+    return forkJoin(others.map((other) => this.count(lists[other](), this.counts[other])));
+  }
+
+  private count(list: Observable<Page<unknown>>, count: WritableSignal<number | null>) {
     return list.pipe(
       map(({ total }) => total),
       // The number is only a hint: without it the tab still works

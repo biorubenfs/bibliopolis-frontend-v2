@@ -51,6 +51,10 @@ h1 {
 }
 
 .owner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
   margin: 4px 0 0;
   font: var(--mat-sys-title-medium);
   color: var(--mat-sys-on-surface-variant);

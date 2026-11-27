@@ -1,6 +1,14 @@
 import { PersonRating, UserBook } from '../user-books/user-book.model';
 
-/** A library of another user, in read-only (see docs/api/shared-libraries.md in the backend). */
+/**
+ * Why the user sees a library of another one: invited as a member, or only because it is public.
+ */
+export type LibraryAccess = 'member' | 'public';
+
+/**
+ * A library of another user, in read-only (see docs/api/shared-libraries.md in the backend): shared
+ * with the user, or public.
+ */
 export interface SharedLibrary {
   id: string;
   name: string;
@@ -8,10 +16,12 @@ export interface SharedLibrary {
   description: string | null;
   ownerName: string;
   booksCount: number;
-  /** The owner lets the people with access see their ratings. */
+  /** The user sees the ratings of the owner. Always false when `access` is `public`. */
   shareRatings: boolean;
-  /** When it was shared with the user. */
-  sharedAt: string;
+  isPublic: boolean;
+  access: LibraryAccess;
+  /** When it was shared with the user; null when `access` is `public`. */
+  sharedAt: string | null;
 }
 
 /** Someone who shares libraries with the user. Two of them may have the same name. */

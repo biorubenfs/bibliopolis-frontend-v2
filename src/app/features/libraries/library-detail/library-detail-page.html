@@ -23,6 +23,9 @@
           (toggled)="toggleFavorite(library)"
         />
       </div>
+      @if (library.isPublic) {
+        <app-public-badge class="public" />
+      }
       <!-- The book count shares the line of the description, to keep the header short -->
       @if (library.description || total() > 0) {
         <p class="description">

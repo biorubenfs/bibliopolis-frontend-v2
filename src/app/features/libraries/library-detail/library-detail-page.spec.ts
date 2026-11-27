@@ -4,7 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { ApiError } from '../../../core/http/api-error';
 import { SEARCH_DEBOUNCE_MS } from '../../../core/lists/searchable-list';
@@ -31,6 +31,8 @@ const library: Library = {
   books: [],
   isFavorite: false,
   shareRatings: false,
+  isPublic: false,
+  publishedAt: null,
   tagIds: [],
   userId: 'u1',
   createdAt: '',
@@ -84,7 +86,11 @@ describe('LibraryDetailPage', () => {
       vi.fn((_id: string, changes: Partial<Library>) => of({ ...library, ...changes }));
     const listByLibrary = options.listByLibrary ?? vi.fn(() => of({ items: [], total: 0 }));
     const listImports = options.listImports ?? vi.fn(() => of({ items: [], total: 0 }));
-    const openDialog = vi.fn(() => ({ afterClosed: () => of(options.dialogResult) }));
+    const visibilityChanged = new Subject<Library>();
+    const openDialog = vi.fn(() => ({
+      afterClosed: () => of(options.dialogResult),
+      componentInstance: { visibilityChanged },
+    }));
     const openSnackBar = vi.fn();
     TestBed.configureTestingModule({
       providers: [
@@ -117,6 +123,7 @@ describe('LibraryDetailPage', () => {
       listImports,
       openDialog,
       openSnackBar,
+      visibilityChanged,
     };
   }
 
@@ -149,6 +156,22 @@ describe('LibraryDetailPage', () => {
         ShareLibraryDialog,
         expect.objectContaining({ data: library }),
       );
+    });
+
+    it('shows at once that the library is public or private again', async () => {
+      const { harness, element, visibilityChanged } = await setup();
+      expect(element.querySelector('app-public-badge')).toBeNull();
+
+      Array.from(element.querySelectorAll('button'))
+        .find((button) => button.textContent?.includes('Compartir'))!
+        .click();
+      visibilityChanged.next({ ...library, isPublic: true, publishedAt: '2026-11-27' });
+      await harness.fixture.whenStable();
+      expect(element.querySelector('.heading app-public-badge')?.textContent).toContain('Pública');
+
+      visibilityChanged.next({ ...library, isPublic: false, publishedAt: null });
+      await harness.fixture.whenStable();
+      expect(element.querySelector('app-public-badge')).toBeNull();
     });
 
     it('opens the import dialog with this library as the destination', async () => {

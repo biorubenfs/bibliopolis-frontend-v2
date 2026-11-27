@@ -83,7 +83,7 @@
         </ul>
       }
 
-      <div class="ratings">
+      <div class="setting">
         <mat-slide-toggle
           [checked]="shareRatings()"
           [disabled]="savingRatings()"
@@ -94,10 +94,27 @@
           Mostrar mis valoraciones
         </mat-slide-toggle>
         <p id="share-ratings-help" class="note">
-          Quienes tengan acceso verán tus valoraciones actuales y futuras de estos libros. El cambio
-          se aplica al momento a todas las personas con acceso. Tus notas son siempre privadas.
+          Las personas que invites verán tus valoraciones actuales y futuras de estos libros. El
+          cambio se aplica al momento a todas ellas. Tus notas son siempre privadas.
         </p>
         <p class="saved" role="status">{{ ratingsMessage() }}</p>
+      </div>
+
+      <div class="setting">
+        <mat-slide-toggle
+          [checked]="isPublic()"
+          [disabled]="savingVisibility()"
+          disabledInteractive
+          aria-describedby="visibility-help"
+          (change)="changeVisibility($event)"
+        >
+          Biblioteca pública
+        </mat-slide-toggle>
+        <p id="visibility-help" class="note">
+          Cualquier usuario de Bibliopolis podrá ver su nombre, su descripción, sus libros y tu
+          nombre, sin que lo invites. Nunca verá tus valoraciones ni tus notas.
+        </p>
+        <p class="saved" role="status">{{ visibilityMessage() }}</p>
       </div>
 
       <div class="error" role="alert">

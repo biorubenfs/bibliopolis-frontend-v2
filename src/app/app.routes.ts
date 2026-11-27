@@ -69,11 +69,29 @@ export const routes: Routes = [
                 (m) => m.SharedLibrariesPage,
               ),
           },
+          {
+            path: 'public',
+            title: 'Bibliotecas públicas · Bibliopolis',
+            loadComponent: () =>
+              import('./features/public-libraries/public-libraries-page').then(
+                (m) => m.PublicLibrariesPage,
+              ),
+          },
         ],
       },
       {
         path: 'libraries/shared/:id',
         title: 'Biblioteca compartida · Bibliopolis',
+        loadComponent: () =>
+          import('./features/shared-libraries/shared-library-page/shared-library-page').then(
+            (m) => m.SharedLibraryPage,
+          ),
+      },
+      {
+        path: 'libraries/public/:id',
+        title: 'Biblioteca pública · Bibliopolis',
+        // The same page as the shared ones: the backend gives access to the public libraries there
+        data: { section: 'public' },
         loadComponent: () =>
           import('./features/shared-libraries/shared-library-page/shared-library-page').then(
             (m) => m.SharedLibraryPage,

@@ -12,6 +12,8 @@ describe('SharedLibraryCard', () => {
     ownerName: 'Ana',
     booksCount: 1,
     shareRatings: false,
+    isPublic: false,
+    access: 'member',
     sharedAt: '',
   };
 
@@ -65,5 +67,23 @@ describe('SharedLibraryCard', () => {
     );
 
     expect(labels).toEqual(['Descargar Novela, de Ana', 'Salir de Novela, de Ana']);
+  });
+
+  it('marks a shared library that is also public', () => {
+    expect(render().element.querySelector('app-public-badge')).toBeNull();
+
+    TestBed.resetTestingModule();
+    expect(render({ isPublic: true }).element.querySelector('app-public-badge')).not.toBeNull();
+  });
+
+  it('links to the library under another tab, and only lets the members leave it', () => {
+    const { fixture, element } = render();
+    fixture.componentRef.setInput('basePath', '/libraries/public');
+    fixture.componentRef.setInput('leavable', false);
+    fixture.detectChanges();
+
+    expect(element.querySelector('h2 a')?.getAttribute('href')).toBe('/libraries/public/l1');
+    expect(element.querySelector('[aria-label^="Salir"]')).toBeNull();
+    expect(element.querySelector('[aria-label="Descargar Novela, de Ana"]')).not.toBeNull();
   });
 });

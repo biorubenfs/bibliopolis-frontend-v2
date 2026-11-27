@@ -7,6 +7,7 @@ import { NEVER, Observable, Subject, of, throwError } from 'rxjs';
 
 import { SEARCH_DEBOUNCE_MS } from '../../../core/lists/searchable-list';
 
+import { PublicLibrariesService } from '../../public-libraries/public-libraries.service';
 import { SharedLibrariesService } from '../../shared-libraries/shared-libraries.service';
 import { LibrariesService } from '../libraries.service';
 import { LibrariesSection } from './libraries-section';
@@ -24,13 +25,20 @@ class OwnPage {
 @Component({ template: 'shared' })
 class SharedPage {}
 
+@Component({ template: 'public' })
+class PublicPage {}
+
 @Component({ template: 'detail' })
 class DetailPage {}
 
 describe('LibrariesSection', () => {
-  async function setup(url: string, options: { own?: () => Result; shared?: () => Result } = {}) {
+  async function setup(
+    url: string,
+    options: { own?: () => Result; shared?: () => Result; public?: () => Result } = {},
+  ) {
     const listOwn = vi.fn((_options: object) => (options.own ?? (() => total(12)))());
     const listShared = vi.fn((_options: object) => (options.shared ?? (() => total(3)))());
+    const listPublic = vi.fn((_options: object) => (options.public ?? (() => total(5)))());
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
@@ -40,12 +48,14 @@ describe('LibrariesSection', () => {
             children: [
               { path: '', pathMatch: 'full', component: OwnPage },
               { path: 'shared', component: SharedPage },
+              { path: 'public', component: PublicPage },
             ],
           },
           { path: 'libraries/:id', component: DetailPage },
         ]),
         { provide: LibrariesService, useValue: { list: listOwn } },
         { provide: SharedLibrariesService, useValue: { list: listShared } },
+        { provide: PublicLibrariesService, useValue: { list: listPublic } },
       ],
     });
     const harness = await RouterTestingHarness.create(url);
@@ -63,6 +73,7 @@ describe('LibrariesSection', () => {
       router: TestBed.inject(Router),
       listOwn,
       listShared,
+      listPublic,
       tabs,
       settle,
       labels: () => tabs().map((tab) => tab.textContent!.replace(/\s+/g, ' ').trim()),
@@ -75,23 +86,42 @@ describe('LibrariesSection', () => {
 
   it('marks the tab of the open page', async () => {
     const { root, selected, harness, settle } = await setup('/libraries');
-    expect(selected()).toEqual(['true', 'false']);
+    expect(selected()).toEqual(['true', 'false', 'false']);
     expect(root.querySelector('[role="tabpanel"]')?.textContent).toContain('own');
 
     await harness.navigateByUrl('/libraries/shared');
     await settle();
 
-    expect(selected()).toEqual(['false', 'true']);
+    expect(selected()).toEqual(['false', 'true', 'false']);
     expect(root.querySelector('[role="tabpanel"]')?.textContent).toContain('shared');
+
+    await harness.navigateByUrl('/libraries/public');
+    await settle();
+
+    expect(selected()).toEqual(['false', 'false', 'true']);
+    expect(root.querySelector('[role="tabpanel"]')?.textContent).toContain('public');
   });
 
-  it('only asks for the number of the other tab', async () => {
+  it('only asks for the numbers of the other tabs', async () => {
     const own = await setup('/libraries?q=nov');
 
     expect(own.listOwn).not.toHaveBeenCalled();
     expect(own.listShared).toHaveBeenCalledExactlyOnceWith({ skip: 0, limit: 1, search: 'nov' });
-    expect(own.numbers()).toEqual([null, '3']);
+    expect(own.listPublic).toHaveBeenCalledExactlyOnceWith({ skip: 0, limit: 1, search: 'nov' });
+    expect(own.numbers()).toEqual([null, '3', '5']);
     expect(own.labels()[1]).toContain(', 3 resultados');
+    expect(own.labels()[2]).toContain(', 5 resultados');
+  });
+
+  it('counts the other tabs from «Públicas»', async () => {
+    const { listOwn, listShared, listPublic, labels, numbers } =
+      await setup('/libraries/public?q=nov');
+
+    expect(listOwn).toHaveBeenCalledExactlyOnceWith({ skip: 0, limit: 1, search: 'nov' });
+    expect(listShared).toHaveBeenCalledExactlyOnceWith({ skip: 0, limit: 1, search: 'nov' });
+    expect(listPublic).not.toHaveBeenCalled();
+    expect(numbers()).toEqual(['12', '3', null]);
+    expect(labels()[2]).toBe('Públicas');
   });
 
   it('counts the own libraries with the search, without the filters', async () => {
@@ -102,7 +132,7 @@ describe('LibrariesSection', () => {
     expect(listOwn).toHaveBeenCalledTimes(1);
     expect(listOwn).toHaveBeenCalledWith({ skip: 0, limit: 1, search: 'nov' });
     expect(listShared).not.toHaveBeenCalled();
-    expect(numbers()).toEqual(['12', null]);
+    expect(numbers()).toEqual(['12', null, '5']);
   });
 
   it('shows the number that the open page sets', async () => {
@@ -112,7 +142,7 @@ describe('LibrariesSection', () => {
     page.componentInstance.counts.own.set(1);
     await settle();
 
-    expect(numbers()).toEqual(['1', '3']);
+    expect(numbers()).toEqual(['1', '3', '5']);
     expect(labels()[0]).toContain(', 1 biblioteca');
     expect(labels()[0]).not.toContain('bibliotecas');
   });
@@ -174,7 +204,7 @@ describe('LibrariesSection', () => {
     first.next({ items: [], total: 9 });
     await settle();
 
-    expect(numbers()).toEqual([null, '1']);
+    expect(numbers()).toEqual([null, '1', '5']);
   });
 
   it('shows the tab without number if it cannot be counted, and counts again later', async () => {
@@ -182,23 +212,24 @@ describe('LibrariesSection', () => {
     const { harness, numbers, labels, settle } = await setup('/libraries', {
       shared: () => results.shift() ?? NEVER,
     });
-    expect(numbers()).toEqual([null, null]);
-    expect(labels()).toEqual(['Mías', 'Compartidas conmigo']);
+    expect(numbers()).toEqual([null, null, '5']);
+    expect(labels().slice(0, 2)).toEqual(['Mías', 'Compartidas conmigo']);
 
     await harness.navigateByUrl('/libraries?q=nov');
     await settle();
 
-    expect(numbers()).toEqual([null, '1']);
+    expect(numbers()).toEqual([null, '1', '5']);
   });
 
   it('asks for nothing when leaving it', async () => {
-    const { harness, root, listOwn, listShared } = await setup('/libraries');
+    const { harness, root, listOwn, listShared, listPublic } = await setup('/libraries');
 
     await harness.navigateByUrl('/libraries/l1');
 
     expect(root.textContent).toContain('detail');
     expect(listOwn).not.toHaveBeenCalled();
     expect(listShared).toHaveBeenCalledTimes(1);
+    expect(listPublic).toHaveBeenCalledTimes(1);
   });
 
   describe('search', () => {
@@ -268,10 +299,19 @@ describe('LibrariesSection', () => {
         'Buscar bibliotecas compartidas conmigo',
       );
       expect(input(root)?.placeholder).toBe('Nombre, descripción o propietario');
+
+      await harness.navigateByUrl('/libraries/public');
+      await settle();
+
+      expect(input(root)?.getAttribute('aria-label')).toBe('Buscar bibliotecas públicas');
+      expect(input(root)?.placeholder).toBe('Nombre, descripción o propietario');
     });
 
     it('is hidden without libraries in any tab, but not with a filter', async () => {
-      const { root, harness, settle } = await setup('/libraries', { shared: () => total(0) });
+      const { root, harness, settle } = await setup('/libraries', {
+        shared: () => total(0),
+        public: () => total(0),
+      });
       const page = () => harness.fixture.debugElement.query(By.directive(OwnPage));
 
       page().componentInstance.counts.own.set(0);

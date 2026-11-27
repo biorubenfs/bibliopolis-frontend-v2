@@ -1,3 +1,4 @@
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -26,6 +27,8 @@ function library(
     books,
     isFavorite,
     shareRatings: false,
+    isPublic: false,
+    publishedAt: null,
     tagIds,
     userId: 'u1',
     createdAt: '',
@@ -111,16 +114,23 @@ describe('LibrariesPage', () => {
     expect(counts.own()).toBe(1);
   });
 
-  it('opens the dialog to share a library', async () => {
+  it('opens the dialog to share a library, and shows at once when it is made public', async () => {
     const item = library('1', 'Novela');
     const element = await render([item]);
+    const visibilityChanged = new Subject<Library>();
     const open = vi
       .spyOn(TestBed.inject(MatDialog), 'open')
-      .mockReturnValue({} as MatDialogRef<unknown>);
+      .mockReturnValue({ componentInstance: { visibilityChanged } } as MatDialogRef<unknown>);
 
     element.querySelector<HTMLButtonElement>('[aria-label="Compartir Novela"]')!.click();
 
     expect(open).toHaveBeenCalledWith(ShareLibraryDialog, expect.objectContaining({ data: item }));
+    expect(element.querySelector('app-public-badge')).toBeNull();
+
+    visibilityChanged.next({ ...item, isPublic: true, publishedAt: '2026-11-27' });
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(element.querySelector('app-library-card app-public-badge')).not.toBeNull();
   });
 
   it('shows the create button in the filters row when there are libraries', async () => {

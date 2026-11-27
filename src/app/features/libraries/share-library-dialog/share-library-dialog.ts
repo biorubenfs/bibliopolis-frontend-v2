@@ -7,6 +7,7 @@ import {
   afterNextRender,
   computed,
   inject,
+  output,
   signal,
   viewChild,
 } from '@angular/core';
@@ -40,8 +41,9 @@ export type ShareLibraryDialogData = Pick<Library, 'id' | 'name'>;
 export const SHARE_DIALOG_SIZE = { width: '520px', maxWidth: 'calc(100vw - 32px)' };
 
 /**
- * Manages who can see a library of the user, and whether they also see the ratings. Every change is
- * saved at once. It loads the library itself, so the setting is right however it was opened.
+ * Manages who can see a library of the user, whether they also see the ratings, and whether anyone
+ * can see it. Every change is saved at once. It loads the library itself, so the settings are right
+ * however it was opened.
  */
 @Component({
   selector: 'app-share-library-dialog',
@@ -67,6 +69,12 @@ export class ShareLibraryDialog {
   private readonly injector = inject(Injector);
   protected readonly library = inject<ShareLibraryDialogData>(MAT_DIALOG_DATA);
 
+  /**
+   * The library once it is made public or private, so whoever opened the dialog can show it at
+   * once: `dialogRef.componentInstance.visibilityChanged.subscribe(…)`.
+   */
+  readonly visibilityChanged = output<Library>();
+
   private readonly formDirective = viewChild(FormGroupDirective);
   private readonly emailInput = viewChild<ElementRef<HTMLInputElement>>('emailInput');
 
@@ -75,6 +83,7 @@ export class ShareLibraryDialog {
   protected readonly state = signal<LoadState>('loading');
   protected readonly members = signal<LibraryMember[]>([]);
   protected readonly shareRatings = signal(false);
+  protected readonly isPublic = signal(false);
   protected readonly limitReached = computed(() => this.members().length >= MAX_LIBRARY_MEMBERS);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
@@ -85,10 +94,13 @@ export class ShareLibraryDialog {
 
   protected readonly removingId = signal<string | null>(null);
   protected readonly savingRatings = signal(false);
+  protected readonly savingVisibility = signal(false);
   /** A failed change of the list or of the setting, shown below them. */
   protected readonly changeError = signal<string | null>(null);
   /** The result of the last change of the setting, shown next to it: there is no button to save it. */
   protected readonly ratingsMessage = signal('');
+  /** The same for the visibility. */
+  protected readonly visibilityMessage = signal('');
   /** The result of the last change of the list, read by screen readers. */
   protected readonly statusMessage = signal('');
 
@@ -106,6 +118,7 @@ export class ShareLibraryDialog {
       .subscribe({
         next: ({ library, members }) => {
           this.shareRatings.set(library.shareRatings);
+          this.isPublic.set(library.isPublic);
           this.members.set(members.items);
           this.state.set('loaded');
         },
@@ -190,6 +203,32 @@ export class ShareLibraryDialog {
       });
   }
 
+  protected changeVisibility({ checked, source }: MatSlideToggleChange): void {
+    this.savingVisibility.set(true);
+    this.clearMessages();
+    this.librariesService
+      .update(this.library.id, { isPublic: checked })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (library) => {
+          this.savingVisibility.set(false);
+          this.isPublic.set(library.isPublic);
+          this.visibilityMessage.set(
+            library.isPublic
+              ? 'Guardado: la biblioteca es pública.'
+              : 'Guardado: la biblioteca ya no es pública.',
+          );
+          this.visibilityChanged.emit(library);
+        },
+        error: () => {
+          this.savingVisibility.set(false);
+          // The toggle has already moved by itself, and its binding has not changed
+          source.checked = this.isPublic();
+          this.changeError.set('No se ha podido guardar el cambio. Inténtalo de nuevo.');
+        },
+      });
+  }
+
   private onRemoved(member: LibraryMember): void {
     this.removingId.set(null);
     this.members.update((members) => members.filter((item) => item.id !== member.id));
@@ -202,6 +241,7 @@ export class ShareLibraryDialog {
     this.inviteError.set(null);
     this.changeError.set(null);
     this.ratingsMessage.set('');
+    this.visibilityMessage.set('');
     this.statusMessage.set('');
   }
 

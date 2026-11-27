@@ -84,7 +84,7 @@ export class SharedLibrariesService {
 
   /** Exports the books of the library as a PDF or CSV file, the same files its owner gets. */
   export(
-    library: SharedLibrary,
+    library: Pick<SharedLibrary, 'id' | 'name'>,
     format: LibraryExportFormat,
   ): Observable<{ blob: Blob; filename: string }> {
     const params = new HttpParams().set('format', format);

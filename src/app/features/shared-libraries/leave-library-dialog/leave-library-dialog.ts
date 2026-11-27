@@ -14,10 +14,18 @@ import { SharedLibrary } from '../shared-library.model';
   template: `
     <h2 mat-dialog-title>¿Salir de «{{ library.name }}»?</h2>
     <mat-dialog-content>
-      <p>
-        Dejarás de ver esta biblioteca de {{ library.ownerName }}, que tendría que invitarte de
-        nuevo. Tus libros, valoraciones y notas no cambian.
-      </p>
+      @if (library.isPublic) {
+        <p>
+          Dejarás de ser miembro de esta biblioteca de {{ library.ownerName }}. Como es pública, la
+          seguirás encontrando en «Públicas», pero sin sus valoraciones. Tus libros, valoraciones y
+          notas no cambian.
+        </p>
+      } @else {
+        <p>
+          Dejarás de ver esta biblioteca de {{ library.ownerName }}, que tendría que invitarte de
+          nuevo. Tus libros, valoraciones y notas no cambian.
+        </p>
+      }
       <div class="error" role="alert">
         @if (errorMessage(); as message) {
           {{ message }}

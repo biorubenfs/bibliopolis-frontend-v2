@@ -12,6 +12,8 @@ describe('LibraryCard', () => {
     books: ['b1'],
     isFavorite: false,
     shareRatings: false,
+    isPublic: false,
+    publishedAt: null,
     tagIds: [],
     userId: 'u1',
     createdAt: '',
@@ -113,5 +115,14 @@ describe('LibraryCard', () => {
       'Prestados',
       'Clásicos',
     ]);
+  });
+
+  it('marks only the public libraries', () => {
+    expect((render().nativeElement as HTMLElement).querySelector('app-public-badge')).toBeNull();
+
+    TestBed.resetTestingModule();
+    const element = render({ isPublic: true, publishedAt: '2026-11-27' })
+      .nativeElement as HTMLElement;
+    expect(element.querySelector('.footer app-public-badge')?.textContent).toContain('Pública');
   });
 });

@@ -21,6 +21,7 @@ describe('ShareLibraryDialog', () => {
     options: {
       members?: LibraryMember[];
       shareRatings?: boolean;
+      isPublic?: boolean;
       services?: Partial<Record<keyof LibraryMembersService, unknown>>;
       update?: ReturnType<typeof vi.fn>;
       get?: ReturnType<typeof vi.fn>;
@@ -34,10 +35,19 @@ describe('ShareLibraryDialog', () => {
       ...options.services,
     };
     const get =
-      options.get ?? vi.fn(() => of({ id: 'l1', shareRatings: options.shareRatings ?? false }));
+      options.get ??
+      vi.fn(() =>
+        of({
+          id: 'l1',
+          shareRatings: options.shareRatings ?? false,
+          isPublic: options.isPublic ?? false,
+        }),
+      );
     const update =
       options.update ??
-      vi.fn((id: string, changes: Partial<Library>) => of({ id, shareRatings: false, ...changes }));
+      vi.fn((id: string, changes: Partial<Library>) =>
+        of({ id, shareRatings: false, isPublic: false, ...changes }),
+      );
     TestBed.configureTestingModule({
       imports: [ShareLibraryDialog],
       providers: [
@@ -57,6 +67,7 @@ describe('ShareLibraryDialog', () => {
     };
     const email = () => element.querySelector<HTMLInputElement>('input[type="email"]')!;
     return {
+      component: fixture.componentInstance,
       element,
       members,
       get,
@@ -65,6 +76,8 @@ describe('ShareLibraryDialog', () => {
       email,
       names: () => Array.from(element.querySelectorAll('.members .name'), (e) => e.textContent),
       toggle: () => element.querySelector<HTMLButtonElement>('mat-slide-toggle button')!,
+      visibilityToggle: () =>
+        element.querySelectorAll<HTMLButtonElement>('mat-slide-toggle button')[1],
       errors: () =>
         Array.from(element.querySelectorAll('[role="alert"]'), (e) => e.textContent!.trim()).join(
           '',
@@ -271,6 +284,60 @@ describe('ShareLibraryDialog', () => {
       expect(toggle().getAttribute('aria-checked')).toBe('false');
       expect(errors()).toContain('No se ha podido guardar el cambio');
       expect(element.querySelector('.saved')?.textContent).toBe('');
+    });
+  });
+
+  describe('visibility', () => {
+    const saved = (element: HTMLElement) =>
+      Array.from(element.querySelectorAll('.saved[role="status"]'), (e) => e.textContent).join('');
+
+    it('shows whether the library is public, with what anyone would see', async () => {
+      const { element, visibilityToggle } = await setup({ isPublic: true });
+
+      expect(visibilityToggle().getAttribute('aria-checked')).toBe('true');
+      expect(element.querySelectorAll('mat-slide-toggle')[1].textContent).toContain(
+        'Biblioteca pública',
+      );
+      expect(element.querySelector('#visibility-help')?.textContent).toContain(
+        'Nunca verá tus valoraciones ni tus notas',
+      );
+    });
+
+    it('saves it at once and tells whoever opened the dialog', async () => {
+      const { component, element, update, visibilityToggle, settle } = await setup();
+      const changed = vi.fn();
+      component.visibilityChanged.subscribe(changed);
+
+      visibilityToggle().click();
+      await settle();
+
+      expect(update).toHaveBeenCalledWith('l1', { isPublic: true });
+      expect(visibilityToggle().getAttribute('aria-checked')).toBe('true');
+      expect(saved(element)).toBe('Guardado: la biblioteca es pública.');
+      expect(changed).toHaveBeenCalledWith(expect.objectContaining({ id: 'l1', isPublic: true }));
+
+      visibilityToggle().click();
+      await settle();
+
+      expect(update).toHaveBeenLastCalledWith('l1', { isPublic: false });
+      expect(saved(element)).toBe('Guardado: la biblioteca ya no es pública.');
+      expect(changed).toHaveBeenLastCalledWith(expect.objectContaining({ isPublic: false }));
+    });
+
+    it('goes back to the saved setting after a failure', async () => {
+      const { component, element, visibilityToggle, settle, errors } = await setup({
+        update: vi.fn(() => throwError(() => new ApiError(500, null, ''))),
+      });
+      const changed = vi.fn();
+      component.visibilityChanged.subscribe(changed);
+
+      visibilityToggle().click();
+      await settle();
+
+      expect(visibilityToggle().getAttribute('aria-checked')).toBe('false');
+      expect(errors()).toContain('No se ha podido guardar el cambio');
+      expect(saved(element)).toBe('');
+      expect(changed).not.toHaveBeenCalled();
     });
   });
 });

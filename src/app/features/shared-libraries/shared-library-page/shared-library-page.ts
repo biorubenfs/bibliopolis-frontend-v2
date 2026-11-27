@@ -23,6 +23,7 @@ import { ApiError } from '../../../core/http/api-error';
 import { Page } from '../../../core/http/api.models';
 import { SpanishPaginatorIntl } from '../../../core/i18n/paginator-intl';
 import { SearchableList } from '../../../core/lists/searchable-list';
+import { PublicBadge } from '../../libraries/public-badge/public-badge';
 import { BooksViewPreference } from '../../user-books/books-view';
 import { BooksViewToggle } from '../../user-books/books-view-toggle/books-view-toggle';
 import { UserBookCard } from '../../user-books/user-book-card/user-book-card';
@@ -36,7 +37,15 @@ import {
   SharedBookDialogResult,
 } from '../shared-book-dialog/shared-book-dialog';
 
-/** A library of another user and its books, in read-only. */
+/** The tab of «Bibliotecas» the page was opened from: the link back goes to it. */
+export type SharedLibrarySection = 'shared' | 'public';
+
+const SECTIONS: Record<SharedLibrarySection, { path: string; label: string }> = {
+  shared: { path: '/libraries/shared', label: 'Compartidas conmigo' },
+  public: { path: '/libraries/public', label: 'Públicas' },
+};
+
+/** A library of another user and its books, in read-only: shared with the user, or public. */
 @Component({
   selector: 'app-shared-library-page',
   imports: [
@@ -47,6 +56,7 @@ import {
     MatInputModule,
     MatPaginatorModule,
     MatProgressSpinnerModule,
+    PublicBadge,
     RouterLink,
     UserBookCard,
     UserBooksTable,
@@ -63,6 +73,12 @@ export class SharedLibraryPage extends SearchableList<SharedLibraryBook> {
 
   /** Library ID, bound from the `:id` route param. */
   readonly id = input.required<string>();
+  /**
+   * Bound from the data of the route. The router sets it to undefined on the routes without it, so
+   * a default value would not apply: they are the shared ones.
+   */
+  readonly section = input<SharedLibrarySection | undefined>();
+  protected readonly back = computed(() => SECTIONS[this.section() ?? 'shared']);
 
   protected readonly library = signal<SharedLibrary | null>(null);
   /** Without access, the library does not exist for the user. */

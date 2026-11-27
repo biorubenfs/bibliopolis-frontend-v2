@@ -19,6 +19,8 @@ function library(id: string, name: string, ownerName: string): SharedLibrary {
     ownerName,
     booksCount: 2,
     shareRatings: false,
+    isPublic: false,
+    access: 'member',
     sharedAt: '',
   };
 }

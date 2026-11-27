@@ -98,6 +98,14 @@
   border-top: 1px solid var(--mat-sys-surface-container-highest);
 }
 
+.details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
 .count {
   display: flex;
   align-items: center;

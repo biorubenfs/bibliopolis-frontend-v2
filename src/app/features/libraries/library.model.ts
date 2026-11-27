@@ -14,6 +14,10 @@ export interface Library {
   shareRatings: boolean;
   /** IDs of its tags, own or global (at most 5). */
   tagIds: string[];
+  /** Any user can see it in «Públicas», without being invited. */
+  isPublic: boolean;
+  /** When it was last made public; null while it is private. */
+  publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -32,10 +36,14 @@ export const LIBRARY_NAME_MAX_LENGTH = 50;
 export const LIBRARY_DESCRIPTION_MAX_LENGTH = 100;
 export const LIBRARY_SEARCH_MAX_LENGTH = 100;
 
-/** A new library is never a favorite nor shares the ratings: that is only set with an update. */
+/**
+ * A new library is never a favorite, nor shares the ratings, nor is public: that is only set with
+ * an update.
+ */
 export type UpdateLibrary = Partial<CreateLibrary> & {
   isFavorite?: boolean;
   shareRatings?: boolean;
+  isPublic?: boolean;
 };
 
 export type LibraryExportFormat = 'pdf' | 'csv';

@@ -18,6 +18,8 @@ const library: SharedLibrary = {
   ownerName: 'Ana',
   booksCount: 2,
   shareRatings: true,
+  isPublic: false,
+  access: 'member',
   sharedAt: '',
 };
 
@@ -61,7 +63,14 @@ describe('SharedLibraryPage', () => {
       providers: [
         // Real routing: the page receives :id through input binding
         provideRouter(
-          [{ path: 'libraries/shared/:id', component: SharedLibraryPage }],
+          [
+            { path: 'libraries/shared/:id', component: SharedLibraryPage },
+            {
+              path: 'libraries/public/:id',
+              component: SharedLibraryPage,
+              data: { section: 'public' },
+            },
+          ],
           withComponentInputBinding(),
         ),
         { provide: SharedLibrariesService, useValue: { get, listBooks } },
@@ -85,7 +94,8 @@ describe('SharedLibraryPage', () => {
     expect(get).toHaveBeenCalledWith('l1');
     expect(listBooks).toHaveBeenCalledWith('l1', { skip: 0, limit: 12, search: '' });
     expect(element.querySelector('h1')?.textContent).toBe('Novela');
-    expect(element.querySelector('.owner')?.textContent).toBe('De Ana');
+    expect(element.querySelector('.owner')?.textContent?.trim()).toBe('De Ana');
+    expect(element.querySelector('app-public-badge')).toBeNull();
     expect(element.querySelector('.description')?.textContent).toContain('Sus novelas');
     expect(element.querySelector('.count')?.textContent).toBe('2 libros');
     expect(element.querySelectorAll('app-user-book-card')).toHaveLength(2);
@@ -164,6 +174,39 @@ describe('SharedLibraryPage', () => {
     expect(element.textContent).toContain('No hemos encontrado esta biblioteca');
     expect(element.querySelector('[role="alert"] button')).toBeNull();
     expect(element.querySelector('mat-paginator')).toBeNull();
+  });
+
+  describe('public library', () => {
+    it('goes back to «Públicas» when opened from there', async () => {
+      const { element } = await setup({
+        url: '/libraries/public/l1',
+        library: { isPublic: true, access: 'public', shareRatings: false, sharedAt: null },
+      });
+
+      const back = element.querySelector('a.back');
+      expect(back?.getAttribute('href')).toBe('/libraries/public');
+      expect(back?.textContent).toContain('Públicas');
+      expect(element.querySelector('.owner app-public-badge')?.textContent).toContain('Pública');
+    });
+
+    it('marks a shared library that is also public', async () => {
+      const { element } = await setup({ library: { isPublic: true } });
+
+      expect(element.querySelector('.owner app-public-badge')).not.toBeNull();
+      expect(element.querySelector('a.back')?.getAttribute('href')).toBe('/libraries/shared');
+    });
+
+    it('says that it may no longer be public when it is not found', async () => {
+      const { element } = await setup({
+        url: '/libraries/public/l1',
+        get: vi.fn(notFound),
+        listBooks: vi.fn(notFound),
+      });
+
+      expect(element.textContent).toContain('No hemos encontrado esta biblioteca');
+      expect(element.textContent).toContain('Puede que ya no sea pública');
+      expect(element.querySelector('a.back')?.getAttribute('href')).toBe('/libraries/public');
+    });
   });
 
   it('leaves nothing of the library on screen when the access is lost with the page open', async () => {

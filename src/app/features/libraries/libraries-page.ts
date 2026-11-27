@@ -401,12 +401,17 @@ export class LibrariesPage {
       });
   }
 
-  /** The dialog saves each change by itself, and nothing on the cards depends on them. */
+  /** The dialog saves each change by itself; of them, the cards only show the visibility. */
   protected openShareDialog(library: Library): void {
-    this.dialog.open<ShareLibraryDialog, ShareLibraryDialogData>(ShareLibraryDialog, {
-      ...SHARE_DIALOG_SIZE,
-      data: library,
-    });
+    const dialogRef = this.dialog.open<ShareLibraryDialog, ShareLibraryDialogData>(
+      ShareLibraryDialog,
+      { ...SHARE_DIALOG_SIZE, data: library },
+    );
+    dialogRef.componentInstance.visibilityChanged.subscribe((updated) =>
+      this.libraries.update((libraries) =>
+        libraries.map((item) => (item.id === updated.id ? updated : item)),
+      ),
+    );
   }
 
   protected openDeleteDialog(library: Library): void {

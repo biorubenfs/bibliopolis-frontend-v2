@@ -7,12 +7,15 @@ import { SharedLibrariesService } from '../shared-libraries.service';
 import { LeaveLibraryDialog } from './leave-library-dialog';
 
 describe('LeaveLibraryDialog', () => {
-  async function confirm(leave: ReturnType<typeof vi.fn>) {
+  async function confirm(leave: ReturnType<typeof vi.fn>, isPublic = false) {
     const close = vi.fn();
     TestBed.configureTestingModule({
       imports: [LeaveLibraryDialog],
       providers: [
-        { provide: MAT_DIALOG_DATA, useValue: { id: 'l1', name: 'Novela', ownerName: 'Ana' } },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: { id: 'l1', name: 'Novela', ownerName: 'Ana', isPublic },
+        },
         { provide: MatDialogRef, useValue: { close } },
         { provide: SharedLibrariesService, useValue: { leave } },
       ],
@@ -49,5 +52,21 @@ describe('LeaveLibraryDialog', () => {
 
     expect(close).not.toHaveBeenCalled();
     expect(element.querySelector('[role="alert"]')?.textContent).toContain('No se ha podido salir');
+  });
+
+  it('explains that a public library will still be seen, without the ratings', async () => {
+    const { element } = await confirm(
+      vi.fn(() => of(undefined)),
+      true,
+    );
+
+    expect(element.textContent).toContain('Como es pública, la seguirás encontrando en «Públicas»');
+    expect(element.textContent).not.toContain('tendría que invitarte');
+  });
+
+  it('warns that only the owner can give the access back to a private library', async () => {
+    const { element } = await confirm(vi.fn(() => of(undefined)));
+
+    expect(element.textContent).toContain('tendría que invitarte de nuevo');
   });
 });

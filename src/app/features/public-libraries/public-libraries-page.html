@@ -1,0 +1,69 @@
+<section aria-label="Bibliotecas públicas">
+  <!-- The search is in the header of «Bibliotecas», shared with the other tabs -->
+  @switch (state()) {
+    @case ('loading') {
+      <div class="status">
+        <mat-spinner diameter="40" aria-label="Cargando bibliotecas" />
+      </div>
+    }
+    @case ('error') {
+      <div class="status" role="alert">
+        <mat-icon aria-hidden="true">cloud_off</mat-icon>
+        <p>No se han podido cargar las bibliotecas públicas.</p>
+        <button mat-stroked-button type="button" (click)="load()">Reintentar</button>
+      </div>
+    }
+    @default {
+      @if (items().length === 0 && search()) {
+        <div class="status empty">
+          <mat-icon aria-hidden="true">search_off</mat-icon>
+          <h2>Ninguna biblioteca pública coincide con «{{ search() }}»</h2>
+          <p>Prueba con otra palabra del nombre o de la descripción, o con otro propietario.</p>
+          <div class="actions">
+            <button mat-stroked-button type="button" (click)="clearSearch()">
+              Borrar búsqueda
+            </button>
+            @if (ownMatches(); as count) {
+              <a mat-button routerLink="/libraries" [queryParams]="{ q: search() }">
+                Ver {{ count }} en mis bibliotecas
+              </a>
+            }
+          </div>
+        </div>
+      } @else if (items().length === 0) {
+        <div class="status empty">
+          <mat-icon aria-hidden="true">public</mat-icon>
+          <h2>Aún no hay bibliotecas públicas</h2>
+          <p>Cuando alguien haga pública una de sus bibliotecas, aparecerá aquí.</p>
+        </div>
+      } @else {
+        <ul class="grid">
+          @for (library of items(); track library.id) {
+            <li>
+              <app-shared-library-card
+                [library]="library"
+                basePath="/libraries/public"
+                [leavable]="false"
+                [exporting]="exportingId() === library.id"
+                (exportRequested)="export(library, $event)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    }
+  }
+
+  <!-- Outside the @switch so it stays in the DOM while a page loads and keeps the keyboard focus -->
+  @if (showPaginator()) {
+    <mat-paginator
+      [length]="total()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      showFirstLastButtons
+      (page)="changePage($event)"
+      aria-label="Páginas de bibliotecas públicas"
+    />
+  }
+</section>

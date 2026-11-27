@@ -1,20 +1,25 @@
 <!-- With the library it goes into the header, on the line of the search -->
 @if (!library()) {
-  <a mat-button class="back" routerLink="/libraries/shared">
+  <a mat-button class="back" [routerLink]="back().path">
     <mat-icon>arrow_back</mat-icon>
-    Compartidas conmigo
+    {{ back().label }}
   </a>
 }
 
 @if (library(); as library) {
   <header class="page-header">
-    <a mat-button class="back" routerLink="/libraries/shared">
+    <a mat-button class="back" [routerLink]="back().path">
       <mat-icon>arrow_back</mat-icon>
-      Compartidas conmigo
+      {{ back().label }}
     </a>
     <div class="heading">
       <h1>{{ library.name }}</h1>
-      <p class="owner">De {{ library.ownerName }}</p>
+      <p class="owner">
+        De {{ library.ownerName }}
+        @if (library.isPublic) {
+          <app-public-badge />
+        }
+      </p>
       <!-- The book count shares the line of the description, to keep the header short -->
       @if (library.description || total() > 0) {
         <p class="description">
@@ -82,8 +87,12 @@
         <mat-icon aria-hidden="true">search_off</mat-icon>
         <h1>No hemos encontrado esta biblioteca</h1>
         <p>
-          Puede que ya no se comparta contigo, que se haya eliminado o que el enlace no sea
-          correcto.
+          @if (section() === 'public') {
+            Puede que ya no sea pública, que se haya eliminado o que el enlace no sea correcto.
+          } @else {
+            Puede que ya no se comparta contigo, que se haya eliminado o que el enlace no sea
+            correcto.
+          }
         </p>
       </div>
     } @else {

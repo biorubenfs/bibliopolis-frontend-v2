@@ -7,9 +7,20 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 
 import { LibraryExportFormat } from '../../libraries/library.model';
+import { PublicBadge } from '../../libraries/public-badge/public-badge';
 import { SharedLibrary } from '../shared-library.model';
 
-/** A library of another user. Its owner is always visible: names may be repeated among users. */
+/** What the card shows: the libraries of «Públicas» have no more. */
+export type SharedLibraryCardData = Pick<
+  SharedLibrary,
+  'id' | 'name' | 'description' | 'ownerName' | 'booksCount'
+> &
+  Partial<Pick<SharedLibrary, 'isPublic'>>;
+
+/**
+ * A library of another user, shared with them or public. Its owner is always visible: names may be
+ * repeated among users.
+ */
 @Component({
   selector: 'app-shared-library-card',
   imports: [
@@ -18,6 +29,7 @@ import { SharedLibrary } from '../shared-library.model';
     MatMenuModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    PublicBadge,
     RouterLink,
   ],
   templateUrl: './shared-library-card.html',
@@ -25,7 +37,11 @@ import { SharedLibrary } from '../shared-library.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SharedLibraryCard {
-  readonly library = input.required<SharedLibrary>();
+  readonly library = input.required<SharedLibraryCardData>();
+  /** The page of the library is under the tab the card is in. */
+  readonly basePath = input('/libraries/shared');
+  /** Only a member can leave a library. */
+  readonly leavable = input(true);
   /** True while an export of this library is being downloaded. */
   readonly exporting = input(false);
 

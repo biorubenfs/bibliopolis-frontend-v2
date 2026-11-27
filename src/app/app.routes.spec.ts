@@ -21,6 +21,8 @@ describe('routes', () => {
     ['/libraries', 'Bibliotecas', {}],
     ['/libraries/shared', 'Compartidas conmigo', {}],
     ['/libraries/shared/l1', 'Biblioteca compartida', { id: 'l1' }],
+    ['/libraries/public', 'Bibliotecas públicas', {}],
+    ['/libraries/public/l1', 'Biblioteca pública', { id: 'l1' }],
     ['/libraries/l1', 'Biblioteca', { id: 'l1' }],
     ['/libraries/l1/imports/i1', 'Importación', { id: 'l1', importId: 'i1' }],
   ])('%s opens «%s»', async (url, title, params) => {

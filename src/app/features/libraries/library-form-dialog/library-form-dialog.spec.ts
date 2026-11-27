@@ -19,6 +19,8 @@ const library: Library = {
   books: [],
   isFavorite: false,
   shareRatings: false,
+  isPublic: false,
+  publishedAt: null,
   tagIds: ['t1', 't2'],
   userId: 'u1',
   createdAt: '',
