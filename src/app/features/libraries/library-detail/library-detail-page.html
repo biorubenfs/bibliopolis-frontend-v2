@@ -194,7 +194,9 @@
       <app-user-books-table
         [books]="books()"
         [showReadingStatus]="true"
+        [addable]="true"
         (openRequested)="openDetailDialog($event)"
+        (addRequested)="openAddToLibrariesDialog($event)"
         (removeRequested)="openRemoveDialog($event)"
       />
     } @else {
@@ -203,7 +205,9 @@
           <li>
             <app-user-book-card
               [book]="book"
+              [addable]="true"
               (openRequested)="openDetailDialog(book)"
+              (addRequested)="openAddToLibrariesDialog(book)"
               (removeRequested)="openRemoveDialog(book)"
             />
           </li>

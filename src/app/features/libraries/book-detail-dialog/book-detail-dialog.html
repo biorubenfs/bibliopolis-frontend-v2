@@ -32,10 +32,22 @@
 
     <app-book-libraries
       class="libraries"
-      [libraryIds]="book.libraries"
+      [libraryIds]="libraryIds()"
       [currentLibraryId]="libraryId"
       (navigated)="closeOnNavigation()"
     />
+
+    <button
+      mat-button
+      type="button"
+      class="add-to-libraries"
+      aria-haspopup="dialog"
+      [disabled]="saving()"
+      (click)="openAddToLibrariesDialog()"
+    >
+      <mat-icon>library_add</mat-icon>
+      Añadir a otra biblioteca
+    </button>
 
     <app-rating-input class="rating" formControlName="rating" aria-labelledby="book-rating-label">
       <span id="book-rating-label" class="rating-label">Valoración</span>

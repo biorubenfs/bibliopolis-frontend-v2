@@ -12,6 +12,15 @@ import { RouterLink } from '@angular/router';
 import { SpanishPaginatorIntl } from '../../../core/i18n/paginator-intl';
 import { SearchableList } from '../../../core/lists/searchable-list';
 import {
+  ADD_TO_LIBRARIES_DIALOG_SIZE,
+  AddToLibrariesDialog,
+  AddedLibrary,
+  BookToAdd,
+  addLibraryIds,
+  addedMessage,
+  toBookToAdd,
+} from '../../libraries/add-to-libraries-dialog/add-to-libraries-dialog';
+import {
   BookDetailDialog,
   BookDetailDialogData,
   BookDetailDialogResult,
@@ -135,23 +144,49 @@ export class MyBooksPage extends SearchableList<UserBook> {
   }
 
   protected openDetailDialog(book: UserBook): void {
+    const dialogRef = this.dialog.open<
+      BookDetailDialog,
+      BookDetailDialogData,
+      BookDetailDialogResult
+    >(BookDetailDialog, {
+      ...DETAIL_DIALOG_SIZE,
+      data: { book },
+    });
+    dialogRef.componentInstance.librariesAdded.subscribe((libraries) =>
+      this.onLibrariesAdded(book, libraries),
+    );
+    dialogRef.afterClosed().subscribe((result) => {
+      // Without a library the dialog does not offer removing the book
+      if (result && result !== 'removed') {
+        // With the filter, a book whose status changed may no longer belong to the list
+        if (this.readingStatus()) {
+          this.load({ quiet: true });
+        } else {
+          this.replaceItem(result);
+        }
+        this.snackBar.open('Cambios guardados', undefined, { duration: 4000 });
+      }
+    });
+  }
+
+  protected openAddToLibrariesDialog(book: UserBook): void {
     this.dialog
-      .open<BookDetailDialog, BookDetailDialogData, BookDetailDialogResult>(BookDetailDialog, {
-        ...DETAIL_DIALOG_SIZE,
-        data: { book },
+      .open<AddToLibrariesDialog, BookToAdd, AddedLibrary[]>(AddToLibrariesDialog, {
+        ...ADD_TO_LIBRARIES_DIALOG_SIZE,
+        data: toBookToAdd(book),
       })
       .afterClosed()
-      .subscribe((result) => {
-        // Without a library the dialog does not offer removing the book
-        if (result && result !== 'removed') {
-          // With the filter, a book whose status changed may no longer belong to the list
-          if (this.readingStatus()) {
-            this.load({ quiet: true });
-          } else {
-            this.replaceItem(result);
-          }
-          this.snackBar.open('Cambios guardados', undefined, { duration: 4000 });
+      .subscribe((libraries) => {
+        if (libraries) {
+          this.onLibrariesAdded(book, libraries);
         }
       });
+  }
+
+  /** Updates the library count of the book without reloading the page. */
+  private onLibrariesAdded(book: UserBook, libraries: AddedLibrary[]): void {
+    const current = this.items().find(({ id }) => id === book.id) ?? book;
+    this.replaceItem({ ...current, libraries: addLibraryIds(current.libraries, libraries) });
+    this.snackBar.open(addedMessage(book.bookTitle, libraries), undefined, { duration: 4000 });
   }
 }

@@ -18,10 +18,15 @@ export class UserBookCard {
   readonly book = input.required<ListedBook>();
   /** Offers removing the book from the library being shown. */
   readonly removable = input(true);
+  /** Offers adding the book to libraries of the user. */
+  readonly addable = input(false);
+  /** The tooltip of the add button, which says where the book is added. */
+  readonly addLabel = input('Añadir a otra biblioteca');
   /** Shows how many libraries contain the book, for lists that span several of them. */
   readonly showLibraryCount = input(false);
 
   readonly openRequested = output<void>();
+  readonly addRequested = output<void>();
   readonly removeRequested = output<void>();
 
   /** Covers come from external services, so a URL may stop working: show the placeholder then. */

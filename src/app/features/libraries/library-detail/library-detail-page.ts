@@ -61,6 +61,15 @@ import { ReadingStatusQuery, UserBooksService } from '../../user-books/user-book
 import { UserBooksTable } from '../../user-books/user-books-table/user-books-table';
 import { AddBookDialog, AddBookDialogData } from '../add-book-dialog/add-book-dialog';
 import {
+  ADD_TO_LIBRARIES_DIALOG_SIZE,
+  AddToLibrariesDialog,
+  AddedLibrary,
+  BookToAdd,
+  addLibraryIds,
+  addedMessage,
+  toBookToAdd,
+} from '../add-to-libraries-dialog/add-to-libraries-dialog';
+import {
   BookDetailDialog,
   BookDetailDialogData,
   BookDetailDialogResult,
@@ -438,27 +447,56 @@ export class LibraryDetailPage {
   }
 
   protected openDetailDialog(book: UserBook): void {
+    const dialogRef = this.dialog.open<
+      BookDetailDialog,
+      BookDetailDialogData,
+      BookDetailDialogResult
+    >(BookDetailDialog, {
+      ...DETAIL_DIALOG_SIZE,
+      data: { libraryId: this.id(), book },
+    });
+    dialogRef.componentInstance.librariesAdded.subscribe((libraries) =>
+      this.onLibrariesAdded(book, libraries),
+    );
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === 'removed') {
+        this.onBookRemoved(book);
+      } else if (result) {
+        // With the filter, a book whose status changed may no longer belong to the list
+        if (this.status()) {
+          this.load();
+        } else {
+          this.books.update((list) => list.map((item) => (item.id === result.id ? result : item)));
+        }
+        this.notify('Cambios guardados');
+      }
+    });
+  }
+
+  protected openAddToLibrariesDialog(book: UserBook): void {
     this.dialog
-      .open<BookDetailDialog, BookDetailDialogData, BookDetailDialogResult>(BookDetailDialog, {
-        ...DETAIL_DIALOG_SIZE,
-        data: { libraryId: this.id(), book },
+      .open<AddToLibrariesDialog, BookToAdd, AddedLibrary[]>(AddToLibrariesDialog, {
+        ...ADD_TO_LIBRARIES_DIALOG_SIZE,
+        data: toBookToAdd(book),
       })
       .afterClosed()
-      .subscribe((result) => {
-        if (result === 'removed') {
-          this.onBookRemoved(book);
-        } else if (result) {
-          // With the filter, a book whose status changed may no longer belong to the list
-          if (this.status()) {
-            this.load();
-          } else {
-            this.books.update((list) =>
-              list.map((item) => (item.id === result.id ? result : item)),
-            );
-          }
-          this.notify('Cambios guardados');
+      .subscribe((libraries) => {
+        if (libraries) {
+          this.onLibrariesAdded(book, libraries);
         }
       });
+  }
+
+  /** The book stays in this library: only its list of libraries changes. */
+  private onLibrariesAdded(book: UserBook, libraries: AddedLibrary[]): void {
+    this.books.update((list) =>
+      list.map((item) =>
+        item.id === book.id
+          ? { ...item, libraries: addLibraryIds(item.libraries, libraries) }
+          : item,
+      ),
+    );
+    this.notify(addedMessage(book.bookTitle, libraries));
   }
 
   protected openRemoveDialog(book: UserBook): void {

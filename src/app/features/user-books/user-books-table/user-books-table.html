@@ -136,17 +136,33 @@
     </ng-container>
 
     <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Acciones</span></th>
-      <td mat-cell *matCellDef="let book">
-        <button
-          mat-icon-button
-          type="button"
-          matTooltip="Quitar de la biblioteca"
-          [attr.aria-label]="'Quitar ' + book.bookTitle + ' de la biblioteca'"
-          (click)="remove(book, $event)"
-        >
-          <mat-icon>delete</mat-icon>
-        </button>
+      <th mat-header-cell *matHeaderCellDef [class.two]="twoActions()">
+        <span class="visually-hidden">Acciones</span>
+      </th>
+      <td mat-cell *matCellDef="let book" [class.two]="twoActions()">
+        @if (addable()) {
+          <button
+            mat-icon-button
+            type="button"
+            aria-haspopup="dialog"
+            [matTooltip]="addLabel()"
+            [attr.aria-label]="addLabel() + ': ' + book.bookTitle"
+            (click)="add(book, $event)"
+          >
+            <mat-icon>library_add</mat-icon>
+          </button>
+        }
+        @if (removable()) {
+          <button
+            mat-icon-button
+            type="button"
+            matTooltip="Quitar de la biblioteca"
+            [attr.aria-label]="'Quitar ' + book.bookTitle + ' de la biblioteca'"
+            (click)="remove(book, $event)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
       </td>
     </ng-container>
 

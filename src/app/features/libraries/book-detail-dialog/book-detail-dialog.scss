@@ -69,6 +69,14 @@ mat-dialog-content {
   margin-bottom: 8px;
 }
 
+.add-to-libraries {
+  // On its own line, but only as wide as its text
+  display: flex;
+  width: fit-content;
+  // The text button has side padding: this aligns its icon with the content
+  margin: 0 0 16px -12px;
+}
+
 .rating,
 .reading-status {
   margin-bottom: 16px;

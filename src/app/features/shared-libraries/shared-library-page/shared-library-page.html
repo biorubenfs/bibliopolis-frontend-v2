@@ -114,7 +114,10 @@
           [books]="books()"
           [raters]="raters()"
           [removable]="false"
+          [addable]="true"
+          addLabel="Añadir a mis bibliotecas"
           (openRequested)="openBookDialog(library, $event)"
+          (addRequested)="openAddToLibrariesDialog($event)"
         />
       } @else {
         <ul class="grid">
@@ -123,7 +126,10 @@
               <app-user-book-card
                 [book]="book"
                 [removable]="false"
+                [addable]="true"
+                addLabel="Añadir a mis bibliotecas"
                 (openRequested)="openBookDialog(library, book)"
+                (addRequested)="openAddToLibrariesDialog(book)"
               />
             </li>
           }

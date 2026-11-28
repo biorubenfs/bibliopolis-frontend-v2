@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
-import { AddToLibraryDialog } from '../add-to-library-dialog/add-to-library-dialog';
+import { AddToLibrariesDialog } from '../../libraries/add-to-libraries-dialog/add-to-libraries-dialog';
 import { SharedLibraryBook } from '../shared-library.model';
 import { SharedBookDialog } from './shared-book-dialog';
 
@@ -21,7 +21,7 @@ describe('SharedBookDialog', () => {
 
   async function setup(
     changes: Partial<SharedLibraryBook> = {},
-    options: { shareRatings?: boolean; addResult?: string } = {},
+    options: { shareRatings?: boolean; addResult?: { id: string; name: string }[] } = {},
   ) {
     const close = vi.fn();
     const open = vi.fn(() => ({ afterClosed: () => of(options.addResult) }));
@@ -71,7 +71,8 @@ describe('SharedBookDialog', () => {
     ]);
     expect(element.querySelector('.notes')?.textContent).toBe('Releer');
     expect(button('Editar en Mis libros')?.getAttribute('href')).toBe('/books?q=9780595385294');
-    expect(button('Añadir a mi biblioteca')).toBeUndefined();
+    expect(button('Añadir a mis bibliotecas')).toBeUndefined();
+    expect(button('Añadir a otra biblioteca')).toBeDefined();
   });
 
   it('has nothing to edit in place', async () => {
@@ -98,7 +99,7 @@ describe('SharedBookDialog', () => {
 
     expect(ratings).toEqual([['Ana', 'Valoración de Ana: 9 de 10']]);
     expect(element.textContent).toContain('No está en ninguna de tus bibliotecas');
-    expect(button('Añadir a mi biblioteca')).toBeDefined();
+    expect(button('Añadir a mis bibliotecas')).toBeDefined();
     expect(button('Editar en Mis libros')).toBeUndefined();
   });
 
@@ -124,21 +125,43 @@ describe('SharedBookDialog', () => {
   });
 
   it('closes with the library the book was added to', async () => {
-    const { button, open, close, data } = await setup({ own: null }, { addResult: 'Pendientes' });
+    const { button, open, close, data } = await setup(
+      { own: null },
+      { addResult: [{ id: 'l2', name: 'Pendientes' }] },
+    );
 
-    button('Añadir a mi biblioteca')!.click();
+    button('Añadir a mis bibliotecas')!.click();
 
     expect(open).toHaveBeenCalledWith(
-      AddToLibraryDialog,
-      expect.objectContaining({ data: data.book }),
+      AddToLibrariesDialog,
+      expect.objectContaining({
+        data: {
+          title: data.book.bookTitle,
+          isbn13: data.book.bookIsbn13,
+          isbn10: data.book.bookIsbn10,
+          authors: data.book.bookAuthors,
+        },
+      }),
     );
-    expect(close).toHaveBeenCalledWith({ addedTo: 'Pendientes' });
+    expect(close).toHaveBeenCalledWith({ addedTo: [{ id: 'l2', name: 'Pendientes' }] });
+  });
+
+  it('adds an own book to other libraries too', async () => {
+    const { button, open, close } = await setup(
+      {},
+      { addResult: [{ id: 'l2', name: 'Pendientes' }] },
+    );
+
+    button('Añadir a otra biblioteca')!.click();
+
+    expect(open).toHaveBeenCalledWith(AddToLibrariesDialog, expect.anything());
+    expect(close).toHaveBeenCalledWith({ addedTo: [{ id: 'l2', name: 'Pendientes' }] });
   });
 
   it('stays open if the book was not added', async () => {
     const { button, close } = await setup({ own: null });
 
-    button('Añadir a mi biblioteca')!.click();
+    button('Añadir a mis bibliotecas')!.click();
 
     expect(close).not.toHaveBeenCalled();
   });

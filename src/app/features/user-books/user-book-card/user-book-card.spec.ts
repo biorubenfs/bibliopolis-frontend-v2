@@ -101,6 +101,35 @@ describe('UserBookCard', () => {
     expect(element.querySelector('h2 button')).not.toBeNull();
   });
 
+  it('does not offer adding the book to libraries by default', () => {
+    const element = render().nativeElement as HTMLElement;
+
+    expect(element.querySelector('[aria-label^="Añadir"]')).toBeNull();
+  });
+
+  it('asks to add the book to libraries through a labelled button, without opening it', () => {
+    TestBed.configureTestingModule({ imports: [UserBookCard] });
+    const fixture = TestBed.createComponent(UserBookCard);
+    fixture.componentRef.setInput('book', book);
+    fixture.componentRef.setInput('removable', false);
+    fixture.componentRef.setInput('addable', true);
+    fixture.componentRef.setInput('addLabel', 'Añadir a mis bibliotecas');
+    fixture.detectChanges();
+    const open = vi.fn();
+    const add = vi.fn();
+    fixture.componentInstance.openRequested.subscribe(open);
+    fixture.componentInstance.addRequested.subscribe(add);
+    const element = fixture.nativeElement as HTMLElement;
+    const button = element.querySelector<HTMLButtonElement>('[aria-label^="Añadir"]')!;
+
+    button.click();
+
+    expect(button.getAttribute('aria-label')).toBe('Añadir a mis bibliotecas: Rossiya');
+    expect(button.textContent).toContain('library_add');
+    expect(add).toHaveBeenCalledTimes(1);
+    expect(open).not.toHaveBeenCalled();
+  });
+
   it('hides the library count by default', () => {
     const element = render().nativeElement as HTMLElement;
 

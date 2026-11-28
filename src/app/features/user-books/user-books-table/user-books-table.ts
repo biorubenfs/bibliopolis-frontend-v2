@@ -29,6 +29,10 @@ export class UserBooksTable<T extends ListedBook> {
   readonly books = input.required<T[]>();
   /** Offers removing each book from the library being shown. */
   readonly removable = input(true);
+  /** Offers adding each book to libraries of the user. */
+  readonly addable = input(false);
+  /** The tooltip of the add button, which says where the book is added. */
+  readonly addLabel = input('Añadir a otra biblioteca');
   /** Shows how many libraries contain each book, for lists that span several of them. */
   readonly showLibraryCount = input(false);
   /**
@@ -45,7 +49,11 @@ export class UserBooksTable<T extends ListedBook> {
   readonly showReadingStatus = input(false);
 
   readonly openRequested = output<T>();
+  readonly addRequested = output<T>();
   readonly removeRequested = output<T>();
+
+  /** Both buttons need a wider column. */
+  protected readonly twoActions = computed(() => this.addable() && this.removable());
 
   /** With several people, narrow frames stack their ratings in one column to make room. */
   protected readonly stacksRatings = computed(() => this.raters().length > 1);
@@ -69,7 +77,7 @@ export class UserBooksTable<T extends ListedBook> {
     ...(this.showLibraryCount() ? ['libraries'] : []),
     'isbn',
     'isbn10',
-    ...(this.removable() ? ['actions'] : []),
+    ...(this.addable() || this.removable() ? ['actions'] : []),
   ]);
 
   /** Covers come from external services, so a URL may stop working: show the placeholder then. */
@@ -94,6 +102,12 @@ export class UserBooksTable<T extends ListedBook> {
 
   protected onCoverError(book: T): void {
     this.failedCovers.update((ids) => new Set(ids).add(book.id));
+  }
+
+  protected add(book: T, event: Event): void {
+    // The row opens the book: the click must stop at the button
+    event.stopPropagation();
+    this.addRequested.emit(book);
   }
 
   protected remove(book: T, event: Event): void {

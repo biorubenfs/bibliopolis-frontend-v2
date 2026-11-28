@@ -108,7 +108,9 @@
         [removable]="false"
         [showLibraryCount]="true"
         [showReadingStatus]="true"
+        [addable]="true"
         (openRequested)="openDetailDialog($event)"
+        (addRequested)="openAddToLibrariesDialog($event)"
       />
     } @else {
       <ul class="grid">
@@ -118,7 +120,9 @@
               [book]="book"
               [removable]="false"
               [showLibraryCount]="true"
+              [addable]="true"
               (openRequested)="openDetailDialog(book)"
+              (addRequested)="openAddToLibrariesDialog(book)"
             />
           </li>
         }

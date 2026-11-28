@@ -59,18 +59,33 @@
       }
     </div>
 
-    @if (removable()) {
+    @if (addable() || removable()) {
       <div class="actions">
-        <button
-          mat-icon-button
-          type="button"
-          class="remove"
-          matTooltip="Quitar de la biblioteca"
-          [attr.aria-label]="'Quitar ' + book().bookTitle + ' de la biblioteca'"
-          (click)="removeRequested.emit()"
-        >
-          <mat-icon>delete</mat-icon>
-        </button>
+        @if (addable()) {
+          <button
+            mat-icon-button
+            type="button"
+            class="action"
+            aria-haspopup="dialog"
+            [matTooltip]="addLabel()"
+            [attr.aria-label]="addLabel() + ': ' + book().bookTitle"
+            (click)="addRequested.emit()"
+          >
+            <mat-icon>library_add</mat-icon>
+          </button>
+        }
+        @if (removable()) {
+          <button
+            mat-icon-button
+            type="button"
+            class="action"
+            matTooltip="Quitar de la biblioteca"
+            [attr.aria-label]="'Quitar ' + book().bookTitle + ' de la biblioteca'"
+            (click)="removeRequested.emit()"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
       </div>
     }
   </div>

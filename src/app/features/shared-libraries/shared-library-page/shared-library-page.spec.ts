@@ -6,6 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 
 import { ApiError } from '../../../core/http/api-error';
+import { AddToLibrariesDialog } from '../../libraries/add-to-libraries-dialog/add-to-libraries-dialog';
 import { SharedBookDialog } from '../shared-book-dialog/shared-book-dialog';
 import { SharedLibrariesService } from '../shared-libraries.service';
 import { SharedLibrary, SharedLibraryBook } from '../shared-library.model';
@@ -131,7 +132,9 @@ describe('SharedLibraryPage', () => {
       'Valoraciones',
       'ISBN-13',
       'ISBN-10',
+      'Acciones',
     ]);
+    expect(element.querySelector('tbody [aria-label^="Añadir a mis bibliotecas"]')).not.toBeNull();
     expect(ratings('tbody tr:nth-child(1) .rater')).toEqual([
       'Valoración de Ana: 9 de 10',
       'Tu valoración: 7 de 10',
@@ -208,6 +211,32 @@ describe('SharedLibraryPage', () => {
     expect(element.querySelector('h1')?.textContent).toBe('Biblioteca l2');
   });
 
+  it('adds a book to own libraries from its card and reloads the books', async () => {
+    const { harness, element, openDialog, listBooks, openSnackBar } = await setup({
+      dialogResult: [
+        { id: 'l2', name: 'Pendientes' },
+        { id: 'l3', name: 'Regalos' },
+      ],
+    });
+
+    element
+      .querySelector<HTMLButtonElement>(
+        'app-user-book-card [aria-label^="Añadir a mis bibliotecas"]',
+      )!
+      .click();
+    await harness.fixture.whenStable();
+
+    expect(openDialog).toHaveBeenCalledWith(
+      AddToLibrariesDialog,
+      expect.objectContaining({
+        data: expect.objectContaining({ isbn13: book('b1').bookIsbn13 }),
+      }),
+    );
+    expect(openSnackBar.mock.calls[0][0]).toBe('«Libro b1» añadido a 2 bibliotecas');
+    // The book may now be the user's, whose rating is shown
+    expect(listBooks).toHaveBeenCalledTimes(2);
+  });
+
   describe('book detail', () => {
     async function open(dialogResult?: unknown) {
       const result = await setup({ dialogResult });
@@ -230,7 +259,9 @@ describe('SharedLibraryPage', () => {
     });
 
     it('reloads the books after adding one to an own library', async () => {
-      const { listBooks, openSnackBar } = await open({ addedTo: 'Pendientes' });
+      const { listBooks, openSnackBar } = await open({
+        addedTo: [{ id: 'l2', name: 'Pendientes' }],
+      });
 
       expect(openSnackBar.mock.calls[0][0]).toBe('«Libro b1» añadido a «Pendientes»');
       expect(listBooks).toHaveBeenCalledTimes(2);

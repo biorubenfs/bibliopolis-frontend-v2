@@ -69,7 +69,7 @@ p {
 }
 
 // The title is a real button, so the card works with the keyboard and screen readers. Stretching its
-// clickable area over the card makes the whole card clickable without nesting the remove button
+// clickable area over the card makes the whole card clickable without nesting the action buttons
 // inside another button, which is invalid HTML.
 .open {
   padding: 0;
@@ -147,7 +147,7 @@ p {
   margin: 0 -8px -8px 0;
 }
 
-.remove {
+.action {
   // Above the clickable area of .open
   z-index: 1;
 }

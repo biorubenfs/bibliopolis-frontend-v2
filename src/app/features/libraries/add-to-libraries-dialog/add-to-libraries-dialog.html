@@ -1,0 +1,88 @@
+<h2 mat-dialog-title>Añadir a mis bibliotecas</h2>
+
+@switch (state()) {
+  @case ('loading') {
+    <mat-dialog-content>
+      <div class="status">
+        <mat-spinner diameter="32" aria-label="Cargando tus bibliotecas" />
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button type="button" (click)="close()">Cancelar</button>
+    </mat-dialog-actions>
+  }
+  @case ('error') {
+    <mat-dialog-content>
+      <div class="status" role="alert">
+        <p>No se han podido cargar tus bibliotecas.</p>
+        <button mat-stroked-button type="button" (click)="load()">Reintentar</button>
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button type="button" (click)="close()">Cancelar</button>
+    </mat-dialog-actions>
+  }
+  @default {
+    @if (libraries().length === 0) {
+      <mat-dialog-content>
+        <p>Aún no tienes bibliotecas. Crea una en «Bibliotecas» y vuelve para añadir el libro.</p>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button type="button" (click)="close()">Cerrar</button>
+      </mat-dialog-actions>
+    } @else if (allContain()) {
+      <mat-dialog-content>
+        <p>«{{ book.title }}» ya está en todas tus bibliotecas.</p>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button type="button" (click)="close()">Cerrar</button>
+      </mat-dialog-actions>
+    } @else {
+      <form (submit)="submit($event)">
+        <mat-dialog-content>
+          <p id="add-to-libraries-hint">Elige dónde quieres añadir «{{ book.title }}».</p>
+          <div role="group" aria-labelledby="add-to-libraries-hint">
+            <ul class="libraries">
+              @for (library of libraries(); track library.id) {
+                @let contains = containing().has(library.id);
+                <li>
+                  <mat-checkbox
+                    [checked]="contains || selected().has(library.id)"
+                    [disabled]="contains || adding()"
+                    (change)="toggle(library.id, $event.checked)"
+                  >
+                    {{ library.name }}
+                    @if (contains) {
+                      <span class="contains">Ya está</span>
+                    }
+                  </mat-checkbox>
+                </li>
+              }
+            </ul>
+          </div>
+          <div class="error" role="alert">
+            @if (errorMessage(); as message) {
+              {{ message }}
+            }
+          </div>
+        </mat-dialog-content>
+        <mat-dialog-actions align="end">
+          <button mat-button type="button" (click)="close()">Cancelar</button>
+          <!-- Still focusable while disabled, so the keyboard focus is not lost -->
+          <button
+            mat-flat-button
+            type="submit"
+            [disabled]="adding() || selected().size === 0"
+            disabledInteractive
+          >
+            @if (adding()) {
+              <mat-spinner diameter="20" aria-label="Añadiendo libro" />
+            } @else {
+              Añadir
+            }
+          </button>
+        </mat-dialog-actions>
+      </form>
+    }
+  }
+}

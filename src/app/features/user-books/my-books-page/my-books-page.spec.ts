@@ -3,9 +3,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { SEARCH_DEBOUNCE_MS } from '../../../core/lists/searchable-list';
+import { AddToLibrariesDialog } from '../../libraries/add-to-libraries-dialog/add-to-libraries-dialog';
 import { BookDetailDialog } from '../../libraries/book-detail-dialog/book-detail-dialog';
 import { UserBook } from '../user-book.model';
 import { UserBooksService } from '../user-books.service';
@@ -38,7 +39,12 @@ describe('MyBooksPage', () => {
     options: { url?: string; list?: ReturnType<typeof vi.fn>; dialogResult?: unknown } = {},
   ) {
     const list = options.list ?? vi.fn(() => of({ items: [], total: 0 }));
-    const openDialog = vi.fn(() => ({ afterClosed: () => of(options.dialogResult) }));
+    // Lets a test tell the page that the book of an open detail was added to libraries
+    const librariesAdded = new Subject<{ id: string; name: string }[]>();
+    const openDialog = vi.fn(() => ({
+      afterClosed: () => of(options.dialogResult),
+      componentInstance: { librariesAdded },
+    }));
     const openSnackBar = vi.fn();
     TestBed.configureTestingModule({
       providers: [
@@ -58,6 +64,7 @@ describe('MyBooksPage', () => {
       list,
       openDialog,
       openSnackBar,
+      librariesAdded,
     };
   }
 
@@ -201,6 +208,39 @@ describe('MyBooksPage', () => {
     expect(element.querySelector('.rating')?.textContent).toContain('9/10');
     expect(openSnackBar).toHaveBeenCalledWith('Cambios guardados', undefined, { duration: 4000 });
     expect(list).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds a book to other libraries from its card and updates its library count', async () => {
+    const list = vi.fn(() => of({ items: [book('1', 'Rossiya')], total: 1 }));
+    const { harness, element, openDialog, openSnackBar } = await setup({
+      list,
+      dialogResult: [{ id: 'l2', name: 'Pendientes' }],
+    });
+
+    element
+      .querySelector<HTMLButtonElement>('app-user-book-card button[aria-label^="Añadir"]')!
+      .click();
+    await harness.fixture.whenStable();
+
+    expect(openDialog).toHaveBeenCalledWith(AddToLibrariesDialog, expect.anything());
+    expect(element.querySelector('app-user-book-card .libraries')?.textContent).toContain(
+      'En 2 bibliotecas',
+    );
+    expect(openSnackBar.mock.lastCall?.[0]).toBe('«Rossiya» añadido a «Pendientes»');
+    expect(list).toHaveBeenCalledTimes(1);
+  });
+
+  it('updates the library count when the book is added to libraries from its detail', async () => {
+    const list = vi.fn(() => of({ items: [book('1', 'Rossiya')], total: 1 }));
+    const { harness, element, librariesAdded } = await setup({ list });
+
+    element.querySelector<HTMLButtonElement>('app-user-book-card h2 button')!.click();
+    librariesAdded.next([{ id: 'l2', name: 'Pendientes' }]);
+    await harness.fixture.whenStable();
+
+    expect(element.querySelector('app-user-book-card .libraries')?.textContent).toContain(
+      'En 2 bibliotecas',
+    );
   });
 
   it('does nothing when the detail closes without changes', async () => {
